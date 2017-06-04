@@ -19,6 +19,7 @@ class Product(models.Model):
     cost_type = models.CharField('出材率计算方式', choices=COST_TYPE_CHOICES, default='1', max_length=1)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
 
+
     class Meta:
         verbose_name = '荒料信息'
         verbose_name_plural = verbose_name

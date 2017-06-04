@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'products',
     # 'make_process',
     'purchase',
+    'django_forms_bootstrap',
 ]
 
 MIDDLEWARE = [
@@ -80,11 +81,14 @@ WSGI_APPLICATION = 'project3.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3')},
+    'mysql': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'project3',
-        'USER': 'root',
-        'PASSWORD': 'password',
-        'HOST': '127.0.0.1',
+        'USER': 'pan',
+        'PASSWORD': 'qqq456777',
+        'HOST': '120.24.161.98',
         'PORT': '3306',
     }
 }

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
-from django.db.models import Q
+from django.shortcuts import reverse
 
 SUPPLIER_TYPE_CHOICES = (('trade', '贸易公司'), ('quarry', '矿山'), ('shipping', '进口代理'))
 
@@ -17,6 +17,9 @@ class Supplier(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('purchase:supplier', args=[self.id])
 
 
 class OrderAbstract(models.Model):
@@ -62,6 +65,7 @@ class PurchaseOrder(OrderAbstract):
 
     def _get_total_count(self):
         return self.__class__.objects.filter(order=self.order).count()
+
     total_count = property(_get_total_count)
 
     def _get_total_weight(self):

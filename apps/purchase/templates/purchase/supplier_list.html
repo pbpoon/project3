@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}合作伙伴列表{% endblock %}
+
+{% block content %}
+    <div class="container">
+    <h2 class="page-header">合作伙伴列表</h2>
+    <a class="btn btn-default" href="{% url 'purchase:supplier_create' %}">新伙伴资料</a>
+        <ul>
+            {% for object in object_list %}
+                <li><a href="{{ object.get_absolute_url }}">{{ object.name }}</a></li>
+            {% endfor %}
+        </ul>
+    </div>
+
+{% endblock %}
