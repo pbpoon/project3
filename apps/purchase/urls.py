@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.conf.urls import url
 from . import views
+
 '''合作伙伴'''
 urlpatterns = [
     url(r'^supplier/$', views.SupplierListView.as_view(), name='supplier_list'),
@@ -28,6 +29,8 @@ urlpatterns += [
     url(r'^purchase_order/$', views.PurchaseOrderListView.as_view(), name='purchase_order_list'),
     url(r'^purchase_order/(?P<pk>\d+)/$', views.PurchaseOrderDetailView.as_view(), name='purchase_order'),
     url(r'^purchase_order/create/$', views.PurchaseOrderCreateView.as_view(), name='purchase_order_create'),
+    url(r'^purchase_order/create/import/$', views.AddExcelFileView.as_view(),
+        name='purchase_order_create_import_item'),
     # url(r'^supplier/delete/(?P<pk>\d+)/$', views.SupplierDeleteView.as_view(), name='supplier_delete'),
     # url(r'^supplier/update/(?P<pk>\d+)$', views.SupplierUpdateView.as_view(), name='supplier_update'),
 ]

@@ -22,12 +22,18 @@ class Supplier(models.Model):
         return reverse('purchase:supplier', args=[self.id])
 
 
+def file_get_upload_to(instance, filename):
+    return '{0}/%Y%m%d/{1}'.format(instance.order, filename)
+
+
 class OrderAbstract(models.Model):
     order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
     handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
+    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    file = models.FileField('相关文件', upload_to=file_get_upload_to, null=True, blank=True)
 
     class Meta:
         abstract = True
@@ -53,8 +59,11 @@ class OrderAbstract(models.Model):
 
 
 class PurchaseOrder(OrderAbstract):
+    date = models.DateField('采购日期')
     type = models.CharField('订单类型', default='PC', max_length=2)
     supplier = models.ForeignKey('Supplier', related_name='sale_order', verbose_name='供应商')
+    cost_money = models.CharField('结算货币', choices=(('USD', '$美元'), ('CNY', '￥人民币'), ('EUR', '€欧元')), default='USD',
+                                  max_length=8)
 
     class Meta:
         verbose_name = '采购订单'
@@ -85,6 +94,7 @@ class PurchaseOrder(OrderAbstract):
 class PurchaseOrderItem(models.Model):
     order = models.ForeignKey('PurchaseOrder', related_name='item', verbose_name='采购订单')
     block_num = models.CharField('荒料编号', max_length=20, unique=True, db_index=True)
+    price = models.DecimalField('单价', max_digits=9, decimal_places=2, null=True, blank=True)
 
     class Meta:
         verbose_name = '采购订单明细'

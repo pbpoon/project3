@@ -9,16 +9,52 @@
                 <div class="panel-heading">
                     <div class="panel-title">{{ object }}</div>
                     <div class="panel-body">
+
                         <ul>
                             <li>{{ object.supplier }}</li>
                             <li>{{ object.handler }}</li>
                             <li>{{ object.created|date }}</li>
-                            <li>{{ form }}</li>
+                            {% if not block_list %}
+                                <li>
+                                    <form action="{% url 'purchase:purchase_order_create_import_item' %}?order_id={{ object.id }}"
+                                          enctype="multipart/form-data"
+                                          method="post">{{ form }}{% csrf_token %}<input type="submit"
+                                                                                         value="提交">
+                                    </form>
+                                </li>{% endif %}
                         </ul>
                     </div>
                 </div>
             </div>
+            {% if block_list %}
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>荒料编号</th>
+                        <th>重量</th>
+                        <th>长</th>
+                        <th>宽</th>
+                        <th>高</th>
+                        <th>立方</th>
+                        <th>批次</th>
+                    </tr>
+                    </thead>
+                    <tbody>
 
+                    {% for block in block_list %}
+                        <tr>
+                            <td>{{ block.block_num }}</td>
+                            <td>{{ block.weight }}</td>
+                            <td>{{ block.long }}</td>
+                            <td>{{ block.width }}</td>
+                            <td>{{ block.high }}</td>
+                            <td>{{ block.m3 }}</td>
+                            <td>{{ block.batch }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
         </div>
         <div class="col-md-4">
             <div class="panel panel-default">

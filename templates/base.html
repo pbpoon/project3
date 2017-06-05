@@ -8,8 +8,12 @@
     <script type="text/javascript" src="http://cdn.static.runoob.com/libs/jquery/2.1.4/jquery.min.js"></script>
 </head>
 <body>
-{% block content %}
-
+{% block messages %}
+    {% include 'messages.html' %}
 {% endblock %}
+{% include 'menu.html' %}
+{% block content %}
+{% endblock %}
+<script src="{% static 'js/bootstrap.js' %}"></script>
 </body>
 </html>
