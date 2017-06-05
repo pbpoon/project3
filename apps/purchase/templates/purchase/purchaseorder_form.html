@@ -8,10 +8,31 @@
         <div class="col-md-8">
             <form action="{% url 'purchase:purchase_order_create' %}" method="post">
                 {{ form|as_bootstrap }}
-{#                {{ itemform|as_bootstrap_inline }}#}
+                {#                {{ itemform|as_bootstrap_inline }}#}
                 {% csrf_token %}
+
+                {{ formset }}
                 <input type="submit" class="btn btn-primary" value="提交">
             </form>
+            <br class="divider">
+
+            {#            <form id="myForm" method="post" action="">#}
+            {#                <table border="0" cellpadding="0" cellspacing="0">#}
+            {#                    <tbody>#}
+            {#                    {% for form in formset.forms %}#}
+            {#                        <tr>#}
+            {#                            <td>#}
+            {#                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}#}
+            {#                                {{ form.field1 }}#}
+            {#                            </td>#}
+            {#                            <td>{{ form.field2 }}</td>#}
+            {#                            <td>{{ form.field3 }}</td>#}
+            {#                        </tr>#}
+            {#                    {% endfor %}#}
+            {#                    </tbody>#}
+            {#                </table>#}
+            {#                {{ formset.management_form }}#}
+            {#            </form>#}
 
         </div>
         <div class="col-md-4">
@@ -23,4 +44,11 @@
             </div>
         </div>
     </div>
+    {#    <script type="text/javascript">#}
+    {#        $(function () {#}
+    {#            $('#myForm tbody tr').formset({#}
+    {#                prefix: '{{ formset.prefix }}'#}
+    {#            });#}
+    {#        })#}
+    {#    </script>#}
 {% endblock %}

@@ -5,9 +5,20 @@
             <h2>{{ object.order }}</h2>
         </div>
         <div class="col-md-8">
-            <div class="list-group">
-                    <a class="list-group-item" href="{{ object.get_absolute_url }}">{{ object }}</a>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="panel-title">{{ object }}</div>
+                    <div class="panel-body">
+                        <ul>
+                            <li>{{ object.supplier }}</li>
+                            <li>{{ object.handler }}</li>
+                            <li>{{ object.created|date }}</li>
+                            <li>{{ form }}</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
+
         </div>
         <div class="col-md-4">
             <div class="panel panel-default">

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
-from django.shortcuts import reverse
+from django.core.urlresolvers import reverse
 
 SUPPLIER_TYPE_CHOICES = (('trade', '贸易公司'), ('quarry', '矿山'), ('shipping', '进口代理'))
 
@@ -23,7 +23,7 @@ class Supplier(models.Model):
 
 
 class OrderAbstract(models.Model):
-    order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='a')
+    order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
@@ -39,7 +39,7 @@ class OrderAbstract(models.Model):
     def save(self, *args, **kwargs):
         # 格式为 IM1703001
         date_str = datetime.now().strftime('%y%m')
-        if self.order == 'a':
+        if self.order == 'new':
             last_record = self.__class__.objects.last()
             if last_record:
                 last_order = last_record.order
@@ -62,6 +62,9 @@ class PurchaseOrder(OrderAbstract):
 
     def __str__(self):
         return self.order
+
+    def get_absolute_url(self):
+        return reverse('purchase:purchase_order', args=[self.id])
 
     def _get_total_count(self):
         return self.__class__.objects.filter(order=self.order).count()
