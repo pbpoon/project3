@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="jumbotron">
+            <h2>运输订单管理</h2>
+        </div>
+        <div class="col-md-8">
+            <div class="list-group">
+                {% for object in object_list %}
+                    <a class="list-group-item" href="{{ object.get_absolute_url }}">{{ object }}</a>
+                {% empty %}
+                    <div class="list-group-item">暂时没有订单</div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">操作侧边栏</div>
+                <div class="panel-body">
+                    <a href="{% url 'purchase:import_order_create' %}" class="btn btn-default">新建订单</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

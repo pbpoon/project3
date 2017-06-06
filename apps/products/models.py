@@ -1,7 +1,6 @@
 from django.db import models
 
 BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板材'))
-COST_TYPE_CHOICES = (('1', '按重量'), ('2', '按立方'))
 
 
 class Product(models.Model):
@@ -16,16 +15,15 @@ class Product(models.Model):
     batch = models.ForeignKey('Batch', null=False, verbose_name=u'批次')
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
-    cost_type = models.CharField('出材率计算方式', choices=COST_TYPE_CHOICES, default='1', max_length=1)
+    price = models.DecimalField('单价', max_digits=9, decimal_places=2)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
-
 
     class Meta:
         verbose_name = '荒料信息'
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.block_num
+        return str(self.block_num)
 
 
 class Batch(models.Model):

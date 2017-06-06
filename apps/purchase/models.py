@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
 from django.core.urlresolvers import reverse
+from django.utils import timezone
 
 SUPPLIER_TYPE_CHOICES = (('trade', '贸易公司'), ('quarry', '矿山'), ('shipping', '进口代理'))
 
@@ -58,12 +59,16 @@ class OrderAbstract(models.Model):
         super(OrderAbstract, self).save(*args, **kwargs)
 
 
+COST_BY_CHOICES = (('ton', '按重量'), ('m3', '按立方'))
+
+
 class PurchaseOrder(OrderAbstract):
-    date = models.DateField('采购日期')
+    date = models.DateField('采购日期', default=timezone.now)
     type = models.CharField('订单类型', default='PC', max_length=2)
     supplier = models.ForeignKey('Supplier', related_name='sale_order', verbose_name='供应商')
     cost_money = models.CharField('结算货币', choices=(('USD', '$美元'), ('CNY', '￥人民币'), ('EUR', '€欧元')), default='USD',
                                   max_length=8)
+    cost_by = models.CharField('成本计算方式', choices=COST_BY_CHOICES, default='ton', max_length=4)
 
     class Meta:
         verbose_name = '采购订单'
@@ -76,12 +81,12 @@ class PurchaseOrder(OrderAbstract):
         return reverse('purchase:purchase_order', args=[self.id])
 
     def _get_total_count(self):
-        return self.__class__.objects.filter(order=self.order).count()
+        return self.item.count()
 
     total_count = property(_get_total_count)
 
     def _get_total_weight(self):
-        return sum(i.weight for i in self.item.all())
+        return sum(i.block.weight for i in self.item.all())
 
     total_weight = property(_get_total_weight)
 

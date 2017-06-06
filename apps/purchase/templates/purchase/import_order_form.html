@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load bootstrap_tags %}
+{% load formset_tags %}
+{% block content %}
+    <div class="container">
+        <div class="jumbotron">
+            <h2>{{ object.order }}</h2>
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="panel-title">{{ object }}</div>
+                    <div class="panel-body">
+
+
+                        <div id="formset" data-formset-prefix="{{ formset.prefix }}">
+                            {{ form|as_bootstrap }}
+                            <div class="divider"></div>
+                            {{ formset.management_form }}
+                            <table>
+                                <tbody data-formset-body>
+                                <!-- New forms will be inserted in here -->
+                                {% for form in formset %}
+                                    <tr data-formset-form>
+                                        <td>{{ form.block_num }}</td>
+                                        <td>{{ form.weight }}</td>
+                                        <td><button type="button" data-formset-delete-button>删除</button></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                            <!-- The empty form template. By wrapping this in a <script> tag, the
+                            __prefix__ placeholder can easily be replaced in both attributes and
+                            any scripts -->
+                            <script type="form-template" data-formset-empty-form>
+                                {% escapescript %}
+                                    <tr data-formset-form>
+                                        <td>{{ formset.empty_form }}</td>
+                                        <td><button type="button" data-formset-delete-button>刪除</button></td>
+                                    </tr>
+                                {% endescapescript %}
+                            </script>
+
+                            <!-- This button will add a new form when clicked -->
+                            <input type="button" value="添加一行数据" data-formset-add>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if block_list %}
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>荒料编号</th>
+                        <th>重量</th>
+                        <th>长</th>
+                        <th>宽</th>
+                        <th>高</th>
+                        <th>立方</th>
+                        <th>批次</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+
+                    {% for block in block_list %}
+                        <tr>
+                            <td>{{ block.block_num }}</td>
+                            <td>{{ block.weight }}</td>
+                            <td>{{ block.long }}</td>
+                            <td>{{ block.width }}</td>
+                            <td>{{ block.high }}</td>
+                            <td>{{ block.m3 }}</td>
+                            <td>{{ block.batch }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">操作侧边栏</div>
+                <div class="panel-body">
+                    <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>jQuery(function ($) {
+        $("#formset").formset({
+            animateForms: true
+        });
+    });</script>
+{% endblock %}

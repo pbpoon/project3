@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     # 'make_process',
     'purchase',
     'django_forms_bootstrap',
+    'cart',
+    'jquery',
+    'djangoformsetjs',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +140,5 @@ STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+CART_SESSION_ID = 'cart'

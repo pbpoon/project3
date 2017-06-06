@@ -3,12 +3,35 @@ __author__ = 'pbpoon'
 __date__ = '2017/6/4 22:37'
 
 from django import forms
-from .models import PurchaseOrderItem, PurchaseOrder
+from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem
 from products.models import Product, Batch
+from djangoformsetjs.utils import formset_media_js
+
+
+class ImportOrdetItemForm(forms.ModelForm):
+    class Meta:
+        model = ImportOrderItem
+        fields = '__all__'
+        widgets = {
+            'block_num': forms.TextInput(attrs={'size': '10'})
+        }
+
+    class MyForm(forms.Form):
+        class Media(object):
+            js = formset_media_js + (
+                # Other form media here
+            )
+
+
+class PurchaseOrderForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseOrder
+        fields = ['handler', 'date', 'supplier', 'cost_money', 'cost_by']
 
 
 class AddExcelForm(forms.Form):
     file = forms.FileField(label='上传文件')
+
 
 COST_TYPE_CHOICES = (('1', '按重量'), ('2', '按立方'))
 

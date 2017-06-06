@@ -26,11 +26,16 @@ urlpatterns = [
 ]
 '''采购订单'''
 urlpatterns += [
-    url(r'^purchase_order/$', views.PurchaseOrderListView.as_view(), name='purchase_order_list'),
-    url(r'^purchase_order/(?P<pk>\d+)/$', views.PurchaseOrderDetailView.as_view(), name='purchase_order'),
-    url(r'^purchase_order/create/$', views.PurchaseOrderCreateView.as_view(), name='purchase_order_create'),
-    url(r'^purchase_order/create/import/$', views.AddExcelFileView.as_view(),
-        name='purchase_order_create_import_item'),
+    url(r'^purchase-order/$', views.PurchaseOrderListView.as_view(), name='purchase_order_list'),
+    url(r'^purchase-order/(?P<pk>\d+)/$', views.PurchaseOrderDetailView.as_view(), name='purchase_order'),
+    url(r'^purchase-order/create/$', views.PurchaseOrderCreateView.as_view(), name='purchase_order_create'),
+    # url(r'^purchase_order/create/import/$', views.AddExcelFileView.as_view(),
+    #     name='purchase_order_create_import_item'),
     # url(r'^supplier/delete/(?P<pk>\d+)/$', views.SupplierDeleteView.as_view(), name='supplier_delete'),
     # url(r'^supplier/update/(?P<pk>\d+)$', views.SupplierUpdateView.as_view(), name='supplier_update'),
+]
+urlpatterns += [
+    url(r'^import-order/$', views.ImportOrderListView.as_view(), name='import_order_list'),
+    url(r'^import-order/(?P<pk>\d+)/$', views.ImportOrderDetailView.as_view(), name='import_order'),
+    url(r'^import-order/create/$', views.ImportOrderCreateView.as_view(), name='import_order_create'),
 ]

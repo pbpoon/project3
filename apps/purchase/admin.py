@@ -14,7 +14,7 @@ class ImportOrderItemInline(admin.TabularInline):
 
 @admin.register(PurchaseOrder)
 class PurchaseOrderAdmin(admin.ModelAdmin):
-    list_display = ['order', 'total_count']
+    list_display = ['order', 'total_count', 'total_weight']
     exclude = ['created', 'updated', 'type']
     readonly_fields = ['order']
     inlines = [PuchaserOrderItemInline]
