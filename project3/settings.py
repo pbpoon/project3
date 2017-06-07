@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'cart',
     'jquery',
     'djangoformsetjs',
-    'datatableview'
+    'import_export',#导入导出数据功能
 ]
 
 MIDDLEWARE = [
@@ -143,3 +143,5 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CART_SESSION_ID = 'cart'
+
+IMPORT_EXPORT_USE_TRANSACTIONS = True

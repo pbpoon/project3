@@ -106,7 +106,7 @@ class PurchaseOrderItem(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.block_num
+        return str(self.block_num)
 
     def _get_weight(self):
         return self.block.weight
@@ -134,10 +134,15 @@ class ImportOrder(OrderAbstract):
     def __str__(self):
         return self.order
 
+    def get_absolute_url(self):
+        return reverse('purchase:import_order', args=[self.id])
+
 
 class ImportOrderItem(models.Model):
     order = models.ForeignKey('ImportOrder', related_name='item', verbose_name='进口代理订单')
-    block_num = models.ForeignKey('products.Product', related_name='import_order', verbose_name='荒料编号')
+    block_num = models.ForeignKey('PurchaseOrderItem', to_field='block_num', db_constraint=False,
+                                  related_name='import_order',
+                                  verbose_name='荒料编号')
     weight = models.DecimalField('重量', decimal_places=2, max_digits=9)
 
     class Meta:
@@ -145,7 +150,7 @@ class ImportOrderItem(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return self.block_num
+        return str(self.block_num)
 
 
 def get_upload_to(instance, filename):

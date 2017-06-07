@@ -2,7 +2,6 @@ from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
 from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView, View, FormView
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib import messages
-from django.forms.models import inlineformset_factory
 
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder
 from .forms import purchase_form, AddExcelForm, PurchaseOrderForm, ImportOrderForm
@@ -11,7 +10,8 @@ from products.models import Product, Batch
 import xlrd
 from decimal import Decimal
 
-from datatableview.views import DatatableMixin, DatatableView
+from tablib import Dataset
+from .resource import ImportOrderItemResources
 
 
 class SupplierListView(ListView):
@@ -152,11 +152,37 @@ class ImportOrderDetailView(DetailView):
     template_name = 'purchase/import_order.html'
     model = ImportOrder
 
+    def get_context_data(self, **kwargs):
+        block_list = self.object.item.all()
+        kwargs['block_list'] = (block.block_num.block for block in block_list)
+        return super(self.__class__, self).get_context_data(**kwargs)
+
 
 class ImportOrderCreateView(FormView):
     template_name = 'purchase/import_order_form.html'
     form_class = ImportOrderForm
 
+    # def post(self, request, *args, **kwargs):
+    #     form = self.get_form()
+    #     if form.is_valid():
+    #         return self.form_valid(form)
+    #
+    # def form_valid(self, form):
+    #     order_item = ImportOrderItemResources()
+    #     dataset = Dataset()
+    #     new_order_item = self.request.FILES.get('myfile')
+    #     imported_data = dataset.load(new_order_item.read())
+    #     result = order_item.import_data(dataset, dry_run=False)
+    #     if not result.has_errors():
+    #         order_item.import_data(dataset, dry_run=True)
+    #         messages.success(self.request, '数据成功导入！')
+    #     else:
+    #         # context = {
+    #         #     'result': result
+    #         # }
+    #         return render(self.request, self.template_name)
+
+    #
     def get_context_data(self, **kwargs):
         if self.request.method == 'GET':
             kwargs['file_form'] = AddExcelForm()
@@ -168,7 +194,7 @@ class ImportOrderCreateView(FormView):
         if form.is_valid() and file_form.is_valid():
             object = form.save(commit=False)
             object.data_entry_staff = self.request.user
-            block_lst = []
+            block_list = []
             order_item = []
             error = []
             f = form.files.get('file')
@@ -197,16 +223,17 @@ class ImportOrderCreateView(FormView):
                                 row[i] = int(row[i])
 
                     if PurchaseOrderItem.objects.filter(block_num=row[0]):
-                        if not ImportOrderItem.objects.filter(block_num_id=Product.objects.filter(block_num=row[0])):
+                        if not ImportOrderItem.objects.filter(
+                                block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
                             """
                             以后还有再加一个判断该编号荒料有没有到货记录。
                             """
-                            order_item.append(ImportOrderItem(block_num_id=Product.objects.filter(block_num=row[0]), weight=row[1]))
-                            block_lst.append(
-                                Product(weight=row[1], long=row[2], width=row[4], high=row[4], m3=row[5], batch=row[6],
-                                        price=row[7]))
-
-
+                            block_num = PurchaseOrderItem.objects.get(block_num=row[0])
+                            order_item.append(
+                                ImportOrderItem(block_num=block_num, weight=row[1]))
+                            block = Product.objects.get(block_num=block_num)
+                            block.weight = row[1]
+                            block_list.append(block)
                     else:
                         error.append(row[0])
                 if len(error) != 0:
@@ -219,19 +246,14 @@ class ImportOrderCreateView(FormView):
                     return render(self.request, self.template_name, context)
             if self.request.POST.get('save'):
                 object.save()
-            block_list = []
-            for block_id, block in zip(order_item, block_lst):
-                block_id.order = object
-                if self.request.POST.get('save'):
+                for block_id, block in zip(order_item, block_list):
+                    block_id.order = object
                     block_id.save()
-                # block_id.block_num = block_id
-                if self.request.POST.get('save'):
                     block.save()
-                block_list.append(block)
-            messages.success(self.request, '数据已经成功导入!')
-            if self.request.POST.get('save'):
+                messages.success(self.request, '数据已经成功保存!')
                 success_url = object.get_absolute_url()
                 return HttpResponseRedirect(success_url)
+            messages.success(self.request, '数据已经成功保存!')
             context = {
                 # 'object': object,
                 'block_list': block_list,

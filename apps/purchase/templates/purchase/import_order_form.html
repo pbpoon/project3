@@ -16,6 +16,7 @@
                               method="post">{{ form|as_bootstrap }}{% csrf_token %}
                             {{ file_form }}<input type="submit" name="import"
                                                   value="导入">
+{#                            <input type="file" name="myfile">#}
                             <input type="submit" name="save"
                                    value="保存">
                         </form>
