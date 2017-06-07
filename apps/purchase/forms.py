@@ -3,7 +3,7 @@ __author__ = 'pbpoon'
 __date__ = '2017/6/4 22:37'
 
 from django import forms
-from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem, ImportOrder
+from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem, ImportOrder, PaymentHistory
 from products.models import Product, Batch
 from djangoformsetjs.utils import formset_media_js
 
@@ -85,3 +85,17 @@ class PurchaseOrderItemForm(forms.ModelForm):
 
 
 purchase_form = forms.inlineformset_factory(PurchaseOrder, PurchaseOrderItem, form=PurchaseOrderItemForm)
+
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = PaymentHistory
+        fields = '__all__'
+        widgets = {
+            'order': forms.ChoiceField(choices=('1', '1'))
+        }
+
+        def __init__(self, *args, **kwargs):
+            super(PaymentForm, self).__init__(*args, **kwargs)
+            self.fields['order'] = forms.ChoiceField(label='相关订单号', widget=forms.Select, required=False, choices=
+            (i.order, i.order for i in PurchaseOrder.objects.all()))

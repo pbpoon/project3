@@ -188,3 +188,6 @@ class PaymentHistory(models.Model):
 
     def __str__(self):
         return '[{0}]:{1}'.format(self.order, self.amount)
+
+    def get_absolute_url(self):
+        return reverse('purchase:import_order', args=[self.id])

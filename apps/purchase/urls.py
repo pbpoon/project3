@@ -39,3 +39,9 @@ urlpatterns += [
     url(r'^import-order/(?P<pk>\d+)/$', views.ImportOrderDetailView.as_view(), name='import_order'),
     url(r'^import-order/create/$', views.ImportOrderCreateView.as_view(), name='import_order_create'),
 ]
+
+urlpatterns += [
+    url(r'^paymen/$', views.PaymentListView.as_view(), name='paymen_list'),
+    url(r'^paymen/(?P<pk>\d+)/$', views.ImportOrderDetailView.as_view(), name='paymen'),
+    url(r'^paymen/create/$', views.PaymenCreateView.as_view(), name='paymen_create'),
+]

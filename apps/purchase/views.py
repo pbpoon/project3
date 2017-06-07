@@ -3,8 +3,8 @@ from django.views.generic import ListView, DetailView, DeleteView, CreateView, U
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib import messages
 
-from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder
-from .forms import purchase_form, AddExcelForm, PurchaseOrderForm, ImportOrderForm
+from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder, PaymentHistory
+from .forms import purchase_form, AddExcelForm, PurchaseOrderForm, ImportOrderForm, PaymentForm
 from products.models import Product, Batch
 
 import xlrd
@@ -44,7 +44,7 @@ class SupplierDeleteView(DeleteView):
 
 class PurchaseOrderListView(ListView):
     model = PurchaseOrder
-    template_name = 'purchase/purchaseorder_list.html'
+    template_name = 'purchase/list.html'
 
 
 class PurchaseOrderDetailView(DetailView):
@@ -263,3 +263,20 @@ class ImportOrderCreateView(FormView):
                 'total_count': len(block_list),
             }
             return render(self.request, self.template_name, context)
+
+
+class PaymentListView(ListView):
+    model = PaymentHistory
+    template_name = 'purchase/payment_list.html'
+
+
+class PaymentDetailView(DetailView):
+    model = PaymentHistory
+    template_name = 'purchase/payment.html'
+
+
+class PaymenCreateView(CreateView):
+    # model = PaymentHistory
+    # fields = '__all__'
+    form_class = PaymentForm
+    template_name = 'purchase/paymen_form.html'
