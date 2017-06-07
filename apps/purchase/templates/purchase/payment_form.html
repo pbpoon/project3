@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load bootstrap_tags %}
+{% block content %}
+    <div class="container">
+        <div class="jumbotron">
+            <h2>{{ object.order }}</h2>
+        </div>
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="panel-title">{{ object }}</div>
+                    <div class="panel-body">
+
+                        <form action="{% url 'purchase:payment_create' %}"
+                              enctype="multipart/form-data"
+                              method="post">{{ form|as_bootstrap }}{% csrf_token %}
+{#                            {{ file_form }}<input type="submit" name="import"#}
+{#                                                  value="导入">#}
+                            <input type="submit" name="save"
+                                                  value="保存">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">操作侧边栏</div>
+                <div class="panel-body">
+                    <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the examples
+        $(document).ready(function () {
+            $('#myForm').DataTable(
+            )
+        });</script>
+{% endblock %}

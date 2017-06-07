@@ -279,4 +279,4 @@ class PaymenCreateView(CreateView):
     # model = PaymentHistory
     # fields = '__all__'
     form_class = PaymentForm
-    template_name = 'purchase/paymen_form.html'
+    template_name = 'purchase/payment_form.html'

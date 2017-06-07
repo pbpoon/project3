@@ -41,7 +41,7 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    url(r'^paymen/$', views.PaymentListView.as_view(), name='paymen_list'),
-    url(r'^paymen/(?P<pk>\d+)/$', views.ImportOrderDetailView.as_view(), name='paymen'),
-    url(r'^paymen/create/$', views.PaymenCreateView.as_view(), name='paymen_create'),
+    url(r'^paymen/$', views.PaymentListView.as_view(), name='payment_list'),
+    url(r'^paymen/(?P<pk>\d+)/$', views.PaymentDetailView.as_view(), name='payment'),
+    url(r'^paymen/create/$', views.PaymenCreateView.as_view(), name='payment_create'),
 ]

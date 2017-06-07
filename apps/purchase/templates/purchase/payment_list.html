@@ -1,0 +1,3 @@
+{% extends 'purchase/list.html' %}
+{% block list_title %}采购付款记录列表{% endblock %}
+{% block sidebar %} <a href="{% url 'purchase:payment_create' %}">新建记录</a> {% endblock %}
