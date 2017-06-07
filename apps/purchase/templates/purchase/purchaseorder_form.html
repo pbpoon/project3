@@ -10,20 +10,20 @@
                 <div class="panel-heading">
                     <div class="panel-title">{{ object }}</div>
                     <div class="panel-body">
-                        {#                        {% if not block_list %}#}
 
                         <form action="{% url 'purchase:purchase_order_create' %}"
                               enctype="multipart/form-data"
                               method="post">{{ form|as_bootstrap }}{% csrf_token %}
-                            {{ file_form }}<input type="submit"
-                                                  value="提交">
+                            {{ file_form }}<input type="submit" name="import"
+                                                  value="导入">
+                            <input type="submit" name="save"
+                                                  value="保存">
                         </form>
-                        {#                        {% endif %}#}
                     </div>
                 </div>
             </div>
             {% if block_list %}
-                <table class="table">
+                <table class="table" id="myForm">
                     <thead>
                     <tr>
                         <th>荒料编号</th>
@@ -49,6 +49,17 @@
                         </tr>
                     {% endfor %}
                     </tbody>
+                <tfoot>
+                <tr>
+                    <td></td>
+                    <td>{{ total_weight }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                </tfoot>
                 </table>
             {% endif %}
         </div>
@@ -61,4 +72,10 @@
             </div>
         </div>
     </div>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the examples
+        $(document).ready(function () {
+            $('#myForm').DataTable(
+            )
+        });</script>
 {% endblock %}

@@ -3,7 +3,7 @@ __author__ = 'pbpoon'
 __date__ = '2017/6/4 22:37'
 
 from django import forms
-from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem
+from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem, ImportOrder
 from products.models import Product, Batch
 from djangoformsetjs.utils import formset_media_js
 
@@ -23,10 +23,16 @@ class ImportOrdetItemForm(forms.ModelForm):
             )
 
 
+class ImportOrderForm(forms.ModelForm):
+    class Meta:
+        model = ImportOrder
+        fields = ['supplier', 'order_date', 'container', 'price', 'handler', 'ps', 'file']
+
+
 class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        fields = ['handler', 'date', 'supplier', 'cost_money', 'cost_by']
+        fields = ['handler', 'date', 'supplier', 'cost_money', 'cost_by', 'ps', 'file']
 
 
 class AddExcelForm(forms.Form):

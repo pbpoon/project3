@@ -14,20 +14,20 @@
                             <li>{{ object.supplier }}</li>
                             <li>{{ object.handler }}</li>
                             <li>{{ object.created|date }}</li>
-{#                            {% if not block_list %}#}
-{#                                <li>#}
-{#                                    <form action="{% url 'purchase:purchase_order_create_import_item' %}?order_id={{ object.id }}"#}
-{#                                          enctype="multipart/form-data"#}
-{#                                          method="post">{{ form }}{% csrf_token %}<input type="submit"#}
-{#                                                                                         value="提交">#}
-{#                                    </form>#}
-{#                                </li>{% endif %}#}
+                            {#                            {% if not block_list %}#}
+                            {#                                <li>#}
+                            {#                                    <form action="{% url 'purchase:purchase_order_create_import_item' %}?order_id={{ object.id }}"#}
+                            {#                                          enctype="multipart/form-data"#}
+                            {#                                          method="post">{{ form }}{% csrf_token %}<input type="submit"#}
+                            {#                                                                                         value="提交">#}
+                            {#                                    </form>#}
+                            {#                                </li>{% endif %}#}
                         </ul>
                     </div>
                 </div>
             </div>
             {% if block_list %}
-                <table class="table">
+                <table class="table" id="myForm">
                     <thead>
                     <tr>
                         <th>荒料编号</th>
@@ -65,4 +65,10 @@
             </div>
         </div>
     </div>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the examples
+        $(document).ready(function () {
+            $('#myForm').DataTable(
+            )
+        });</script>
 {% endblock %}

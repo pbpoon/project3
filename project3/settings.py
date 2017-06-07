@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'cart',
     'jquery',
     'djangoformsetjs',
+    'datatableview'
 ]
 
 MIDDLEWARE = [

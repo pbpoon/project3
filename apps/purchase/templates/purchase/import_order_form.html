@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load bootstrap_tags %}
-{% load formset_tags %}
 {% block content %}
     <div class="container">
         <div class="jumbotron">
@@ -12,43 +11,19 @@
                     <div class="panel-title">{{ object }}</div>
                     <div class="panel-body">
 
-
-                        <div id="formset" data-formset-prefix="{{ formset.prefix }}">
-                            {{ form|as_bootstrap }}
-                            <div class="divider"></div>
-                            {{ formset.management_form }}
-                            <table>
-                                <tbody data-formset-body>
-                                <!-- New forms will be inserted in here -->
-                                {% for form in formset %}
-                                    <tr data-formset-form>
-                                        <td>{{ form.block_num }}</td>
-                                        <td>{{ form.weight }}</td>
-                                        <td><button type="button" data-formset-delete-button>删除</button></td>
-                                    </tr>
-                                {% endfor %}
-                                </tbody>
-                            </table>
-                            <!-- The empty form template. By wrapping this in a <script> tag, the
-                            __prefix__ placeholder can easily be replaced in both attributes and
-                            any scripts -->
-                            <script type="form-template" data-formset-empty-form>
-                                {% escapescript %}
-                                    <tr data-formset-form>
-                                        <td>{{ formset.empty_form }}</td>
-                                        <td><button type="button" data-formset-delete-button>刪除</button></td>
-                                    </tr>
-                                {% endescapescript %}
-                            </script>
-
-                            <!-- This button will add a new form when clicked -->
-                            <input type="button" value="添加一行数据" data-formset-add>
-                        </div>
+                        <form action="{% url 'purchase:import_order_create' %}"
+                              enctype="multipart/form-data"
+                              method="post">{{ form|as_bootstrap }}{% csrf_token %}
+                            {{ file_form }}<input type="submit" name="import"
+                                                  value="导入">
+                            <input type="submit" name="save"
+                                   value="保存">
+                        </form>
                     </div>
                 </div>
             </div>
             {% if block_list %}
-                <table class="table">
+                <table class="table" id="myForm">
                     <thead>
                     <tr>
                         <th>荒料编号</th>
@@ -74,6 +49,17 @@
                         </tr>
                     {% endfor %}
                     </tbody>
+                    <tfoot>
+                    <tr>
+                        <td></td>
+                        <td>{{ total_weight }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    </tfoot>
                 </table>
             {% endif %}
         </div>
@@ -86,9 +72,10 @@
             </div>
         </div>
     </div>
-    <script>jQuery(function ($) {
-        $("#formset").formset({
-            animateForms: true
-        });
-    });</script>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the examples
+        $(document).ready(function () {
+            $('#myForm').DataTable(
+            )
+        });</script>
 {% endblock %}
