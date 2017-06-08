@@ -55,20 +55,35 @@
                     </tbody>
                 </table>
             {% endif %}
+        <div class="divider"></div>
+            {% if payment_history %}
+                <div class="panel panel-default">
+                <div class="panel-heading">本订单付款记录</div>
+                    <div class="panel-body">
+                        <ul class="list-unstyled">
+                            {% for payment in payment_history %}
+                                <li>
+                                    <a href="{{ payment.get_absolute_url }}">{{ payment.date }}:[{{ payment.get_use_type_display }}]{{ payment.order }}/￥{{ payment.amount }}/{{ payment.payee }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
         </div>
-        <div class="col-md-4">
-            <div class="panel panel-default">
-                <div class="panel-heading">操作侧边栏</div>
-                <div class="panel-body">
-                    <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
+            <div class="col-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">操作侧边栏</div>
+                    <div class="panel-body">
+                        <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <script>
-        var editor; // use a global for the submit and return data rendering in the examples
-        $(document).ready(function () {
-            $('#myForm').DataTable(
-            )
-        });</script>
+        <script>
+            var editor; // use a global for the submit and return data rendering in the examples
+            $(document).ready(function () {
+                $('#myForm').DataTable(
+                )
+            });</script>
 {% endblock %}

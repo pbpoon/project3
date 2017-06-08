@@ -47,11 +47,12 @@ class PurchaseOrderListView(ListView):
     template_name = 'purchase/list.html'
 
 
-class PurchaseOrderDetailView(DetailView):
+class PurchaseOrderDetailView( DetailView):
     model = PurchaseOrder
     template_name = 'purchase/purchaseorder.html'
 
     def get_context_data(self, **kwargs):
+        kwargs['payment_history'] = PaymentHistory.objects.filter(order=self.object.order)
         kwargs['block_list'] = [block.block for block in self.object.item.all()]
         if self.request.method == 'POST':
             kwargs['form'] = AddExcelForm(self.request.POST, self.request.FILES)
@@ -143,7 +144,7 @@ class PurchaseOrderCreateView(FormView):
             return render(self.request, self.template_name, context)
 
 
-class ImportOrderListView(ListView):
+class ImportOrderListView( ListView):
     template_name = 'purchase/import_order_list.html'
     model = ImportOrder
 
@@ -155,6 +156,7 @@ class ImportOrderDetailView(DetailView):
     def get_context_data(self, **kwargs):
         block_list = self.object.item.all()
         kwargs['block_list'] = (block.block_num.block for block in block_list)
+        kwargs['payment_history'] = PaymentHistory.objects.filter(order=self.object.order)
         return super(self.__class__, self).get_context_data(**kwargs)
 
 
@@ -270,7 +272,7 @@ class PaymentListView(ListView):
     template_name = 'purchase/payment_list.html'
 
 
-class PaymentDetailView(DetailView):
+class PaymentDetailView( DetailView):
     model = PaymentHistory
     template_name = 'purchase/payment.html'
 
