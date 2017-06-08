@@ -26,13 +26,13 @@ class ImportOrdetItemForm(forms.ModelForm):
 class ImportOrderForm(forms.ModelForm):
     class Meta:
         model = ImportOrder
-        fields = ['supplier', 'order_date', 'container', 'price', 'handler', 'ps', 'file']
+        fields = ['finish_pay', 'supplier', 'order_date', 'container', 'price', 'handler', 'ps', 'file']
 
 
 class PurchaseOrderForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrder
-        fields = ['handler', 'date', 'supplier', 'cost_money', 'cost_by', 'ps', 'file']
+        fields = ['finish_pay', 'handler', 'date', 'supplier', 'cost_money', 'cost_by', 'ps', 'file']
 
 
 class AddExcelForm(forms.Form):
@@ -88,18 +88,15 @@ purchase_form = forms.inlineformset_factory(PurchaseOrder, PurchaseOrderItem, fo
 
 
 def get_choices_list():
-    purchase_order = [(i.order, i.order +"[采购]") for i in PurchaseOrder.objects.all()]
-    import_order = [(i.order, i.order + '[运输]') for i in ImportOrder.objects.all()]
+    purchase_order = [(i.order, i.order + '[采购]') for i in PurchaseOrder.objects.filter(finish_pay=False)]
+    import_order = [(i.order, i.order + '[运输]') for i in ImportOrder.objects.filter(finish_pay=False)]
     return purchase_order + import_order
 
 
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = PaymentHistory
-        fields = '__all__'
-        # widgets = {
-        #     'order': forms.ChoiceField(choices=('1', '1'))
-        # }
+        exclude = ['data_entry_staff']
 
     def __init__(self, *args, **kwargs):
         super(PaymentForm, self).__init__(*args, **kwargs)

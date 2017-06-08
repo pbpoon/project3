@@ -33,8 +33,10 @@ class OrderAbstract(models.Model):
     updated = models.DateTimeField('更新时间', auto_now=True)
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
     handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
-    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     file = models.FileField('相关文件', upload_to=file_get_upload_to, null=True, blank=True)
+    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    finish_pay = models.BooleanField('完成付款', default=False)
+
 
     class Meta:
         abstract = True

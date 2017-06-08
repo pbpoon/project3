@@ -11,56 +11,42 @@
                     <div class="panel-body">
 
                         <ul>
-                            <li>{{ object.supplier }}</li>
-                            <li>{{ object.handler }}</li>
-                            <li>{{ object.created|date }}</li>
-{#                            {% if not block_list %}#}
-{#                                <li>#}
-{#                                    <form action="{% url 'purchase:purchase_order_create_import_item' %}?order_id={{ object.id }}"#}
-{#                                          enctype="multipart/form-data"#}
-{#                                          method="post">{{ form }}{% csrf_token %}<input type="submit"#}
-{#                                                                                         value="提交">#}
-{#                                    </form>#}
-{#                                </li>{% endif %}#}
+                            <li>付款日期：{{ object.date }}</li>
+                            <li>付款金额：{{ object.handler }}</li>
+                            <li>款项用途：{{ object.created|date }}</li>
+                            <li>收款人：{{ object.payee }}</li>
+                            <li>收款人账户：{{ object.payee_account }}</li>
+                            <li>美金金额:{{ object.usd_amount }}</li>
+                            <li>汇率:{{ object.exchange_rate }}</li>
+                            <li>备注:{{  }}</li>
+
+
+
+                                order = models.CharField('订单号', max_length=16)
+    date = models.DateField('日期')
+    amount = models.DecimalField('金额', max_digits=9, decimal_places=2)
+    use_type = models.CharField('款项用途', choices=USE_TYPE_CHOICES, max_length=16)
+    payee = models.ForeignKey('Supplier', on_delete=models.SET(payee_setdefault), verbose_name='收款人')
+    payee_account = models.CharField('收款人账户', max_length=20)
+    usd_amount = models.DecimalField('美金金额', max_digits=9, decimal_places=2, null=True, blank=True)
+    exchange_rate = models.DecimalField('汇率', max_digits=9, decimal_places=2, null=True, blank=True)
+    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    file = models.FileField('相关文件', upload_to=get_upload_to, null=True, blank=True)
+    created = models.DateField('创建日期', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
+    data_entry_staff = models.ForeignKey(User, related_name='payment_entry', verbose_name='数据录入人')
+    handler = models.ForeignKey(User, related_name='payment_handler', verbose_name='经办人')
                         </ul>
                     </div>
                 </div>
             </div>
-            {% if block_list %}
-                <table class="table">
-                    <thead>
-                    <tr>
-                        <th>荒料编号</th>
-                        <th>重量</th>
-                        <th>长</th>
-                        <th>宽</th>
-                        <th>高</th>
-                        <th>立方</th>
-                        <th>批次</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-
-                    {% for block in block_list %}
-                        <tr>
-                            <td>{{ block.block_num }}</td>
-                            <td>{{ block.weight }}</td>
-                            <td>{{ block.long }}</td>
-                            <td>{{ block.width }}</td>
-                            <td>{{ block.high }}</td>
-                            <td>{{ block.m3 }}</td>
-                            <td>{{ block.batch }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            {% endif %}
         </div>
         <div class="col-md-4">
             <div class="panel panel-default">
                 <div class="panel-heading">操作侧边栏</div>
                 <div class="panel-body">
                     <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
+                    <a href="{% url 'purchase:payment_update' object.id %}" class="btn btn-default">编辑订单</a>
                 </div>
             </div>
         </div>

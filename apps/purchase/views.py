@@ -275,8 +275,18 @@ class PaymentDetailView(DetailView):
     template_name = 'purchase/payment.html'
 
 
-class PaymenCreateView(CreateView):
-    # model = PaymentHistory
-    # fields = '__all__'
+class PaymentCreateView(CreateView):
     form_class = PaymentForm
     template_name = 'purchase/payment_form.html'
+
+
+class PaymentUpdateView(UpdateView):
+    model = PaymentHistory
+    form_class = PaymentForm
+    template_name = 'purchase/payment_form.html'
+
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        instance.data_entry_staff = self.request.user
+        instance.save()
+        return super(self.__class__, self).form_valid(form)
