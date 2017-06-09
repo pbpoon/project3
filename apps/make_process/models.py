@@ -1,8 +1,10 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from datetime import datetime
+from decimal import Decimal
 
 BLOCK_TYPE_CHOICES = (
     ('block', '荒料'),
@@ -12,7 +14,23 @@ BLOCK_TYPE_CHOICES = (
 SERVICE_TYPE_CHOICES = (
     ('TS', '运输'),
     ('MB', '补板'),
-    ('KS', '界石')
+    ('KS', '界石'),
+    ('ST', '到货')
+)
+
+STATUS_CHOICES = (
+    ('N', '新订单'),
+    ('V', '核实'),
+    ('F', '完成'),
+    ('C', '关闭'),
+    ('M', '修改过')
+)
+
+UNIT_CHOICES = (
+    ('m2', 'm2'),
+    ('m3', 'm3'),
+    ('che', '车'),
+    ('ton', 'ton'),
 )
 
 
@@ -20,6 +38,7 @@ class ServiceProvider(models.Model):
     name = models.CharField('名称', max_length=80, unique=True, db_index=True)
     service_type = models.CharField('服务类型', max_length=2, choices=SERVICE_TYPE_CHOICES)
     default_price = models.DecimalField('默认单价', max_digits=9, decimal_places=2, default=0)
+    unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
     address = models.CharField('地址', max_length=100, null=True, blank=True)
     desc = models.CharField('补充说明', max_length=200, null=True, blank=True)
     contacts = models.CharField('联系人', max_length=8, null=True, blank=True)
@@ -32,10 +51,12 @@ class ServiceProvider(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return '[{}]{}'.format(self.service_type, self.name)
+        return '[{0}]{1}'.format(self.get_service_type_display(), self.name)
 
 
-class OrderBaseModel(models.Model):
+class ProcessOrder(models.Model):
+    status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES, default='N')
+    order_type = models.CharField('订单类型', max_length=2, choices=SERVICE_TYPE_CHOICES)
     order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
     date = models.DateField('订单日期', db_index=True)
     service_provider = models.ForeignKey('ServiceProvider', verbose_name='服务商')
@@ -47,28 +68,107 @@ class OrderBaseModel(models.Model):
     updated = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
-        abstract = True
+        verbose_name = '加工订单'
+        verbose_name_plural = verbose_name
+        ordering = ['-date']
 
     def __str__(self):
-        return self.order
+        return '[{0}]{1}'.format(self.get_order_type_display(), self.order)
 
     def save(self, *args, **kwargs):
         # 格式为 IM1703001
+        service_type = self.service_provider.service_type
         date_str = datetime.now().strftime('%y%m')
         if self.order == 'new':
-            last_record = self.__class__.objects.last()
+            last_record = self.__class__.objects.filter(order__startswith=service_type).last()
             if last_record:
                 last_order = last_record.order
                 if date_str in last_order[2:6]:
-                    self.order = self.type + str(int(last_order[2:9]) + 1)
+                    self.order = service_type + str(int(last_order[2:9]) + 1)
                 else:
-                    self.order = self.type + date_str + '001'  # 新月份
+                    self.order = service_type + date_str + '001'  # 新月份
             else:
-                self.order = self.type + date_str + '001'  # 新记录
-        super(OrderBaseModel, self).save(*args, **kwargs)
+                self.order = service_type + date_str + '001'  # 新记录
+        super(ProcessOrder, self).save(*args, **kwargs)
+
+    def get_total_amount(self):
+        order_type = self.order_type
+        model_name = '{0}OrderItem'.format(order_type[:1].upper())
+        total_amount = sum(item.amount for item in model_name.objects.filter(order=self.id))
+        return Decimal('{0:.2f}'.format(total_amount))
+
+    total_amount = property(get_total_amount)
 
 
-class ProcessStatus(models.Model):
-    status = models.CharField(choices=PROCESS_STATUS_CHOICES)
-    block_num = models.ForeignKey('products.Product', on_delete=models.CASCADE, verbose_name='荒料编号')
-    type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6, default='block')
+class OrderItemBaseModel(models.Model):
+    order = models.ForeignKey('ProcessOrder', related_name='%(class)s', verbose_name='加工订单号')
+    line_num = models.SmallIntegerField('序号', default=1)
+    block_num = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='%(class)s_cost',
+                                  verbose_name='荒料编号')
+    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6, default='block')
+    quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
+    price = models.DecimalField('价格', max_digits=9, decimal_places=2)
+    amount = models.DecimalField('金额', decimal_places=2, max_digits=6, default=0)
+    date = models.DateField('日期', default=timezone.now())
+    ps = models.CharField('备注信息', max_length=100, null=True, blank=True)
+
+    class Meta:
+        abstract = True
+        ordering = ['line_num']
+
+    def get_amount(self):
+        amount = self.quantity * self.price
+        return Decimal('{0:.2f}'.format(amount))
+
+    def save(self, *args, **kwargs):
+        self.amount = self.get_amount()
+        super(OrderItemBaseModel, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return str(self.block_num)
+
+
+class TSOrderItem(OrderItemBaseModel):
+    from_ = models.ForeignKey('ServiceProvider', related_name='TS_from')
+    to_ = models.ForeignKey('ServiceProvider', related_name='TS_to')
+    unit = models.CharField('单位', max_length=1, default='车')
+
+    class Meta:
+        verbose_name = '运输单'
+        verbose_name_plural = verbose_name
+
+
+class MBOrderItem(OrderItemBaseModel):
+    pic = models.SmallIntegerField('件数', null=True, blank=True)
+    unit = models.CharField('单位', max_length=2, default='m2')
+
+    class Meta:
+        verbose_name = '补板加工单'
+        verbose_name_plural = verbose_name
+
+
+class KSOrderItem(OrderItemBaseModel):
+    pic = models.SmallIntegerField('件数', null=True, blank=True)
+    pi = models.SmallIntegerField('板皮', null=True, blank=True)
+    unit = models.CharField('单位', max_length=2, default='m3')
+
+    class Meta:
+        verbose_name = '界石加工单'
+        verbose_name_plural = verbose_name
+
+    def get_amount(self):
+        cost_by = self.block_num.block_num.order.cost_by
+        if cost_by == 'ton':
+            amount = self.quantity / 2.8 * self.price
+        else:
+            amount = self.quantity / self.price
+        return Decimal('{0:.2f}'.format(amount))
+
+
+class STOrderItem(OrderItemBaseModel):
+    def get_amount(self):
+        return Decimal('{0:.2f}'.format(self.amount))
+
+    class Meta:
+        verbose_name = '荒料到货单'
+        verbose_name_plural = verbose_name

@@ -118,6 +118,13 @@ class PurchaseOrderItem(models.Model):
 
     m3 = property(_get_m3)
 
+EXTRA_COST_CHOICES=(
+    ('travel','差旅'),
+    ('gi')
+)
+
+class PurchaseOrderExtraCost(models.Model):
+    item = models.CharField(max_length=10, choices=EXTRA_COST_CHOICES)
 
 class ImportOrder(OrderAbstract):
     type = models.CharField('订单类型', default='IM', max_length=2)

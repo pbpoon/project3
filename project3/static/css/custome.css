@@ -1,0 +1,15 @@
+#top-messages, #top-messages > li {
+    border-radius: 0;
+    margin-bottom: 0;
+}
+
+.navbar {
+    border-radius: 0;
+}
+
+.breadcrumb {
+    padding: 0;
+}
+.breadcrumb a {
+    margin: 5px;
+}
