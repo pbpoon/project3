@@ -37,7 +37,6 @@ class OrderAbstract(models.Model):
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     finish_pay = models.BooleanField('完成付款', default=False)
 
-
     class Meta:
         abstract = True
         ordering = ['-created']
@@ -96,7 +95,6 @@ class PurchaseOrder(OrderAbstract):
         return sum(i.m3 for i in self.item.all())
 
     total_m3 = property(_get_total_m3)
-
 
 class PurchaseOrderItem(models.Model):
     order = models.ForeignKey('PurchaseOrder', related_name='item', verbose_name='采购订单')
