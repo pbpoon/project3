@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block main %}
+    <div class="panel panel-default">
+        <div class="panel-heading"></div>
+        <div class="panel-body">
+            <ul class="list-unstyled">
+                <li>{{ object.name }}</li>
+                <li>{{ object.address }}</li>
+                <li>{{ object.get_service_type_display }}</li>
+                <li>{{ object.contacts }}</li>
+                <li>{{ object.telephone }}</li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+{% block sidebar %}
+<li><a href="#" class="btn btn-default">编辑资料</a></li>
+{% endblock %}

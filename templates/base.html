@@ -23,6 +23,27 @@
 {% endblock %}
 {% include 'menu.html' %}
 {% block content %}
+    <div class="container">
+        <div class="jumbotron">{% block jumbotron %}{% endblock %}</div>
+        <div class="col-md-8">
+            {% block main %}
+                <div class="list-group">
+                    {% block list_group %}
+
+                    {% endblock %}
+                </div>
+            {% endblock %}
+            {% block extra_item_1 %}{% endblock %}
+            {% block extra_item_2 %}{% endblock %}
+            {% block extra_item_3 %}{% endblock %}
+        </div>
+        <div class="col-md-4">
+            <ul class="list-unstyled">
+                {% block sidebar %}
+                {% endblock %}
+            </ul>
+        </div>
+    </div>
 {% endblock %}
 {#<script src="{% static 'js/datatableview.js' %}"></script>#}
 <script src="{% static 'js/bootstrap.js' %}"></script>

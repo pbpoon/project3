@@ -1,9 +1,8 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.auth.models import User
-from django.utils import timezone
-
+from django.core.urlresolvers import reverse
 from datetime import datetime
 from decimal import Decimal
 
@@ -53,6 +52,9 @@ class ServiceProvider(models.Model):
 
     def __str__(self):
         return '[{0}]{1}'.format(self.get_service_type_display(), self.name)
+
+    def get_absolute_url(self):
+        return reverse('process:serviceprovider_detail', args=[self.id])
 
 
 class ProcessOrder(models.Model):
@@ -110,7 +112,7 @@ class OrderItemBaseModel(models.Model):
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     price = models.DecimalField('价格', max_digits=9, decimal_places=2)
     amount = models.DecimalField('金额', decimal_places=2, max_digits=6, default=0)
-    date = models.DateField('日期', default=timezone.now())
+    date = models.DateField('日期', default='django.utils.timezone.now')
     ps = models.CharField('备注信息', max_length=100, null=True, blank=True)
 
     class Meta:
@@ -130,8 +132,8 @@ class OrderItemBaseModel(models.Model):
 
 
 class TSOrderItem(OrderItemBaseModel):
-    from_ = models.ForeignKey('ServiceProvider', related_name='TS_from')
-    to_ = models.ForeignKey('ServiceProvider', related_name='TS_to')
+    be_from = models.ForeignKey('ServiceProvider', related_name='TS_from')
+    destination = models.ForeignKey('ServiceProvider', related_name='TS_to')
     unit = models.CharField('单位', max_length=1, default='车')
 
     class Meta:
@@ -176,11 +178,11 @@ class STOrderItem(OrderItemBaseModel):
 
 
 class SlabList(models.Model):
-    block_num = models.ForeignKey('MBOrderItem', related_name='slablist', to_field='block_num',
-                                  on_delete=models.CASCADE, verbose_name=u'荒料编号')
+    order_item = models.ForeignKey('MBOrderItem', related_name='slablist', on_delete=models.CASCADE,
+                                   verbose_name=u'荒料编号')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    OrderItem =
+    order = GenericForeignKey()
     thick = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
     ps = models.CharField(max_length=200, null=True, blank=True, verbose_name=u'备注信息')
     data_entry_staff = models.ForeignKey(User, related_name='date_entry', verbose_name='数据录入人')
@@ -190,7 +192,6 @@ class SlabList(models.Model):
     class Meta:
         verbose_name = u'码单信息'
         verbose_name_plural = verbose_name
-        unique_together = ('thick', 'block_num')
         ordering = ['-updated']
 
     def __str__(self):
@@ -211,7 +212,7 @@ class SlabList(models.Model):
         return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
 
     @property
-    def can_pickup_m2(self):
+    def can_pickup(self):
         part = len(self.item.filter(is_pickup=False).distinct('part_num'))
         pic = len(self.item.filter(is_pickup=False))
         m2 = sum(item.m2 for item in self.item.filter(is_pickup=False))
@@ -222,18 +223,12 @@ class SlabListItem(models.Model):
     item = models.ForeignKey('SlabList', related_name='item', verbose_name=u'对应码单')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
     line_num = models.SmallIntegerField(u'序号')
-    long = models.PositiveSmallIntegerField(verbose_name=u'长')
-    high = models.PositiveSmallIntegerField(verbose_name=u'高')
-    kl1 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'长1')
-    kl2 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'长2')
-    kh1 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'高1')
-    kh2 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'高2')
-    m2 = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=u'平方')
-    is_sell = models.BooleanField(default=False, verbose_name=u'是否已售')
-    is_booking = models.BooleanField(default=False, verbose_name=u'是否已定')
-    is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
+    slab = models.ForeignKey('products.Slab', on_delete=models.CASCADE, verbose_name='板材编号')
 
-    def save(self, *args, **kwargs):
-        m2 = (self.long * self.high) / 10000 - (self.kl1 * self.kh1) / 10000 - (self.kl2 * self.kh2) / 10000
-        self.m2 = Decimal('{0:.2f}'.format(m2))
-        super(SlabListItem, self).save(*args, **kwargs)
+    def __str__(self):
+        return str(self.slab)
+
+    def _get_m2(self):
+        return self.slab.m2
+
+    m2 = property(_get_m2)

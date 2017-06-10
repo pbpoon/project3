@@ -64,7 +64,7 @@ COST_BY_CHOICES = (('ton', '按重量'), ('m3', '按立方'))
 
 
 class PurchaseOrder(OrderAbstract):
-    date = models.DateField('采购日期', default=timezone.now)
+    date = models.DateField('采购日期', default='django.utils.timezone.now')
     type = models.CharField('订单类型', default='PC', max_length=2)
     supplier = models.ForeignKey('Supplier', related_name='sale_order', verbose_name='供应商')
     cost_money = models.CharField('结算货币', choices=(('USD', '$美元'), ('CNY', '￥人民币'), ('EUR', '€欧元')), default='USD',
@@ -96,6 +96,7 @@ class PurchaseOrder(OrderAbstract):
 
     total_m3 = property(_get_total_m3)
 
+
 class PurchaseOrderItem(models.Model):
     order = models.ForeignKey('PurchaseOrder', related_name='item', verbose_name='采购订单')
     block_num = models.CharField('荒料编号', max_length=20, unique=True, db_index=True)
@@ -118,13 +119,28 @@ class PurchaseOrderItem(models.Model):
 
     m3 = property(_get_m3)
 
-EXTRA_COST_CHOICES=(
-    ('travel','差旅'),
-    ('gi')
+
+EXTRA_COST_CHOICES = (
+    ('travel', '差旅'),
+    ('ticket', '机票'),
+    ('discount', '折扣')
 )
 
+
 class PurchaseOrderExtraCost(models.Model):
-    item = models.CharField(max_length=10, choices=EXTRA_COST_CHOICES)
+    item = models.CharField('项目', max_length=10, choices=EXTRA_COST_CHOICES)
+    desc = models.CharField('补充说明', max_length=80, null=True, blank=True)
+    amount = models.DecimalField('金额', max_digits=9, decimal_places=2)
+    date = models.DateField('日期')
+    updated = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '额外费用'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.amount
+
 
 class ImportOrder(OrderAbstract):
     type = models.CharField('订单类型', default='IM', max_length=2)

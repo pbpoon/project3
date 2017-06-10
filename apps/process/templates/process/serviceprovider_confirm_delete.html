@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block main %}
+    <h2 class="page-header">删除资料</h2>
+    <form action="{% url 'process:serviceprovider_delete' %}" method="post">{% csrf_token %}
+        <p>Are you sure you want to delete "{{ object }}"?</p>
+        <input type="submit" value="Confirm"/>
+    </form>
+
+{% endblock %}

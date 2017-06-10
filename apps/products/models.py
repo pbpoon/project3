@@ -1,4 +1,5 @@
 from django.db import models
+from decimal import Decimal
 
 BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板材'))
 
@@ -26,6 +27,34 @@ class Product(models.Model):
 
     def __str__(self):
         return str(self.block_num)
+
+
+class Slab(models.Model):
+    block_num = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name='荒料编号')
+    thick = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
+    part_num = models.CharField(max_length=8, verbose_name=u'夹号')
+    line_num = models.SmallIntegerField(u'序号')
+    long = models.PositiveSmallIntegerField(verbose_name=u'长')
+    high = models.PositiveSmallIntegerField(verbose_name=u'高')
+    kl1 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'长1')
+    kl2 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'长2')
+    kh1 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'高1')
+    kh2 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'高2')
+    m2 = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=u'平方')
+    created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
+    updated = models.DateTimeField(auto_now=True, verbose_name=u'更新日期')
+    is_sell = models.BooleanField(default=False, verbose_name=u'是否已售')
+    is_booking = models.BooleanField(default=False, verbose_name=u'是否已定')
+    is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
+
+    def save(self, *args, **kwargs):
+        m2 = (self.long * self.high) / 10000 - (self.kl1 * self.kh1) / 10000 - (self.kl2 * self.kh2) / 10000
+        self.m2 = Decimal('{0:.2f}'.format(m2))
+        super(Slab, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return '{0} x {1} ({2} x {3}) ({4} x {5}) = {6}m2'.format(self.long, self.high, self.kl1, self.kh1, self.kl2,
+                                                                  self.kh2, self.m2)
 
 
 class Batch(models.Model):

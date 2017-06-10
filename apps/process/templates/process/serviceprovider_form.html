@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% load bootstrap_tags %}
+
+{% block main %}
+    <form action="{% url 'process/serviceprovider_create' %}" method="post">
+        {% csrf_token %}
+        {{ form|as_bootstrap }}
+        <input type="submit" class="btn btn-primary" value="提交">
+    </form>
+{% endblock %}

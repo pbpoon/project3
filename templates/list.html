@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+        <div class="jumbotron"></div>
+        <div class="col-md-8">
+            {% block main %}
+                <div class="list-group">
+                    {% blcok list_group %}
+
+                    {% endblcok %}
+                </div>
+            {% endblock %}
+            {% block extra_item_1 %}{% endblock %}
+            {% block extra_item_2 %}{% endblock %}
+            {% block extra_item_3 %}{% endblock %}
+        </div>
+        <div class="col-md-4">
+            <ul class="list-unstyled">
+                {% block sidebar %}
+                {% endblock %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}

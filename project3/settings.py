@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'products',
-    # 'make_process',
+    'process',
     'purchase',
     'django_forms_bootstrap',
     'cart',
