@@ -19,8 +19,16 @@ from . import views
 '''服务商'''
 urlpatterns = [
     url(r'^service/$', views.ServiceProviderListView.as_view(), name='serviceprovider_list'),
-    url(r'^service/(?P<pk>\d+)/$', views.ServiceProviderDetailView.as_view(), name='serviceprovider_detail'),
     url(r'^service/create/$', views.ServiceProviderCreateView.as_view(), name='serviceprovider_create'),
+    url(r'^service/(?P<pk>\d+)/$', views.ServiceProviderDetailView.as_view(), name='serviceprovider_detail'),
     url(r'^service/update/(?P<pk>\d+)/$', views.ServiceProviderUpdateView.as_view(), name='serviceprovider_update'),
-    url(r'^service/delete/(?P<pk>\d+)/$', views.ServiceProviderUpdateView.as_view(), name='serviceprovider_delete'),
+    url(r'^service/delete/(?P<pk>\d+)/$', views.ServiceProviderDeleteView.as_view(), name='serviceprovider_delete'),
+]
+'''生产订单'''
+urlpatterns += [
+    url(r'^order/$', views.ProcessOrderListView.as_view(), name='order_list'),
+    url(r'^order/create/$', views.ProcessOrderCreateView.as_view(), name='order_create'),
+    url(r'^order/(?P<pk>\d+)/$', views.ProcessOrderDetailView.as_view(), name='order_detail'),
+    # url(r'^order/update/(?P<pk>\d+)/$', views.ServiceProviderUpdateView.as_view(), name='order_update'),
+    # url(r'^order/delete/(?P<pk>\d+)/$', views.ServiceProviderDeleteView.as_view(), name='order_delete'),
 ]

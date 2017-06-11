@@ -3,7 +3,7 @@
 {% block list_group %}
     {% for object in object_list %}
         <div class="list-group">
-            <a class="list-group-item" href="#">
+            <a class="list-group-item" href="{{ object.get_absolute_url }}">
                 {{ object.name }}[{{ object.get_service_type_display }}]
             </a>
             {% empty %}
@@ -15,5 +15,5 @@
 {% endblock %}
 
 {% block sidebar %}
-    <li><a href="#" class="btn btn-default">新建伙伴</a></li>
+    <li><a href="{% url 'process:serviceprovider_create' %}" class="btn btn-default">新建伙伴</a></li>
 {% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block jumbotron %}
+{{ object }}
+{% endblock %}
+{% block main %}
+    <ul>
+        <li>{{ object.get_status_display }}</li>
+        <li>{{ object.get_order_type_display }}</li>
+        <li>{{ object.service_provider }}</li>
+        <li>{{ object.date }}</li>
+    </ul>
+{% endblock %}
+
+{% block sidebar %}
+<li><a href="#">编辑订单</a></li>
+{% endblock %}

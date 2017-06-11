@@ -14,5 +14,6 @@
     </div>
 {% endblock %}
 {% block sidebar %}
-<li><a href="#" class="btn btn-default">编辑资料</a></li>
+    <li><a href="{% url 'process:serviceprovider_update' object.id %}" class="btn btn-default">编辑资料</a></li>
+    <li><a href="{% url 'process:serviceprovider_delete' object.id %}" class="btn btn-default">删去资料</a></li>
 {% endblock %}

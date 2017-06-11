@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from datetime import datetime
 from decimal import Decimal
+from django.utils import timezone
 
 BLOCK_TYPE_CHOICES = (
     ('block', '荒料'),
@@ -15,9 +16,13 @@ SERVICE_TYPE_CHOICES = (
     ('TS', '运输'),
     ('MB', '补板'),
     ('KS', '界石'),
-    ('ST', '到货')
 )
-
+ORDER_TYPE_CHOICES = (
+    ('TS', '运输单'),
+    ('MB', '补板单'),
+    ('KS', '界石单'),
+    ('ST', '荒料入库单')
+)
 STATUS_CHOICES = (
     ('N', '新订单'),
     ('V', '核实'),
@@ -59,7 +64,7 @@ class ServiceProvider(models.Model):
 
 class ProcessOrder(models.Model):
     status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES, default='N')
-    order_type = models.CharField('订单类型', max_length=2, choices=SERVICE_TYPE_CHOICES)
+    order_type = models.CharField('订单类型', max_length=2, choices=ORDER_TYPE_CHOICES)
     order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
     date = models.DateField('订单日期', db_index=True)
     service_provider = models.ForeignKey('ServiceProvider', verbose_name='服务商')
@@ -74,6 +79,9 @@ class ProcessOrder(models.Model):
         verbose_name = '加工订单'
         verbose_name_plural = verbose_name
         ordering = ['-date']
+
+    def get_absolute_url(self):
+        return reverse('process:order_lis', args=[self.id])
 
     def __str__(self):
         return '[{0}]{1}'.format(self.get_order_type_display(), self.order)
@@ -112,7 +120,7 @@ class OrderItemBaseModel(models.Model):
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     price = models.DecimalField('价格', max_digits=9, decimal_places=2)
     amount = models.DecimalField('金额', decimal_places=2, max_digits=6, default=0)
-    date = models.DateField('日期', default='django.utils.timezone.now')
+    date = models.DateField('日期', default=timezone.now)
     ps = models.CharField('备注信息', max_length=100, null=True, blank=True)
 
     class Meta:
@@ -132,8 +140,8 @@ class OrderItemBaseModel(models.Model):
 
 
 class TSOrderItem(OrderItemBaseModel):
-    be_from = models.ForeignKey('ServiceProvider', related_name='TS_from')
-    destination = models.ForeignKey('ServiceProvider', related_name='TS_to')
+    be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地', related_name='TS_from')
+    destination = models.ForeignKey('ServiceProvider', related_name='TS_to', verbose_name='目的')
     unit = models.CharField('单位', max_length=1, default='车')
 
     class Meta:
