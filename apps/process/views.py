@@ -1,10 +1,12 @@
-from django.shortcuts import render, HttpResponseRedirect
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.core import serializers
 from django.core.urlresolvers import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
+from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
+from products.models import Product
+from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm
 from django.forms import inlineformset_factory
-from .forms import TSorderItemForm
-from django import forms
 
 
 class ServiceProviderListView(ListView):
@@ -48,11 +50,16 @@ class OrderFormsetMixin(object):
             raise '传入数据出错'
         if type == 'TS':
             model = TSOrderItem
-            form = TSorderItemForm
+            form = TSOrderItemForm
         elif type == 'KS':
             model = KSOrderItem
+            form = KSOrderItemForm
         elif type == 'MB':
             model = MBOrderItem
+            form = MBOrderItemForm
+        elif type == 'ST':
+            model = STOrderItem
+            form = STOrderItemForm
         return inlineformset_factory(self.model, model, form=form, fields='__all__')
 
     def get_context_data(self, **kwargs):
@@ -68,13 +75,12 @@ class ProcessOrderCreateView(OrderFormsetMixin, CreateView):
     model = ProcessOrder
     fields = '__all__'
 
-    def post(self, request, *args, **kwargs):
-        formset = self.get_inlineformset()
-        formset = formset(self.request.POST)
-        form = self.get_form()
-        if form.is_valid() and formset.is_valid():
-            instance = form.save(commit=False)
-            instance.data_entry_staff = self.request.user
-            instance.save()
-            formset.save()
-            return HttpResponseRedirect(reverse_lazy('process:order_list'))
+
+class GetBlockListView(View):
+    def get(self, request):
+        block_list = Product.objects.filter(id__in=[1, 2, 3])
+        block_list = serializers.serialize('json', block_list)
+        data = {
+            'block_list': block_list
+        }
+        return JsonResponse(data, safe=False)

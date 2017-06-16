@@ -3,10 +3,10 @@
 {% load bootstrap_tags %}
 
 {% block main %}
-    <form action="" method="post">
+    <form action="" method="post" id="formset">
         {% csrf_token %}
         {{ form|as_bootstrap }}
-        <table class="table-responsive">
+        <table class="table-responsive" >
             <tr>
                 <th>序号</th>
                 <th>编号</th>
@@ -41,25 +41,36 @@
 
             {% endfor %}</tbody>
         </table>
-        <datalist id="block_num" v-for="block in block_list">
-            <option ></option>
-
+        <datalist id="block_list" >
+            <option v-for="block in block_list" v-bind:value="block.pk">{% verbatim %}{{ block.fields.block_num }}{% endverbatim %}</option>
         </datalist>
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
     <script type="text/javascript">
-        function selectOnchang(obj) {
-            //获取被选中的option标签选项
-            a = obj.id.split('-',2)
-            var y = $('#'+a.join('-')+'-line_num')
-            y.val((parseInt(y.val())+1))
-        },
-    var block_list = new Vue({
-        el:'#block_num',
-        data:{
-            'block_list':[]
-        }
-    })
+        {#        function selectOnchang(obj) {#}
+        {#            //获取被选中的option标签选项#}
+        {#            a = obj.id.split('-',2)#}
+        {#            var y = $('#'+a.join('-')+'-line_num')#}
+        {#            y.val((parseInt(y.val())+1))#}
+        {#        };#}
+        new Vue({
+            el: '#formset',
+            data: {
+                block_list:''
+            },
+            methods: {
+                get_list: function () {
+                    console.log(this.data);
+                    axios.get('{% url 'process:get_block_list' %}').then(function (response) {
+                        console.log(response);
+                        this.$set('block_list',response.data.block_lis)
+                        console.log('after');
+                        console.log(this.data);
+                    }).catch(function (error) {
+                            console.log(error);
+                        })
+                }
+            }
+        })
     </script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 {% endblock %}

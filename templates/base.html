@@ -18,6 +18,9 @@
 
 </head>
 <body>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="{% static 'js/vue.js' %}"></script>
+<script src="{% static 'js/bootstrap.js' %}"></script>
 {% block messages %}
     {% include 'messages.html' %}
 {% endblock %}
@@ -46,6 +49,13 @@
     </div>
 {% endblock %}
 {#<script src="{% static 'js/datatableview.js' %}"></script>#}
-<script src="{% static 'js/bootstrap.js' %}"></script>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        Vue.config.delimiters = ["[[", "]]"]
+        {% block domready %}
+        {% endblock %}
+    })
+</script>
 </body>
 </html>
