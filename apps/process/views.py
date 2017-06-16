@@ -1,8 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, HttpResponseRedirect
 from django.core.urlresolvers import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem
 from django.forms import inlineformset_factory
+from .forms import TSorderItemForm
+from django import forms
 
 
 class ServiceProviderListView(ListView):
@@ -46,11 +48,12 @@ class OrderFormsetMixin(object):
             raise '传入数据出错'
         if type == 'TS':
             model = TSOrderItem
+            form = TSorderItemForm
         elif type == 'KS':
             model = KSOrderItem
         elif type == 'MB':
             model = MBOrderItem
-        return inlineformset_factory(self.model, model, fields='__all__')
+        return inlineformset_factory(self.model, model, form=form, fields='__all__')
 
     def get_context_data(self, **kwargs):
         formset = self.get_inlineformset()
@@ -64,3 +67,14 @@ class OrderFormsetMixin(object):
 class ProcessOrderCreateView(OrderFormsetMixin, CreateView):
     model = ProcessOrder
     fields = '__all__'
+
+    def post(self, request, *args, **kwargs):
+        formset = self.get_inlineformset()
+        formset = formset(self.request.POST)
+        form = self.get_form()
+        if form.is_valid() and formset.is_valid():
+            instance = form.save(commit=False)
+            instance.data_entry_staff = self.request.user
+            instance.save()
+            formset.save()
+            return HttpResponseRedirect(reverse_lazy('process:order_list'))

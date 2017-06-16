@@ -5,22 +5,22 @@ __date__ = '2017/6/4 22:37'
 from django import forms
 from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem, ImportOrder, PaymentHistory
 from products.models import Product, Batch
-from djangoformsetjs.utils import formset_media_js
+# from djangoformsetjs.utils import formset_media_js
 
 
-class ImportOrdetItemForm(forms.ModelForm):
-    class Meta:
-        model = ImportOrderItem
-        fields = '__all__'
-        widgets = {
-            'block_num': forms.TextInput(attrs={'size': '10'})
-        }
-
-    class MyForm(forms.Form):
-        class Media(object):
-            js = formset_media_js + (
-                # Other form media here
-            )
+# class ImportOrdetItemForm(forms.ModelForm):
+#     class Meta:
+#         model = ImportOrderItem
+#         fields = '__all__'
+#         widgets = {
+#             'block_num': forms.TextInput(attrs={'size': '10'})
+#         }
+#
+#     class MyForm(forms.Form):
+#         class Media(object):
+#             js = formset_media_js + (
+#                 # Other form media here
+#             )
 
 
 class ImportOrderForm(forms.ModelForm):

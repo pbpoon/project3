@@ -9,6 +9,14 @@
                 <li>{{ object.get_service_type_display }}</li>
                 <li>{{ object.contacts }}</li>
                 <li>{{ object.telephone }}</li>
+                <li>
+                    <div id="app-6">
+                        {% verbatim %}
+                        <p>{{ message }}</p>
+                        {% endverbatim %}
+                        <input v-model="message">
+                    </div>
+                </li>
             </ul>
         </div>
     </div>
@@ -16,4 +24,12 @@
 {% block sidebar %}
     <li><a href="{% url 'process:serviceprovider_update' object.id %}" class="btn btn-default">编辑资料</a></li>
     <li><a href="{% url 'process:serviceprovider_delete' object.id %}" class="btn btn-default">删去资料</a></li>
+{% endblock %}
+{% block domready %}
+    var app6 = new Vue({
+    el: '#app-6',
+    data: {
+    message: '{{ object.name|safe }}'
+    }
+    })
 {% endblock %}
