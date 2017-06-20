@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from datetime import datetime
@@ -81,7 +81,7 @@ class ProcessOrder(models.Model):
         ordering = ['-date']
 
     def get_absolute_url(self):
-        return reverse('process:order_lis', args=[self.id])
+        return reverse('process:order_detail', args=[self.id])
 
     def __str__(self):
         return '[{0}]{1}'.format(self.get_order_type_display(), self.order)
@@ -143,7 +143,7 @@ class TSOrderItem(OrderItemBaseModel):
     be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地', related_name='TS_from')
     destination = models.ForeignKey('ServiceProvider', related_name='TS_to', verbose_name='目的')
     unit = models.CharField('单位', max_length=1, default='车')
-
+    slab_list = GenericRelation('SlabList')
     class Meta:
         verbose_name = '运输单'
         verbose_name_plural = verbose_name
@@ -152,14 +152,15 @@ class TSOrderItem(OrderItemBaseModel):
 class MBOrderItem(OrderItemBaseModel):
     pic = models.SmallIntegerField('件数', null=True, blank=True)
     unit = models.CharField('单位', max_length=2, default='m2')
-
+    slab_list = GenericRelation('SlabList')
     class Meta:
         verbose_name = '补板加工单'
         verbose_name_plural = verbose_name
 
 
 class KSOrderItem(OrderItemBaseModel):
-    pic = models.SmallIntegerField('件数', null=True, blank=True)
+    think = models.DecimalField('厚度', max_digits=4, decimal_places=2)
+    pic =models.SmallIntegerField('件数', null=True, blank=True)
     pi = models.SmallIntegerField('板皮', null=True, blank=True)
     unit = models.CharField('单位', max_length=2, default='m3')
 

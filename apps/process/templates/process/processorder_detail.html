@@ -10,6 +10,12 @@
         <li>{{ object.service_provider }}</li>
         <li>{{ object.date }}</li>
     </ul>
+
+    {% if item_list %}
+    {% for item in item_list %}
+        {{ item }}
+    {% endfor %}
+    {% endif %}
 {% endblock %}
 
 {% block sidebar %}

@@ -1,12 +1,25 @@
-from django.shortcuts import render
+from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
 from django.core import serializers
 from django.core.urlresolvers import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
 from products.models import Product
-from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm
-from django.forms import inlineformset_factory
+from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm, ProcessOrderForm
+from django.forms import inlineformset_factory, BaseInlineFormSet
+from django.db import transaction
+
+
+class CustomBaseInlineFormset(BaseInlineFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        block_list = []
+        for form in self.forms:
+            block_num = form.cleaned_data['block_num']
+            if block_num in block_list:
+                raise forms.ValidationError('荒料编号不能重复')
+            block_list.append(block_num)
 
 
 class ServiceProviderListView(ListView):
@@ -39,6 +52,18 @@ class ProcessOrderListView(ListView):
 class ProcessOrderDetailView(DetailView):
     model = ProcessOrder
 
+    def get_context_data(self, **kwargs):
+        if self.object.order_type == 'TS':
+            item_model = TSOrderItem
+        elif self.object.order_type == 'MB':
+            item_model = MBOrderItem
+        elif self.object.order_type == 'KS':
+            item_model = KSOrderItem
+        elif self.object.order_type == 'ST':
+            item_model = STOrderItem
+        kwargs['item_list'] = item_model.objects.filter(order=self.object)
+        return super(ProcessOrderDetailView, self).get_context_data(**kwargs)
+
 
 class OrderFormsetMixin(object):
     def get_inlineformset(self):
@@ -60,20 +85,42 @@ class OrderFormsetMixin(object):
         elif type == 'ST':
             model = STOrderItem
             form = STOrderItemForm
-        return inlineformset_factory(self.model, model, form=form, fields='__all__')
+        return inlineformset_factory(self.model, model, form=form, fields='__all__', extra=1)
 
     def get_context_data(self, **kwargs):
-        formset = self.get_inlineformset()
-        if self.request.method == 'POST':
-            kwargs['formset'] = formset(self.request.POST)
+        context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
+        if kwargs.get('pk'):
+            self.object = ProcessOrder.objects.get(id=kwargs.get('pk'))
         else:
-            kwargs['formset'] = formset()
-        return super(OrderFormsetMixin, self).get_context_data(**kwargs)
+            self.object =None
+        formset = self.get_inlineformset()
+        if self.object:
+            instance = self.object
+        else:
+            instance = ProcessOrder()
+        if self.request.method == 'POST':
+            context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
+            context['formset'] = formset(self.request.POST, instance=instance)
+        else:
+            context['form'] = ProcessOrderForm(instance=instance)
+            context['formset'] = formset(instance=instance)
+        return context
 
 
-class ProcessOrderCreateView(OrderFormsetMixin, CreateView):
+class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
     model = ProcessOrder
-    fields = '__all__'
+    template_name = 'process/processorder_form.html'
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        form = context['form']
+        formset = context['formset']
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return HttpResponse('成功')
+        else:
+            return self.render_to_response({'form': form, 'formset': formset})
 
 
 class GetBlockListView(View):

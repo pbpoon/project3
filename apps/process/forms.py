@@ -7,6 +7,11 @@ from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, STOrder
 from products.models import Product
 
 
+class ProcessOrderForm(forms.ModelForm):
+    class Meta:
+        model = ProcessOrder
+        exclude = ()
+
 def block_num_choice():
     return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
 
@@ -20,7 +25,7 @@ class TSOrderItemForm(forms.ModelForm):
             'ps')
         widgets = {
             'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_list', 'v-on:click': 'get_list'}),
+            # 'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_list', 'v-on:click': 'get_list'}),
             # 'be_from': forms.Select(attrs={'size': '3'}),
             # 'destination': forms.Select(attrs={'size': '3'}),
             'quantity': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1'}),

@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
 
 {% block list_group %}
+    {% for object in object_list %}
     <a class="list-group-item" href="{{ object.get_absolute_url }}">{{ object }}</a>
+    {% endfor %}
     <div id="app-6">
     {% verbatim %}
         <p>{{ message }}</p>
