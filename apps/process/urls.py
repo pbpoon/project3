@@ -28,6 +28,7 @@ urlpatterns = [
 urlpatterns += [
     url(r'^order/$', views.ProcessOrderListView.as_view(), name='order_list'),
     url(r'^order/create/$', views.ProcessOrderCreateView.as_view(), name='order_create'),
+    url(r'^order/update/(?P<pk>\d+)/$', views.ProcessOrderCreateView.as_view(), name='order_update'),
     url(r'^order/(?P<pk>\d+)/$', views.ProcessOrderDetailView.as_view(), name='order_detail'),
     url(r'^api/block_list/$', views.GetBlockListView.as_view(), name='get_block_list')
     # url(r'^order/update/(?P<pk>\d+)/$', views.ServiceProviderUpdateView.as_view(), name='order_update'),

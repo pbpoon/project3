@@ -12,6 +12,7 @@ class ProcessOrderForm(forms.ModelForm):
         model = ProcessOrder
         exclude = ()
 
+
 def block_num_choice():
     return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
 
@@ -28,11 +29,11 @@ class TSOrderItemForm(forms.ModelForm):
             # 'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_list', 'v-on:click': 'get_list'}),
             # 'be_from': forms.Select(attrs={'size': '3'}),
             # 'destination': forms.Select(attrs={'size': '3'}),
-            'quantity': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1'}),
+            'quantity': forms.TextInput(attrs={'style': 'width:7em', 'min': '0', 'step': '1', 'type': 'number'}),
             'unit': forms.TextInput(attrs={'size': '1'}),
             'price': forms.TextInput(attrs={'size': '3'}),
             'amount': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.DateInput(attrs={'size': '2', 'type': 'date'}),
+            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
         }
 
 
@@ -49,7 +50,7 @@ class KSOrderItemForm(forms.ModelForm):
             'pic': forms.TextInput(attrs={'size': '3'}),
             'pi': forms.TextInput(attrs={'size': '3'}),
             'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.DateInput(attrs={'size': '3', 'type': 'date'}),
+            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
         }
 
 
@@ -65,7 +66,7 @@ class MBOrderItemForm(forms.ModelForm):
             'think': forms.TextInput(attrs={'size': '2'}),
             'pic': forms.TextInput(attrs={'size': '3'}),
             'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.DateInput(attrs={'size': '3', 'type': 'date'}),
+            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
         }
 
 
@@ -80,5 +81,5 @@ class STOrderItemForm(forms.ModelForm):
             'unit': forms.TextInput(attrs={'size': '1'}),
             'think': forms.TextInput(attrs={'size': '2'}),
             'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.DateInput(attrs={'size': '3', 'type': 'date'}),
+            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
         }

@@ -19,5 +19,5 @@
 {% endblock %}
 
 {% block sidebar %}
-<li><a href="#">编辑订单</a></li>
+<li><a href="{% url 'process:order_update' object.id %}">编辑订单</a></li>
 {% endblock %}

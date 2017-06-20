@@ -116,7 +116,6 @@ class OrderItemBaseModel(models.Model):
     line_num = models.SmallIntegerField('序号', default=1)
     block_num = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='%(class)s_cost',
                                   verbose_name='荒料编号')
-    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6, default='block')
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     price = models.DecimalField('价格', max_digits=9, decimal_places=2)
     amount = models.DecimalField('金额', decimal_places=2, max_digits=6, default=0)
@@ -140,10 +139,12 @@ class OrderItemBaseModel(models.Model):
 
 
 class TSOrderItem(OrderItemBaseModel):
+    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6, default='block')
     be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地', related_name='TS_from')
     destination = models.ForeignKey('ServiceProvider', related_name='TS_to', verbose_name='目的')
     unit = models.CharField('单位', max_length=1, default='车')
     slab_list = GenericRelation('SlabList')
+
     class Meta:
         verbose_name = '运输单'
         verbose_name_plural = verbose_name
@@ -153,6 +154,7 @@ class MBOrderItem(OrderItemBaseModel):
     pic = models.SmallIntegerField('件数', null=True, blank=True)
     unit = models.CharField('单位', max_length=2, default='m2')
     slab_list = GenericRelation('SlabList')
+
     class Meta:
         verbose_name = '补板加工单'
         verbose_name_plural = verbose_name
@@ -160,7 +162,7 @@ class MBOrderItem(OrderItemBaseModel):
 
 class KSOrderItem(OrderItemBaseModel):
     think = models.DecimalField('厚度', max_digits=4, decimal_places=2)
-    pic =models.SmallIntegerField('件数', null=True, blank=True)
+    pic = models.SmallIntegerField('件数', null=True, blank=True)
     pi = models.SmallIntegerField('板皮', null=True, blank=True)
     unit = models.CharField('单位', max_length=2, default='m3')
 

@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponseRedirect
 from django.http import JsonResponse
 from django.core import serializers
 from django.core.urlresolvers import reverse_lazy
@@ -67,7 +67,7 @@ class ProcessOrderDetailView(DetailView):
 
 class OrderFormsetMixin(object):
     def get_inlineformset(self):
-        if self.object:
+        if self.object is not None:
             type = self.object.order_type
         else:
             type = self.request.GET.get('order_type', None)
@@ -89,10 +89,10 @@ class OrderFormsetMixin(object):
 
     def get_context_data(self, **kwargs):
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
-        if kwargs.get('pk'):
-            self.object = ProcessOrder.objects.get(id=kwargs.get('pk'))
+        if self.kwargs.get('pk'):
+            self.object = ProcessOrder.objects.get(id=self.kwargs.get('pk'))
         else:
-            self.object =None
+            self.object = None
         formset = self.get_inlineformset()
         if self.object:
             instance = self.object
@@ -116,9 +116,10 @@ class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
         form = context['form']
         formset = context['formset']
         if form.is_valid() and formset.is_valid():
-            form.save()
+            object = form.save()
             formset.save()
-            return HttpResponse('成功')
+            success_url = object.get_absolute_url
+            return HttpResponseRedirect(success_url)
         else:
             return self.render_to_response({'form': form, 'formset': formset})
 
