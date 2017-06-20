@@ -113,12 +113,13 @@ class ProcessOrder(models.Model):
 
 class OrderItemBaseModel(models.Model):
     order = models.ForeignKey('ProcessOrder', related_name='%(class)s', verbose_name='加工订单号')
-    line_num = models.SmallIntegerField('序号', default=1)
+    line_num = models.SmallIntegerField('序号', null=True, blank=True)
     block_num = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='%(class)s_cost',
                                   verbose_name='荒料编号')
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
+    unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
     price = models.DecimalField('价格', max_digits=9, decimal_places=2)
-    amount = models.DecimalField('金额', decimal_places=2, max_digits=6, default=0)
+    amount = models.DecimalField('金额', decimal_places=2, max_digits=6, null=True, blank=True)
     date = models.DateField('日期', default=timezone.now)
     ps = models.CharField('备注信息', max_length=100, null=True, blank=True)
 
@@ -131,6 +132,10 @@ class OrderItemBaseModel(models.Model):
         return Decimal('{0:.2f}'.format(amount))
 
     def save(self, *args, **kwargs):
+        if not self.line_num:
+            self.line_num = self.__class__.objects.filter(order=self.order).count()
+        if not self.unit:
+            self.unit = self.get_unit()
         self.amount = self.get_amount()
         super(OrderItemBaseModel, self).save(*args, **kwargs)
 
@@ -142,29 +147,33 @@ class TSOrderItem(OrderItemBaseModel):
     block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6, default='block')
     be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地', related_name='TS_from')
     destination = models.ForeignKey('ServiceProvider', related_name='TS_to', verbose_name='目的')
-    unit = models.CharField('单位', max_length=1, default='车')
     slab_list = GenericRelation('SlabList')
 
     class Meta:
         verbose_name = '运输单'
         verbose_name_plural = verbose_name
 
+    def get_unit(self):
+        return 'che'
+
 
 class MBOrderItem(OrderItemBaseModel):
+    thickness = models.DecimalField('厚度', max_digits=4, decimal_places=2)
     pic = models.SmallIntegerField('件数', null=True, blank=True)
-    unit = models.CharField('单位', max_length=2, default='m2')
     slab_list = GenericRelation('SlabList')
 
     class Meta:
         verbose_name = '补板加工单'
         verbose_name_plural = verbose_name
 
+    def get_unit(self):
+        return 'm2'
+
 
 class KSOrderItem(OrderItemBaseModel):
-    think = models.DecimalField('厚度', max_digits=4, decimal_places=2)
+    thickness = models.DecimalField('厚度', max_digits=4, decimal_places=2)
     pic = models.SmallIntegerField('件数', null=True, blank=True)
     pi = models.SmallIntegerField('板皮', null=True, blank=True)
-    unit = models.CharField('单位', max_length=2, default='m3')
 
     class Meta:
         verbose_name = '界石加工单'
@@ -177,6 +186,9 @@ class KSOrderItem(OrderItemBaseModel):
         else:
             amount = self.quantity / self.price
         return Decimal('{0:.2f}'.format(amount))
+
+    def get_unit(self):
+        return 'm3'
 
 
 class STOrderItem(OrderItemBaseModel):

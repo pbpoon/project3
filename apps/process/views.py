@@ -76,16 +76,25 @@ class OrderFormsetMixin(object):
         if type == 'TS':
             model = TSOrderItem
             form = TSOrderItemForm
+            fields = (
+                'block_num', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price',
+                'date', 'ps')
         elif type == 'KS':
             model = KSOrderItem
             form = KSOrderItemForm
+            fields = (
+                'block_num', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
+                'date', 'ps')
         elif type == 'MB':
             model = MBOrderItem
             form = MBOrderItemForm
+            fields = (
+                'block_num', 'thickness', 'pic', 'quantity', 'unit', 'price', 'slab_list'
+                                                                              'date', 'ps')
         elif type == 'ST':
             model = STOrderItem
             form = STOrderItemForm
-        return inlineformset_factory(self.model, model, form=form, fields='__all__', extra=1)
+        return inlineformset_factory(self.model, model, form=form, fields=fields, extra=1)
 
     def get_context_data(self, **kwargs):
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)

@@ -10,7 +10,11 @@ from products.models import Product
 class ProcessOrderForm(forms.ModelForm):
     class Meta:
         model = ProcessOrder
-        exclude = ()
+        exclude = ('data_entry_staff', 'order', 'line_num')
+        widgets = {
+            'date': forms.TextInput(attrs={'type': 'date'}),
+            'order_type': forms.HiddenInput()
+        }
 
 
 def block_num_choice():
@@ -20,64 +24,58 @@ def block_num_choice():
 class TSOrderItemForm(forms.ModelForm):
     class Meta:
         model = TSOrderItem
-        fields = (
-            'line_num', 'block_num', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price', 'amount',
-            'date',
-            'ps')
+        exclude = ('amount', 'order')
         widgets = {
-            'line_num': forms.TextInput(attrs={'size': '2'}),
+            # 'line_num': forms.TextInput(attrs={'size': '2'}),
             # 'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_list', 'v-on:click': 'get_list'}),
             # 'be_from': forms.Select(attrs={'size': '3'}),
             # 'destination': forms.Select(attrs={'size': '3'}),
-            'quantity': forms.TextInput(attrs={'style': 'width:7em', 'min': '0', 'step': '1', 'type': 'number'}),
-            'unit': forms.TextInput(attrs={'size': '1'}),
+            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
             'price': forms.TextInput(attrs={'size': '3'}),
             'amount': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
+            'date': forms.TextInput(attrs={'type': 'date'}),
         }
 
 
 class KSOrderItemForm(forms.ModelForm):
     class Meta:
         model = KSOrderItem
-        fields = '__all__'
+        exclude = ('amount',)
         widgets = {
-            'line_num': forms.TextInput(attrs={'size': '2'}),
+            # 'line_num': forms.TextInput(attrs={'size': '2'}),
             'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
-            'quantity': forms.NumberInput(attrs={'size': '2', 'min': '0', 'step': '1'}),
-            'unit': forms.TextInput(attrs={'size': '1'}),
-            'think': forms.TextInput(attrs={'size': '2'}),
+            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+            'thickness': forms.TextInput(attrs={'size': '2'}),
             'pic': forms.TextInput(attrs={'size': '3'}),
             'pi': forms.TextInput(attrs={'size': '3'}),
             'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
+            'date': forms.TextInput(attrs={'type': 'date'}),
         }
 
 
 class MBOrderItemForm(forms.ModelForm):
     class Meta:
         model = MBOrderItem
-        fields = '__all__'
+        exclude = ('amount',)
         widgets = {
-            'line_num': forms.TextInput(attrs={'size': '2'}),
+            # 'line_num': forms.TextInput(attrs={'size': '2'}),
             'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
-            'quantity': forms.NumberInput(attrs={'size': '2', 'min': '0', 'step': '1'}),
-            'unit': forms.TextInput(attrs={'size': '1'}),
+            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
             'think': forms.TextInput(attrs={'size': '2'}),
             'pic': forms.TextInput(attrs={'size': '3'}),
             'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
+            'date': forms.TextInput(attrs={ 'type': 'date'}),
         }
 
 
 class STOrderItemForm(forms.ModelForm):
     class Meta:
         model = STOrderItem
-        fields = '__all__'
+        exclude = ('amount',)
         widgets = {
-            'line_num': forms.TextInput(attrs={'size': '2'}),
+            # 'line_num': forms.TextInput(attrs={'size': '2'}),
             'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
-            'quantity': forms.NumberInput(attrs={'size': '2', 'min': '0', 'step': '1'}),
+            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
             'unit': forms.TextInput(attrs={'size': '1'}),
             'think': forms.TextInput(attrs={'size': '2'}),
             'price': forms.TextInput(attrs={'size': '3'}),

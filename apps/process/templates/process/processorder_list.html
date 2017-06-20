@@ -4,12 +4,6 @@
     {% for object in object_list %}
     <a class="list-group-item" href="{{ object.get_absolute_url }}">{{ object }}</a>
     {% endfor %}
-    <div id="app-6">
-    {% verbatim %}
-        <p>{{ message }}</p>
-        {% endverbatim %}
-        <input v-model="message">
-    </div>
 {% endblock %}
 
 {% block sidebar %}
@@ -17,12 +11,3 @@
     <li><a href="{% url 'process:order_create' %}?order_type=KS" class="btn btn-default">新建界石单</a></li>
     <li><a href="{% url 'process:order_create' %}?order_type=MB" class="btn btn-default">新建补石单</a></li>
 {% endblock %}
-{% block domready %}
-    var app6 = new Vue({
-    el: '#app-6',
-    data: {
-    message: 'hahahahahahah!'
-    }
-    })
-{% endblock %}
-</script>
