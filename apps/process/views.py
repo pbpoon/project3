@@ -1,16 +1,17 @@
-from django.shortcuts import render, HttpResponseRedirect
+from django.shortcuts import render, HttpResponseRedirect, redirect
 from django.http import JsonResponse
 from django.core import serializers
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
-from products.models import Product
-from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm, ProcessOrderForm, SlabListForm, SlabListItemForm
+from products.models import Product, Slab
+from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm, ProcessOrderForm, SlabListForm, \
+    SlabListItemForm
 from django.forms import inlineformset_factory, BaseInlineFormSet
 from utils import AddExcelForm
 
 import xlrd
-
+from decimal import Decimal
 
 
 class CustomBaseInlineFormset(BaseInlineFormSet):
@@ -133,16 +134,12 @@ class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
         else:
             return self.render_to_response({'form': form, 'formset': formset})
 
-    def dispatch(self, request, *args, **kwargs):
-        aa = self.request.GET.get('order_type')
-        return super(ProcessOrderCreateView, self).dispatch(request, *args, **kwargs)
-
 
 class ProcessMbOrderEditView(TemplateView):
-    template_name = 'process/mb_order_form.htm'
+    template_name = 'process/processorder_mb_form.html'
 
     def get_context_data(self, **kwargs):
-        context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
+        context = super(ProcessMbOrderEditView, self).get_context_data(**kwargs)
         if self.kwargs.get('pk'):
             self.object = ProcessOrder.objects.get(id=self.kwargs.get('pk'))
         else:
@@ -153,12 +150,11 @@ class ProcessMbOrderEditView(TemplateView):
             instance = ProcessOrder()
         if self.request.method == 'POST':
             context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
-            context['item_form'] = MBOrderItemForm(self.request.POST, instance=instance)
+            context['item_form'] = AddExcelForm(self.request.POST, self.request.FILES)
         else:
             context['form'] = ProcessOrderForm(instance=instance)
-            context['formset'] = formset(instance=instance)
+            context['item_form'] = AddExcelForm()
         return context
-
 
 
 class GetBlockListView(View):
@@ -172,72 +168,69 @@ class GetBlockListView(View):
 
 
 class ImportSlabList(View):
-    def Post(self, request, *args, **kwargs):
-        form = AddExcelForm(request.POST, request.FILES)
-        if form.is_valid():
-            f = form.files.get('file')
+    def post(self, request, *args, **kwargs):
+        item_form = AddExcelForm(request.POST, request.FILES)
+        if item_form.is_valid():
+            f = item_form.files.get('file')
             if f:
                 data = xlrd.open_workbook(file_contents=f.read())
                 table = data.sheets()[0]
                 nrows = table.nrows  # 总行数
                 colnames = table.row_values(0)  # 表头列名称数据
+                block = Product.objects.get(id=1)
+                list = []
                 for rownum in range(1, nrows):
-                    row = table.row_values(rownum)
-                    for index, i in enumerate(range(len(colnames))):
-                        if row:
-                            if index == 0:
-                                row[i] = str(row[i])
-                            elif index == 1 or index == 7:
-                                row[i] = Decimal('{0:.2f}'.format(row[i]))
-                            elif index == 5:
-                                if row[i]:
-                                    row[i] = Decimal('{0:.2f}'.format(row[i]))
-                                else:
-                                    row[i] = Decimal('{0:.2f}'.format(
-                                        float(row[2]) * float(row[3]) * float(row[4]) * 0.000001))
-                            elif index == 6:
-                                row[i] = Batch.objects.filter(name=str(row[i]))[0]
-                            else:
-                                row[i] = int(row[i])
-
-                    if PurchaseOrderItem.objects.filter(block_num=row[0]):
-                        if not ImportOrderItem.objects.filter(
-                                block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
-                            """
-                            以后还有再加一个判断该编号荒料有没有到货记录。
-                            """
-                            block_num = PurchaseOrderItem.objects.get(block_num=row[0])
-                            order_item.append(
-                                ImportOrderItem(block_num=block_num, weight=row[1]))
-                            block = Product.objects.get(block_num=block_num)
-                            block.weight = row[1]
-                            block_list.append(block)
-                    else:
-                        error.append(row[0])
-                if len(error) != 0:
-                    messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
-                    context = {
-                        'object': object,
-                        'form': form,
-                        'file_form': file_form,
-                    }
-                    return render(self.request, self.template_name, context)
-            if self.request.POST.get('save'):
-                object.save()
-                for block_id, block in zip(order_item, block_list):
-                    block_id.order = object
-                    block_id.save()
-                    block.save()
-                messages.success(self.request, '数据已经成功保存!')
-                success_url = object.get_absolute_url()
-                return HttpResponseRedirect(success_url)
-            messages.success(self.request, '数据已经成功保存!')
-            context = {
-                # 'object': object,
-                'block_list': block_list,
-                'form': form,
-                'file_form': file_form,
-                'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
-                'total_count': len(block_list),
-            }
-            return render(self.request, self.template_name, context)
+                    rows = table.row_values(rownum)
+                    item = {}
+                    for key, row in zip(colnames, rows):
+                        if key == 'part_num':
+                            item[key] = str(row)
+                        elif key == 'block_num':
+                            item[key] = block
+                        elif key == 'line_num':
+                            item[key] = int(row)
+                        else:
+                            item[key] = Decimal('{0:.2f}'.format(row))
+                    list.append(item)
+                print(list)
+                #         if PurchaseOrderItem.objects.filter(block_num=row[0]):
+                #             if not ImportOrderItem.objects.filter(
+                #                     block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
+                #                 """
+                #                 以后还有再加一个判断该编号荒料有没有到货记录。
+                #                 """
+                #                 block_num = PurchaseOrderItem.objects.get(block_num=row[0])
+                #                 order_item.append(
+                #                     ImportOrderItem(block_num=block_num, weight=row[1]))
+                #                 block = Product.objects.get(block_num=block_num)
+                #                 block.weight = row[1]
+                #                 block_list.append(block)
+                #         else:
+                #             error.append(row[0])
+                #     if len(error) != 0:
+                #         messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
+                #         context = {
+                #             'object': object,
+                #             'form': form,
+                #             'file_form': file_form,
+                #         }
+                #         return render(self.request, self.template_name, context)
+                # if self.request.POST.get('save'):
+                #     object.save()
+                #     for block_id, block in zip(order_item, block_list):
+                #         block_id.order = object
+                #         block_id.save()
+                #         block.save()
+                #     messages.success(self.request, '数据已经成功保存!')
+                #     success_url = object.get_absolute_url()
+                #     return HttpResponseRedirect(success_url)
+                # messages.success(self.request, '数据已经成功保存!')
+                # context = {
+                #     # 'object': object,
+                #     'block_list': block_list,
+                #     'form': form,
+                #     'file_form': file_form,
+                #     'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
+                #     'total_count': len(block_list),
+                # }
+                # return render(self.request, self.template_name, context)
