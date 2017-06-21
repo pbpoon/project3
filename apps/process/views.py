@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponseRedirect, redirect
+from django.shortcuts import render, HttpResponseRedirect, redirect, HttpResponse
 from django.http import JsonResponse
 from django.core import serializers
 from django.core.urlresolvers import reverse_lazy, reverse
@@ -177,7 +177,7 @@ class ImportSlabList(View):
                 table = data.sheets()[0]
                 nrows = table.nrows  # 总行数
                 colnames = table.row_values(0)  # 表头列名称数据
-                block = Product.objects.get(id=1)
+                block = Product.objects.get(id=1).id
                 list = []
                 for rownum in range(1, nrows):
                     rows = table.row_values(rownum)
@@ -193,44 +193,46 @@ class ImportSlabList(View):
                             item[key] = Decimal('{0:.2f}'.format(row))
                     list.append(item)
                 print(list)
-                #         if PurchaseOrderItem.objects.filter(block_num=row[0]):
-                #             if not ImportOrderItem.objects.filter(
-                #                     block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
-                #                 """
-                #                 以后还有再加一个判断该编号荒料有没有到货记录。
-                #                 """
-                #                 block_num = PurchaseOrderItem.objects.get(block_num=row[0])
-                #                 order_item.append(
-                #                     ImportOrderItem(block_num=block_num, weight=row[1]))
-                #                 block = Product.objects.get(block_num=block_num)
-                #                 block.weight = row[1]
-                #                 block_list.append(block)
-                #         else:
-                #             error.append(row[0])
-                #     if len(error) != 0:
-                #         messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
-                #         context = {
-                #             'object': object,
-                #             'form': form,
-                #             'file_form': file_form,
-                #         }
-                #         return render(self.request, self.template_name, context)
-                # if self.request.POST.get('save'):
-                #     object.save()
-                #     for block_id, block in zip(order_item, block_list):
-                #         block_id.order = object
-                #         block_id.save()
-                #         block.save()
-                #     messages.success(self.request, '数据已经成功保存!')
-                #     success_url = object.get_absolute_url()
-                #     return HttpResponseRedirect(success_url)
-                # messages.success(self.request, '数据已经成功保存!')
-                # context = {
-                #     # 'object': object,
-                #     'block_list': block_list,
-                #     'form': form,
-                #     'file_form': file_form,
-                #     'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
-                #     'total_count': len(block_list),
-                # }
-                # return render(self.request, self.template_name, context)
+            request.session['slab_list'] = list
+            return HttpResponse(list)
+            #         if PurchaseOrderItem.objects.filter(block_num=row[0]):
+            #             if not ImportOrderItem.objects.filter(
+            #                     block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
+            #                 """
+            #                 以后还有再加一个判断该编号荒料有没有到货记录。
+            #                 """
+            #                 block_num = PurchaseOrderItem.objects.get(block_num=row[0])
+            #                 order_item.append(
+            #                     ImportOrderItem(block_num=block_num, weight=row[1]))
+            #                 block = Product.objects.get(block_num=block_num)
+            #                 block.weight = row[1]
+            #                 block_list.append(block)
+            #         else:
+            #             error.append(row[0])
+            #     if len(error) != 0:
+            #         messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
+            #         context = {
+            #             'object': object,
+            #             'form': form,
+            #             'file_form': file_form,
+            #         }
+            #         return render(self.request, self.template_name, context)
+            # if self.request.POST.get('save'):
+            #     object.save()
+            #     for block_id, block in zip(order_item, block_list):
+            #         block_id.order = object
+            #         block_id.save()
+            #         block.save()
+            #     messages.success(self.request, '数据已经成功保存!')
+            #     success_url = object.get_absolute_url()
+            #     return HttpResponseRedirect(success_url)
+            # messages.success(self.request, '数据已经成功保存!')
+            # context = {
+            #     # 'object': object,
+            #     'block_list': block_list,
+            #     'form': form,
+            #     'file_form': file_form,
+            #     'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
+            #     'total_count': len(block_list),
+            # }
+            # return render(self.request, self.template_name, context)
