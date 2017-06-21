@@ -35,10 +35,6 @@ class PurchaseOrderForm(forms.ModelForm):
         fields = ['finish_pay', 'handler', 'date', 'supplier', 'cost_money', 'cost_by', 'ps', 'file']
 
 
-class AddExcelForm(forms.Form):
-    file = forms.FileField(label='上传文件')
-
-
 COST_TYPE_CHOICES = (('1', '按重量'), ('2', '按立方'))
 
 

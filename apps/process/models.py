@@ -100,6 +100,7 @@ class ProcessOrder(models.Model):
                     self.order = service_type + date_str + '001'  # 新月份
             else:
                 self.order = service_type + date_str + '001'  # 新记录
+            self.status = 'N'
         super(ProcessOrder, self).save(*args, **kwargs)
 
     def get_total_amount(self):
@@ -206,7 +207,7 @@ class SlabList(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     order = GenericForeignKey()
-    thick = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
+    thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
     ps = models.CharField(max_length=200, null=True, blank=True, verbose_name=u'备注信息')
     data_entry_staff = models.ForeignKey(User, related_name='date_entry', verbose_name='数据录入人')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')

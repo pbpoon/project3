@@ -4,8 +4,9 @@ from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib import messages
 
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder, PaymentHistory
-from .forms import purchase_form, AddExcelForm, PurchaseOrderForm, ImportOrderForm, PaymentForm
+from .forms import  PurchaseOrderForm, ImportOrderForm, PaymentForm
 from products.models import Product, Batch
+from utils import  AddExcelForm
 
 import xlrd
 from decimal import Decimal

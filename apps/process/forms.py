@@ -3,8 +3,8 @@ __author__ = 'pb'
 __date__ = '2017/6/14 11:34'
 
 from django import forms
-from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
-from products.models import Product
+from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem, SlabList
+from products.models import Product, Slab
 
 
 class ProcessOrderForm(forms.ModelForm):
@@ -81,3 +81,15 @@ class STOrderItemForm(forms.ModelForm):
             'price': forms.TextInput(attrs={'size': '3'}),
             'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
         }
+
+
+class SlabListForm(forms.ModelForm):
+    class Meta:
+        model = SlabList
+        exclude = ()
+
+
+class SlabListItemForm(forms.ModelForm):
+    class Meta:
+        model = Slab
+        exclude =('block_num', 'thickness', 'created', 'updated', 'is_booking', 'is_pickup', 'is_sell', 'm2')

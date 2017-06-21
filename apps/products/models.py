@@ -31,7 +31,7 @@ class Product(models.Model):
 
 class Slab(models.Model):
     block_num = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name='荒料编号')
-    thick = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
+    thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
     line_num = models.SmallIntegerField(u'序号')
     long = models.PositiveSmallIntegerField(verbose_name=u'长')
