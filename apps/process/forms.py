@@ -93,3 +93,15 @@ class SlabListItemForm(forms.ModelForm):
     class Meta:
         model = Slab
         exclude =('block_num', 'thickness', 'created', 'updated', 'is_booking', 'is_pickup', 'is_sell', 'm2')
+
+
+class CustomBaseInlineFormset(forms.BaseInlineFormSet):
+    def clean(self):
+        if any(self.errors):
+            return
+        block_list = []
+        for form in self.forms:
+            block_num = form.cleaned_data['block_num']
+            if block_num in block_list:
+                raise forms.ValidationError('荒料编号不能重复')
+            block_list.append(block_num)
