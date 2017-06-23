@@ -32,6 +32,22 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('product:detail', args=[self.id])
 
+    def get_slab_list(self):
+        slab_list = self.slab.values('thickness').annotate(total_pics=models.Count('id'), total_m2=models.Sum('m2'))
+        for part in slab_list:
+            part['part_num'] = {}
+            part_list = [part for part in
+                         self.slab.values('part_num').filter(thickness=part['thickness']).distinct()]
+            for item in part_list:
+                slabs = [slab for slab in
+                         self.slab.filter(thickness=part['thickness'],
+                                          part_num=item['part_num']).order_by('line_num')]
+                part['part_num'][item['part_num']] = {}
+                part['part_num'][item['part_num']]['pics'] = len(slabs)
+                part['part_num'][item['part_num']]['m2'] = sum(s.m2 for s in slabs)
+                part['part_num'][item['part_num']]['slabs'] = slabs
+        return slab_list
+
 
 class Slab(models.Model):
     block_num = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='slab', verbose_name='荒料编号')
@@ -51,6 +67,10 @@ class Slab(models.Model):
     is_booking = models.BooleanField(default=False, verbose_name=u'是否已定')
     is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
 
+    class Meta:
+        verbose_name = '码单'
+        verbose_name_plural = verbose_name
+
     def save(self, *args, **kwargs):
         k1 = 0
         k2 = 0
@@ -69,7 +89,7 @@ class Slab(models.Model):
             k1 = '({0} x {1})'.format(self.kl1, self.kh1)
         if self.kh2 and self.kl2:
             k2 = '({0} x {1})'.format(self.kl2, self.kh2)
-        return '{0} x {1} {2} {3} = {4}m2'.format(self.long, self.high, k1, k2, self.m2)
+        return '{0} x {1} {2} {3} = {4}'.format(self.long, self.high, k1, k2, self.m2)
 
 
 class Batch(models.Model):

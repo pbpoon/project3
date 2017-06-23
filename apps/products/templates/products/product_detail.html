@@ -4,27 +4,30 @@
     <h2 class="page-header">{{ object }}</h2>
 {% endblock %}
 {% block main %}
-{% for  %}
-    <ul>
-        <li>
-            <div class="panel panel-default">
+    {% for thickness in slab_list %}
+        <h4>{{ thickness.thickness }}</h4>
+        {% for part_key, part_value in thickness.part_num.items %}
+        <ul>
+            <li>{{ part_key }}/{{ part_value.pics }}/{{ part_value.m2 }}
+                <div class="panel panel-default">
 
-                <table class="table">
-                    <tr>
-                        <th width="10%">选择</th>
-                        <th width="10%">序号</th>
-                        <th>规格</th>
-                    </tr>
-                    {% for slab in part.list %}
+                    <table class="table">
                         <tr>
+                            <th width="10%">选择</th>
+                            <th width="10%">序号</th>
+                            <th>规格</th>
+                        </tr>
+                        {% for slab in part_value.slabs %}
+                            <tr>
+                                <td><input type="checkbox" name="select" value="{{ slab.id }}"></td>
+                                <td>{{ slab.line_num }}</td>
+                                <td>{{ slab }}</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </li>
 
-                            <td><input type="checkbox" name="select" value="{{ slab.id }}"></td>
-                            <td>{{ slab.line_num }}</td>
-                            <td>{{ slab }}</td>
-
-                        </tr> {% endfor %}
-                </table>
-            </div>
-        </li>
-    </ul>
+        </ul>{% endfor %}
+    {% endfor %}
 {% endblock %}
