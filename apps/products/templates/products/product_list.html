@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load get_verbose_name %}
+
+{% block title %}荒料列表{% endblock %}
+{% block jumbotron %}<h2>荒料列表</h2>{% endblock %}
+{% block main %}
+    <table class="table">
+        <tr>
+            <th>荒料编号</th>
+            <th>重量</th>
+            <th>长</th>
+            <th>宽</th>
+            <th>高</th>
+            <th>立方</th>
+            <th>品种</th>
+            <th>矿口</th>
+            <th>批次</th>
+            <th>备注信息</th>
+            <th>更新日期</th>
+        </tr>
+        {% for object in object_list %}
+            <tr>
+                <td><a href="{{ object.get_absolute_url }}">{{ object.block_num }}</a></td>
+                <td>{{ object.weight }}</td>
+                <td>{{ object.long }}</td>
+                <td>{{ object.width }}</td>
+                <td>{{ object.high }}</td>
+                <td>{{ object.m3 }}</td>
+                <td>{{ object.category }}</td>
+                <td>{{ object.quarry }}</td>
+                <td>{{ object.batch }}</td>
+                <td>{{ object.ps }}</td>
+                <td>{{ object.updated }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

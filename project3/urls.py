@@ -20,4 +20,5 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^purchase/', include('purchase.urls', namespace='purchase')),
     url(r'^process/', include('process.urls', namespace='process')),
+    url(r'^product/', include('products.urls', namespace='product')),
 ]

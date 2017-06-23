@@ -175,26 +175,30 @@ class ImportSlabList(View):
                     item = {}
                     for key, row in zip(colnames, rows):
                         if key == 'part_num':
-                            item[key] = str(row)
+                            item[key] = str(row).split('.')[0]
                         elif key == 'block_num':
                             item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0]
                         elif key == 'line_num':
                             item[key] = int(row)
                         else:
-                            item[key] = Decimal('{0:.2f}'.format(row))
+                            if row:
+                                item[key] = Decimal('{0:.2f}'.format(row))
+                            # else:
+                            #     item[key] = ''
                     list.append(Slab(**item))
                 print(list)
                 id_list = []
                 for i in list:
                     i.save()
                     id_list.append(i.id)
-                k = Slab.objects.filter(id__in=id_list).values('block_num', 'thickness').annotate(pics=Count('id'),
-                                                                                                  m2=Sum('m2'))
-                print(k)
-                for i in k:
-                    i['item'] = [slab.id for slab in list if
-                                 slab.block_num_id == i['block_num'] and slab.thickness == i['thickness']]
-        return HttpResponse(k)
+                block_item = Slab.objects.filter(id__in=id_list).values('block_num', 'thickness').annotate(
+                    pics=Count('id'),
+                    m2=Sum('m2'))
+                print(block_item)
+                for item in block_item:
+                    item['item'] = [slab.id for slab in list if
+                                    slab.block_num_id == item['block_num'] and slab.thickness == item['thickness']]
+        return HttpResponse(block_item)
         # {block_num: 8801, thickness: 1.5, pics: 48, part: 3, m2: 283.53,
         #  slab: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
 

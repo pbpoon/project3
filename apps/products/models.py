@@ -1,5 +1,6 @@
 from django.db import models
 from decimal import Decimal
+from django.shortcuts import reverse
 
 BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板材'))
 
@@ -28,9 +29,12 @@ class Product(models.Model):
     def __str__(self):
         return str(self.block_num)
 
+    def get_absolute_url(self):
+        return reverse('product:detail', args=[self.id])
+
 
 class Slab(models.Model):
-    block_num = models.ForeignKey('Product', on_delete=models.CASCADE, verbose_name='荒料编号')
+    block_num = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='slab', verbose_name='荒料编号')
     thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
     line_num = models.SmallIntegerField(u'序号')
@@ -48,13 +52,24 @@ class Slab(models.Model):
     is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
 
     def save(self, *args, **kwargs):
-        m2 = (self.long * self.high) / 10000 - (self.kl1 * self.kh1) / 10000 - (self.kl2 * self.kh2) / 10000
+        k1 = 0
+        k2 = 0
+        if self.kl1 and self.kh1:
+            k1 = (self.kl1 * self.kh1) / 10000
+        if self.kl2 and self.kh2:
+            k2 = (self.kl2 * self.kh2) / 10000
+        m2 = (self.long * self.high) / 10000 - k1 - k2
         self.m2 = Decimal('{0:.2f}'.format(m2))
         super(Slab, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '{0} x {1} ({2} x {3}) ({4} x {5}) = {6}m2'.format(self.long, self.high, self.kl1, self.kh1, self.kl2,
-                                                                  self.kh2, self.m2)
+        k1 = ''
+        k2 = ''
+        if self.kh1 and self.kl1:
+            k1 = '({0} x {1})'.format(self.kl1, self.kh1)
+        if self.kh2 and self.kl2:
+            k2 = '({0} x {1})'.format(self.kl2, self.kh2)
+        return '{0} x {1} {2} {3} = {4}m2'.format(self.long, self.high, k1, k2, self.m2)
 
 
 class Batch(models.Model):
