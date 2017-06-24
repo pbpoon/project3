@@ -6,7 +6,6 @@ from decimal import Decimal
 from django.conf import settings
 from products.models import Product
 
-
 class Cart(object):
     def __init__(self, request):
         self.session = request.session
@@ -22,7 +21,6 @@ class Cart(object):
         for id in slab_ids:
             if id not in self.cart['slab_ids']:
                 self.cart['slab_ids'].append(id)
-            print(self.cart)
         self.make_price_list()
         self.save()
 
@@ -66,6 +64,9 @@ class Cart(object):
     def make_slab_list(self):
         block_list = self.get_block_num()
         slab_ids = self.cart['slab_ids']
+        # for items in :
+        #     for item in items:
+        #
         return (block.get_slab_list(slab_ids) for block in block_list)
 
     def get_block_num(self):

@@ -10,9 +10,10 @@ def cart_detail(request):
     object_list = []
     for item in items:
         for i in item:
-            object_list.append({'item': i, 'price_form': PriceForm(
-                initial={'price': cart.cart['price'].get(str(i['block_num']))})})
-    return render(request, 'cart/detail.html', {'object_list': object_list})
+            # priceform = PriceForm(initial={'price': cart.cart['price'].get(str(i['block_num']))})
+            object_list.append({'item': i, 'price_form': PriceForm()})
+    form = PriceForm()
+    return render(request, 'cart/detail.html', {'object_list': object_list, 'form': form})
 
 
 @require_POST

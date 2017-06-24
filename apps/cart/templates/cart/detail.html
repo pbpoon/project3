@@ -2,7 +2,6 @@
 {% block title %}购物车{% endblock %}
 
 {% block main %}
-
     <table class="table">
         <tr>
             <th>序号</th>
@@ -15,20 +14,20 @@
         </tr>
         {% for object in object_list %}
             {% with object.item as item %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ item.block_num }}</td>
-                <td>{{ item.thickness }}</td>
-                <td>{{ item.block_pics }}</td>
-                <td>{{ item.block_m2 }}</td>
-                <td>
-                    <form method="post">
-                        {{ object.price_form.price }}
-                        <input type="submit" value="更新">
-                    </form>
-                </td>
-                <td>ps</td>
-            </tr>
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.block_num }}</td>
+                    <td>{{ item.thickness }}</td>
+                    <td>{{ item.block_pics }}</td>
+                    <td>{{ item.block_m2 }}</td>
+                    <td>
+                        <form method="post">
+                            {{ object.price_form.price }}
+                            <input type="submit" value="更新">
+                        </form>
+                    </td>
+                    <td>ps</td>
+                </tr>
             {% endwith %}
         {% endfor %}
     </table>

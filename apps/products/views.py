@@ -12,6 +12,6 @@ class ProductDetailView(DetailView):
     model = Product
 
     def get_context_data(self, **kwargs):
-        kwargs['slab_list'] = self.object.get_slab_list()
+        kwargs['slab_list'] = self.object.get_slab_list(object_format=True)
         return super(ProductDetailView, self).get_context_data(**kwargs)
 
