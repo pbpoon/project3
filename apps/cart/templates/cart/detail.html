@@ -13,10 +13,10 @@
             <th>码单</th>
         </tr>
         {% for object in object_list %}
-            {% with object.item as item %}
+            {% for key, item in object.items %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ item.block_num }}</td>
+                    <td>{{ key }}</td>
                     <td>{{ item.thickness }}</td>
                     <td>{{ item.block_pics }}</td>
                     <td>{{ item.block_m2 }}</td>
@@ -28,7 +28,7 @@
                     </td>
                     <td>ps</td>
                 </tr>
-            {% endwith %}
+            {% endfor %}
         {% endfor %}
     </table>
 

@@ -7,13 +7,10 @@ from .forms import PriceForm
 def cart_detail(request):
     cart = Cart(request)
     items = cart.make_slab_list()
-    object_list = []
     for item in items:
-        for i in item:
-            # priceform = PriceForm(initial={'price': cart.cart['price'].get(str(i['block_num']))})
-            object_list.append({'item': i, 'price_form': PriceForm()})
-    form = PriceForm()
-    return render(request, 'cart/detail.html', {'object_list': object_list, 'form': form})
+        for thickness_key, thickness in item.items():
+            thickness['price_form'] = PriceForm(initial={'price': cart.cart['price'].get(str(thickness_key))})
+    return render(request, 'cart/detail.html', {'object_list': items})
 
 
 @require_POST

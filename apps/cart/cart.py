@@ -67,7 +67,7 @@ class Cart(object):
         # for items in :
         #     for item in items:
         #
-        return (block.get_slab_list(slab_ids) for block in block_list)
+        return [block.get_slab_list(slab_ids) for block in block_list]
 
     def get_block_num(self):
         slab_ids = self.cart['slab_ids']
@@ -77,7 +77,7 @@ class Cart(object):
     def make_price_list(self):
         block_list = self.get_block_num()
         for block in block_list:
-            if block.id not in self.cart['price'].keys():
+            if block.block_num_id not in self.cart['price'].keys():
                 self.cart['price'][block.id] = 0
 
     def update_price(self, block_id, price):
