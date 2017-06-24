@@ -32,20 +32,24 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('product:detail', args=[self.id])
 
-    def get_slab_list(self):
-        slab_list = self.slab.values('thickness').annotate(total_pics=models.Count('id'), total_m2=models.Sum('m2'))
+    def get_slab_list(self, slab_ids=None):
+        obj = self.slab.all()
+        if slab_ids:
+            obj = self.slab.filter(id__in=slab_ids)
+        slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'), block_m2=models.Sum('m2'))
         for part in slab_list:
             part['part_num'] = {}
             part_list = [part for part in
-                         self.slab.values('part_num').filter(thickness=part['thickness']).distinct()]
+                         obj.values('part_num').filter(thickness=part['thickness']).distinct()]
             for item in part_list:
                 slabs = [slab for slab in
-                         self.slab.filter(thickness=part['thickness'],
+                         obj.filter(thickness=part['thickness'],
                                           part_num=item['part_num']).order_by('line_num')]
                 part['part_num'][item['part_num']] = {}
-                part['part_num'][item['part_num']]['pics'] = len(slabs)
-                part['part_num'][item['part_num']]['m2'] = sum(s.m2 for s in slabs)
+                part['part_num'][item['part_num']]['part_pics'] = len(slabs)
+                part['part_num'][item['part_num']]['part_m2'] = sum(s.m2 for s in slabs)
                 part['part_num'][item['part_num']]['slabs'] = slabs
+
         return slab_list
 
 

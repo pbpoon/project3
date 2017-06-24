@@ -4,30 +4,37 @@
     <h2 class="page-header">{{ object }}</h2>
 {% endblock %}
 {% block main %}
-    {% for thickness in slab_list %}
-        <h4>{{ thickness.thickness }}</h4>
-        {% for part_key, part_value in thickness.part_num.items %}
-        <ul>
-            <li>{{ part_key }}/{{ part_value.pics }}/{{ part_value.m2 }}
-                <div class="panel panel-default">
+    <form method="post" id="slab_form" action="{% url 'cart:add' %}">
+        {% for thickness in slab_list %}
+            <h4>{{ thickness.thickness }}/{{ thickness.block_pics }}/{{ thickness.block_m2 }}</h4>
+            {% for part_key, part_value in thickness.part_num.items %}
+                <ul>
+                    <li>{{ part_key }}/{{ part_value.part_pics }}/{{ part_value.part_m2 }}
+                        <div class="panel panel-default">
 
-                    <table class="table">
-                        <tr>
-                            <th width="10%">选择</th>
-                            <th width="10%">序号</th>
-                            <th>规格</th>
-                        </tr>
-                        {% for slab in part_value.slabs %}
-                            <tr>
-                                <td><input type="checkbox" name="select" value="{{ slab.id }}"></td>
-                                <td>{{ slab.line_num }}</td>
-                                <td>{{ slab }}</td>
-                            </tr>
-                        {% endfor %}
-                    </table>
-                </div>
-            </li>
+                            <table class="table">
+                                <tr>
+                                    <th width="10%">选择</th>
+                                    <th width="10%">序号</th>
+                                    <th>规格</th>
+                                </tr>
+                                {% for slab in part_value.slabs %}
+                                    <tr>
+                                        <td><input type="checkbox" name="check_box_list" value="{{ slab.id }}"></td>
+                                        <td>{{ slab.line_num }}</td>
+                                        <td>{{ slab }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </li>
 
-        </ul>{% endfor %}
-    {% endfor %}
+                </ul>
+            {% endfor %}
+        {% endfor %}
+    {% csrf_token %}
+    </form>
+{% endblock %}
+{% block sidebar %}
+    <input type="submit" value="添加到码单" form="slab_form">
 {% endblock %}

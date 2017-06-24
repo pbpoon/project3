@@ -19,7 +19,7 @@ from . import views
 '''服务商'''
 urlpatterns = [
     url(r'^$', views.ProductListView.as_view(), name='list'),
-    url(r'^/(?P<pk>\d+)/$', views.ProductDetailView.as_view(), name='detail'),
+    url(r'^(?P<pk>\d+)/$', views.ProductDetailView.as_view(), name='detail'),
 ]
 # '''生产订单'''
 # urlpatterns += [
