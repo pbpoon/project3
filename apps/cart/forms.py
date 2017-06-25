@@ -6,4 +6,4 @@ from django import forms
 
 
 class PriceForm(forms.Form):
-    price = forms.DecimalField()
+    price = forms.DecimalField(widget=forms.NumberInput(attrs={'style': 'width:4em', 'min':'0'}))

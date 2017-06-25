@@ -2,6 +2,7 @@
 {% block title %}购物车{% endblock %}
 
 {% block main %}
+
     <table class="table">
         <tr>
             <th>序号</th>
@@ -11,27 +12,36 @@
             <th>平方</th>
             <th>单价</th>
             <th>码单</th>
+            <th>删除</th>
         </tr>
+
         {% for object in object_list %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ object.block_num }}</td>
-                    <td>{{ object.thickness }}</td>
-                    <td>{{ object.block_pics }}</td>
-                    <td>{{ object.block_m2 }}</td>
-                    <td>
-                        <form method="post">
-                            {{ object.price_form.price }}
-                            <input type="submit" value="更新">
-                        </form>
-                    </td>
-                    <td><form action="{% url 'cart:remove' %}" method="post">
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ object.block_num }}</td>
+                <td>{{ object.thickness }}</td>
+                <td>{{ object.block_pics }}</td>
+                <td>{{ object.block_m2 }}</td>
+                <td>
+                    <form method="post" action="{% url 'cart:update_price' %}">
+                        {{ object.price_form.price }}
+                        <input type="hidden" name="item" value="{{ object.block_num }},{{ object.thickness }}">
+                        <input class="btn btn-default" type="submit" value="更新">
+                        {% csrf_token %}
+                    </form>
+                </td>
+                <td><form><input type="submit" value="打开"></form></td>
+                <td>
+                    <form action="{% url 'cart:remove' %}" method="post">
                         <input type="hidden" name="item" value="{{ object.slab_ids }}">
                         {% csrf_token %}
                         <input type="submit" value="删除">
-                    </form></td>
-                </tr>
+                    </form>
+                </td>
+            </tr>
         {% endfor %}
+
     </table>
+
 
 {% endblock %}

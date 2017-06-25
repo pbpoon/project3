@@ -20,4 +20,5 @@ urlpatterns = [
     url(r'^$', views.cart_detail, name='index'),
     url(r'^add/$', views.cart_add, name='add'),
     url(r'^remove/$', views.cart_remove, name='remove'),
+    url(r'^update-price/$', views.cart_update_price, name='update_price'),
 ]

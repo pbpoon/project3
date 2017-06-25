@@ -59,24 +59,14 @@ class Cart(object):
         slab_list = self.make_slab_list()
         price_list = self.cart['price']
         for item in slab_list:
-            price_list.setdefault(str(item['block_num'])+str(item['thickness']), 0)
+            price_list.setdefault(str(item['block_num']) + str(item['thickness']), 0)
         print(price_list)
 
-    def update_price(self, block_num=None, thickness=None, price=None):
-        if block_num and thickness and price:
-            self.cart['price'][block_num][thickness] = price
-            self.save()
-
-    def order_item_list(self):
-        slab_list = self.make_slab_list()
+    def update_price(self, item, price=None):
         price_list = self.cart['price']
-        list = []
-        for item in slab_list:
-            lst = {}
-            for key, val in item.items():
-                for k, v in val.items():
-                    lst = {'block_num': key, 'thickness': str(k), 'block_pics': str(v['block_pics']),
-                           'block_m2': str(v['block_m2']),
-                           'price': price_list[key][str(k)]}
-                    list.append(lst)
-        return list
+        if item and price:
+            try:
+                price_list[item]=int(price)
+            except ValueError as e:
+                return
+            self.save()
