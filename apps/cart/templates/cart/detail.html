@@ -13,22 +13,24 @@
             <th>码单</th>
         </tr>
         {% for object in object_list %}
-            {% for key, item in object.items %}
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ key }}</td>
-                    <td>{{ item.thickness }}</td>
-                    <td>{{ item.block_pics }}</td>
-                    <td>{{ item.block_m2 }}</td>
+                    <td>{{ object.block_num }}</td>
+                    <td>{{ object.thickness }}</td>
+                    <td>{{ object.block_pics }}</td>
+                    <td>{{ object.block_m2 }}</td>
                     <td>
                         <form method="post">
                             {{ object.price_form.price }}
                             <input type="submit" value="更新">
                         </form>
                     </td>
-                    <td>ps</td>
+                    <td><form action="{% url 'cart:remove' %}" method="post">
+                        <input type="hidden" name="item" value="{{ object.slab_ids }}">
+                        {% csrf_token %}
+                        <input type="submit" value="删除">
+                    </form></td>
                 </tr>
-            {% endfor %}
         {% endfor %}
     </table>
 

@@ -32,18 +32,51 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('product:detail', args=[self.id])
 
+    # def get_slab_list(self, slab_ids=None, object_format=False):
+    #     obj = self.slab.all()
+    #     if slab_ids:
+    #         obj = self.slab.filter(id__in=slab_ids)
+    #     slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
+    #                                                               block_m2=models.Sum('m2'))
+    #     lst = {}
+    #     lst[self.block_num_id] = {}
+    #     # lst[self.block_num_id]['block_num'] = self.block_num_id
+    #     for part in slab_list:
+    #         lst[self.block_num_id][part['thickness']] = {'block_pics': part['block_pics'],
+    #                                                      'block_m2': part['block_m2'], 'part_num': {}}
+    #         part_list = [part for part in
+    #                      obj.values('part_num').filter(thickness=part['thickness']).distinct()]
+    #         for item in part_list:
+    #             slabs = [slab for slab in
+    #                      obj.filter(thickness=part['thickness'],
+    #                                 part_num=item['part_num']).order_by('line_num')]
+    #             part_num = item['part_num']
+    #             # lst[self.block_num_id][part['thickness']]['part_num'] = {}
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num] = {}
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_pics'] = len(slabs)
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_m2'] = sum(s.m2 for s in slabs)
+    #             slab = [s.id for s in slabs]
+    #             if object_format:
+    #                 slab = [s for s in slabs]
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['slabs'] = slab
+    #     return lst
+
+
     def get_slab_list(self, slab_ids=None, object_format=False):
         obj = self.slab.all()
         if slab_ids:
             obj = self.slab.filter(id__in=slab_ids)
         slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
                                                                   block_m2=models.Sum('m2'))
-        lst = {}
-        lst[self.block_num_id] = {}
-        # lst[self.block_num_id]['block_num'] = self.block_num_id
+        list = []
+        # # lst[self.block_num_id] = {}
+        # # lst[self.block_num_id]['block_num'] = self.block_num_id
+
         for part in slab_list:
-            lst[self.block_num_id][part['thickness']] = {'block_pics': part['block_pics'],
-                                                         'block_m2': part['block_m2'], 'part_num': {}}
+            lst = {}
+            lst = {'block_num': self.block_num_id, 'thickness': str(part['thickness']),
+                   'block_pics': str(part['block_pics']),
+                   'block_m2': str(part['block_m2']), 'part_num': {}}
             part_list = [part for part in
                          obj.values('part_num').filter(thickness=part['thickness']).distinct()]
             for item in part_list:
@@ -51,26 +84,15 @@ class Product(models.Model):
                          obj.filter(thickness=part['thickness'],
                                     part_num=item['part_num']).order_by('line_num')]
                 part_num = item['part_num']
-                # lst[self.block_num_id][part['thickness']]['part_num'] = {}
-                lst[self.block_num_id][part['thickness']]['part_num'][part_num] = {}
-                lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_pics'] = len(slabs)
-                lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_m2'] = sum(s.m2 for s in slabs)
+                lst['part_num'][part_num] = {}
+                lst['part_num'][part_num]['part_pics'] = len(slabs)
+                lst['part_num'][part_num]['part_m2'] = str(sum(s.m2 for s in slabs))
                 slab = [s.id for s in slabs]
                 if object_format:
                     slab = [s for s in slabs]
-                lst[self.block_num_id][part['thickness']]['part_num'][part_num]['slabs'] = slab
-        return lst
-
-    # def make_slab_list_to_object(self, slab_ids=None):
-    #     slab_list = self.get_slab_list()
-    #     if slab_ids:
-    #         slab_list = self.get_slab_list(slab_ids)
-    #     for thickness in slab_list.values():
-    #         thickness['block_num'] = slab_list.keys()
-    #         for part_num in thickness.values():
-    #             for slab in part_num['part_num'].values():
-    #                 for s in slab['slabs']:
-    #                     s = Slab.objects.filter(id=s)
+                lst['part_num'][part_num]['slabs'] = slab
+            list.append(lst)
+        return list
 
 
 class Slab(models.Model):

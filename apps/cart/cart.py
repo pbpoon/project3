@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.conf import settings
 from products.models import Product
 
+
 class Cart(object):
     def __init__(self, request):
         self.session = request.session
@@ -35,24 +36,7 @@ class Cart(object):
         for id in slab_ids:
             if id in self.cart['slab_ids']:
                 self.cart['slab_ids'].remove(id)
-                self.save()
-
-
-                # def __iter__(self):
-                #     product_ids = self.cart.keys()
-                #     products = Product.objects.filter(id__in=product_ids)
-                #     for product in products:
-                #         self.cart[str(product.id)]['product'] = product
-                #     # 需要改寫這個forvalues的方法
-                #     for item in self.cart.values():
-                #         item['price'] = Decimal(item['price'])
-                #         item['total_price'] = item['price'] * item['quantity']
-                #         yield item
-                #     print(self.cart)
-                #
-                #
-                # def __len__(self):
-                #     return sum(item['quantity'] for item in self.cart.values())
+        self.save()
 
     def get_total_price(self):
         return sum(Decimal(item['price']) * item['quantity'] for item in self.cart.values())
@@ -64,10 +48,7 @@ class Cart(object):
     def make_slab_list(self):
         block_list = self.get_block_num()
         slab_ids = self.cart['slab_ids']
-        # for items in :
-        #     for item in items:
-        #
-        return [block.get_slab_list(slab_ids) for block in block_list]
+        return [i for block in block_list for i in block.get_slab_list(slab_ids)]
 
     def get_block_num(self):
         slab_ids = self.cart['slab_ids']
@@ -75,11 +56,27 @@ class Cart(object):
         return block_list
 
     def make_price_list(self):
-        block_list = self.get_block_num()
-        for block in block_list:
-            if block.block_num_id not in self.cart['price'].keys():
-                self.cart['price'][block.id] = 0
+        slab_list = self.make_slab_list()
+        price_list = self.cart['price']
+        for item in slab_list:
+            price_list.setdefault(str(item['block_num'])+str(item['thickness']), 0)
+        print(price_list)
 
-    def update_price(self, block_id, price):
-        self.cart['price'][block_id] = price
-        self.save()
+    def update_price(self, block_num=None, thickness=None, price=None):
+        if block_num and thickness and price:
+            self.cart['price'][block_num][thickness] = price
+            self.save()
+
+    def order_item_list(self):
+        slab_list = self.make_slab_list()
+        price_list = self.cart['price']
+        list = []
+        for item in slab_list:
+            lst = {}
+            for key, val in item.items():
+                for k, v in val.items():
+                    lst = {'block_num': key, 'thickness': str(k), 'block_pics': str(v['block_pics']),
+                           'block_m2': str(v['block_m2']),
+                           'price': price_list[key][str(k)]}
+                    list.append(lst)
+        return list
