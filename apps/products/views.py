@@ -3,6 +3,7 @@ from django.db.models import Count, Sum
 from django.views.generic import ListView, DetailView, View
 from .models import Product, Slab, Category, Quarry, Batch
 
+from utils import str_to_list
 
 class ProductListView(ListView):
     model = Product
@@ -17,16 +18,16 @@ class ProductDetailView(DetailView):
 
 
 class ProductSlabListView(View):
-    template_name = 'product/slablist_detail.html'
+    template_name = 'products/slablist_detail.html'
 
-    def get(self, request):
+    def get(self, request, **kwargs):
         object = Product.objects.all()
         block_num = self.kwargs.get('block_num', None)
         slab_ids = self.request.GET.get('slab_ids')
         if block_num:
-            object = object.filter(block_num=block_num)
+            object = object.filter(block_num=block_num).first()
         if slab_ids:
-            slab_list = object.get_slab_list(slab_ids=slab_ids, object_format=True)
+            slab_list = object.get_slab_list(slab_ids=str_to_list(slab_ids), object_format=True)
         else:
             slab_list = object.get_slab_list(object_format=True)
-        return render(request, self.template_name, {'slab_list': slab_list})
+        return render(request, self.template_name, {'slab_list': slab_list, 'object': object})

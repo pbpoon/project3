@@ -31,7 +31,12 @@
                     </form>
                 </td>
                 <td>
-                    <button class="button" value="{{ object.slab_ids }}">打开</button>
+                    {#                    <a class="button" href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>#}
+                    {#                    <a href="{% url 'product:slab_list' object.block_num %}?slab_ids={{ object.slab_ids }}"#}
+                    {#                       class="btn btn-default" data-toggle="modal" data-target="#slab_list">#}
+                    {#                        打开#}
+                    {#                    </a>#}
+{#                    <a data-toggle="modal" data-target="#slab_list" onclick=targetto("{{ object.block_num }}")>打开</a>#}
                 </td>
                 <td>
                     <form action="{% url 'cart:remove' %}" method="post">
@@ -44,14 +49,26 @@
         {% endfor %}
 
     </table>
-    <div class="modal">
+    <div class="modal fade" id="slab_list">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-body">
-
+                    <h2 class="page-header">这里内容</h2>
                 </div>
             </div>
         </div>
     </div>
+{#    <script>#}
+{#        $("#slab_list").on("hidden.bs.modal", function () {#}
+{#            $(this).removeData("bs.modal");#}
+{#        });#}
+{#        function targetto(block_num) {#}
+{#            $("#slab_list").modal({#}
+{#                remote: "{% url 'product:slab_list' block_num %}"#}
+{#            })#}
+{#        }#}
+{#        ;#}
+{#    </script>#}
 
 {% endblock %}
+

@@ -32,6 +32,10 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('product:detail', args=[self.id])
 
+    '''
+    注释的代码为返回码单为字典类型
+    '''
+
     # def get_slab_list(self, slab_ids=None, object_format=False):
     #     obj = self.slab.all()
     #     if slab_ids:
@@ -69,16 +73,15 @@ class Product(models.Model):
         slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
                                                                   block_m2=models.Sum('m2'))
         list = []
-        # # lst[self.block_num_id] = {}
-        # # lst[self.block_num_id]['block_num'] = self.block_num_id
 
         for part in slab_list:
+            part_list = [part for part in
+                         obj.values('part_num').filter(thickness=part['thickness']).distinct()]
             lst = {}
             lst = {'block_num': self.block_num_id, 'thickness': str(part['thickness']),
                    'block_pics': str(part['block_pics']),
-                   'block_m2': str(part['block_m2']), 'part_num': {}}
-            part_list = [part for part in
-                         obj.values('part_num').filter(thickness=part['thickness']).distinct()]
+                   'block_m2': str(part['block_m2']), 'part_count': len(part_list), 'part_num': {}}
+
             for item in part_list:
                 slabs = [slab for slab in
                          obj.filter(thickness=part['thickness'],
@@ -92,6 +95,7 @@ class Product(models.Model):
                     slab = [s for s in slabs]
                 lst['part_num'][part_num]['slabs'] = slab
             list.append(lst)
+
         return list
 
 

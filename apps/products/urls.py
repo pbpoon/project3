@@ -20,7 +20,7 @@ from . import views
 urlpatterns = [
     url(r'^$', views.ProductListView.as_view(), name='list'),
     url(r'^(?P<pk>\d+)/$', views.ProductDetailView.as_view(), name='detail'),
-    url(r'^(?P<block_num>\d+)/$', views.ProductSlabListView.as_view(), name='slab_list'),
+    url(r'^slab-list/(?P<block_num>\w+)/$', views.ProductSlabListView.as_view(), name='slab_list'),
 ]
 # '''生产订单'''
 # urlpatterns += [

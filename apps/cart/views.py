@@ -3,7 +3,7 @@ from django.views.decorators.http import require_POST
 from .cart import Cart
 from .forms import PriceForm
 
-import re
+from utils import str_to_list
 
 
 def cart_detail(request):
@@ -29,10 +29,7 @@ def cart_add(request):
 def cart_remove(request):
     cart = Cart(request)
     item = request.POST.get('item')
-    s, *t, r = re.split(r'[\[|,\s|\]]\s', item)
-    t.append(s.split('[')[1])
-    t.append(r.split(']')[0])
-    cart.remove(t)
+    cart.remove(str_to_list(item))
     return redirect('cart:index')
 
 

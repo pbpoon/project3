@@ -66,7 +66,13 @@ class Cart(object):
         price_list = self.cart['price']
         if item and price:
             try:
-                price_list[item]=int(price)
+                price_list[item] = int(price)
             except ValueError as e:
                 return
             self.save()
+
+    def get_info(self):
+        slab_list = self.make_slab_list()
+        count = len(slab_list)
+        total_m2 = sum(Decimal(i['block_m2']) for i in slab_list)
+        return {'count': count, 'total_m2': total_m2}

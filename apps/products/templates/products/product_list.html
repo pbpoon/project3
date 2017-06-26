@@ -16,6 +16,7 @@
             <th>矿口</th>
             <th>批次</th>
             <th>备注信息</th>
+            <th>码单</th>
             <th>更新日期</th>
         </tr>
         {% for object in object_list %}
@@ -30,6 +31,7 @@
                 <td>{{ object.quarry }}</td>
                 <td>{{ object.batch }}</td>
                 <td>{{ object.ps }}</td>
+                <td><a class="button" href="{% url 'product:slab_list' object.block_num_id %}">打开</a></td>
                 <td>{{ object.updated }}</td>
             </tr>
         {% endfor %}
