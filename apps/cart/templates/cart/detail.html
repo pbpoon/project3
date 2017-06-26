@@ -30,7 +30,9 @@
                         {% csrf_token %}
                     </form>
                 </td>
-                <td><form><input type="submit" value="打开"></form></td>
+                <td>
+                    <button class="button" value="{{ object.slab_ids }}">打开</button>
+                </td>
                 <td>
                     <form action="{% url 'cart:remove' %}" method="post">
                         <input type="hidden" name="item" value="{{ object.slab_ids }}">
@@ -42,6 +44,14 @@
         {% endfor %}
 
     </table>
+    <div class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
 
+                </div>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}

@@ -44,3 +44,8 @@ def cart_update_price(request):
     item = ''.join(item.split(','))
     cart.update_price(item, price)
     return redirect('cart:index')
+
+
+def cart_slablist_detail(request):
+    cart = Cart(request)
+    item = request.GET.get('item')
