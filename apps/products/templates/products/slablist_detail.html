@@ -1,46 +1,51 @@
 {% extends 'base.html' %}
 {% load cart_tags %}
-{% block jumbotron %}{{ object.block_num }}{% endblock %}
+{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}
 {% block main %}
     <form method="post" id="slab_form" action="{% url 'cart:add' %}">
         {% for slabs in slab_list %}
-            <div class="panel panel-default">
-                <div class="panel-heading">
-
-                    <h4 class="panel-title">{{ slabs.thickness }} 厚度/{{ slabs.part_count }} 夹/ {{ slabs.block_pics }}
-                        件/ {{ slabs.block_m2 }}
-                        m2</h4></div>
-                <div class="panel-body">
-                    <ul class="list-unstyled">
-                        {% for part_key ,part_value in slabs.part_num.items %}
-                            <li>{{ part_key }}# 夹/ {{ part_value.part_pics }} 件/ {{ part_value.part_m2 }} m2
 
 
-                                <table class="table">
+            <h2 id="{{ slabs.thickness }}" class="page-header">{{ slabs.thickness }} 厚度/{{ slabs.part_count }}
+                夹/ {{ slabs.block_pics }}
+                件/ {{ slabs.block_m2 }}
+                m2</h2>
+
+            <ul class="list-unstyled">
+                {% for part_key ,part_value in slabs.part_num.items %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <li class="panel-title" id="{{ part_key }}">{{ part_key }}# 夹/ {{ part_value.part_pics }}
+                                件/ {{ part_value.part_m2 }} m2
+
+
+                        </div>
+                        <div class="panel-body">
+                            <table class="table">
+                                <tr>
+                                    <th width="10%">选择</th>
+                                    <th width="15%">序号</th>
+                                    <th width="45%">规格</th>
+                                    <th>m2</th>
+                                </tr>
+                                {% for slab in part_value.slabs %}
                                     <tr>
-                                        <th width="15%">选择</th>
-                                        <th width="20%">序号</th>
-                                        <th>规格</th>
+                                        <td ><input type="checkbox" name="check_box_list"
+                                                   {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
+                                                   value="{{ slab.id }}">
+                                        </td>
+                                        <td>{{ slab.line_num }}</td>
+                                        <td>{{ slab }}</td>
+                                        <td>{{ slab.m2 }}</td>
                                     </tr>
-                                    {% for slab in part_value.slabs %}
-                                        <tr>
-                                            <td><input type="checkbox" name="check_box_list" value="{{ slab.id }}"></td>
-                                            <td>{{ slab.line_num }}</td>
-                                            <td>{{ slab }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                    <tr>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                    </tr>
-                                </table>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                    </li>
+                {% endfor %}
+            </ul>
 
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
 
         {% endfor %}
 
@@ -50,6 +55,32 @@
 {% endblock %}
 
 {% block sidebar %}
-    <input class="btn btn-default" type="submit" value="添加到码单" form="slab_form">
-    {% show_cart_info %}
+
+    <div class="row">
+        <div style="width: 260px;" data-spy="affix"
+             data-offset-top="60">
+            {% show_cart_info %}
+            <ul class="list-group">
+
+                {% for item in slab_list %}
+                    <li class="list-group-item"><a href="#{{ item.thickness }}">{{ item.thickness }} 厚度/{{ item.part_count }}
+                        夹/ {{ item.block_pics }}
+                        件/ {{ item.block_m2 }}
+                        m2</a>
+                        <ul>
+                            {% for part_key ,part_value in item.part_num.items %}
+                                <li><a href="#{{ part_key }}">{{ part_key }}# 夹/ {{ part_value.part_pics }}
+                                    件/ {{ part_value.part_m2 }} m2</a></li>
+                            {% endfor %}
+                        </ul>
+
+                    </li>
+
+                {% endfor %}
+
+            </ul>
+        <input class="btn btn-default" type="submit" value="添加到选择列表" form="slab_form">
+        </div>
+    </div>
+
 {% endblock %}

@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}购物车{% endblock %}
+{% load cart_tags %}
+{% block title %}选择列表{% endblock %}
+{% block jumbotron %}
+    <h2 class="page-header">你已选择的码单列表</h2>
+{% endblock %}
 
 {% block main %}
 
     <table class="table">
-        <tr>
+        <tr><th>选择</th>
             <th>序号</th>
             <th>荒料编号</th>
             <th>厚度</th>
@@ -17,6 +21,7 @@
 
         {% for object in object_list %}
             <tr>
+            <td><input type="checkbox" value="{{ object.part_num }}"></td>
                 <td>{{ forloop.counter }}</td>
                 <td>{{ object.block_num }}</td>
                 <td>{{ object.thickness }}</td>
@@ -31,44 +36,57 @@
                     </form>
                 </td>
                 <td>
-                    {#                    <a class="button" href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>#}
-                    {#                    <a href="{% url 'product:slab_list' object.block_num %}?slab_ids={{ object.slab_ids }}"#}
-                    {#                       class="btn btn-default" data-toggle="modal" data-target="#slab_list">#}
-                    {#                        打开#}
-                    {#                    </a>#}
-{#                    <a data-toggle="modal" data-target="#slab_list" onclick=targetto("{{ object.block_num }}")>打开</a>#}
+                    <div class="dropdown">
+                        <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                           aria-haspopup="true"
+                           aria-expanded="false"><span class="btn btn-default">相关操作</span><span
+                                class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a
+                                   href="{% url 'product:slab_list'  object.block_num %}">修改</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a
+                                   href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                            </li>
+                        </ul>
+                    </div>
+
+
                 </td>
                 <td>
+
+
                     <form action="{% url 'cart:remove' %}" method="post">
                         <input type="hidden" name="item" value="{{ object.slab_ids }}">
                         {% csrf_token %}
-                        <input type="submit" value="删除">
+                        <input class="btn btn-danger" type="submit" value="删除">
                     </form>
                 </td>
             </tr>
+            {% empty %}
+            <h4>还没有选择的码单</h4>
         {% endfor %}
 
     </table>
-    <div class="modal fade" id="slab_list">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <h2 class="page-header">这里内容</h2>
-                </div>
-            </div>
-        </div>
-    </div>
+{#    <div class="modal fade" id="slab_list">#}
+{#        <div class="modal-dialog">#}
+{#            <div class="modal-content">#}
+{#                <div class="modal-body">#}
+{##}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
 {#    <script>#}
 {#        $("#slab_list").on("hidden.bs.modal", function () {#}
 {#            $(this).removeData("bs.modal");#}
 {#        });#}
-{#        function targetto(block_num) {#}
-{#            $("#slab_list").modal({#}
-{#                remote: "{% url 'product:slab_list' block_num %}"#}
-{#            })#}
-{#        }#}
-{#        ;#}
 {#    </script>#}
-
+<div class="btn-group-vertical">
+    <a class="btn btn-default" href="">生成补板单订单</a>
+</div>
 {% endblock %}
 
+{% block sidebar %}
+{% show_cart_info %}
+{% endblock %}

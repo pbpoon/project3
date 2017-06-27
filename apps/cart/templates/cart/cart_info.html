@@ -1,12 +1,13 @@
-<div class="panel-primary">
+<div class="panel panel-primary">
     <div class="panel-heading">
-        <h4 class="panel-title">你共选择了：</h4>
-        <div class="panel-body">
-            <ul>
-                <li>{{ count }} 张规格码单</li>
-                <li>共 {{ total_m2 }} m2</li>
-            </ul>
-            <a class="btn btn-default" href="{% url 'cart:index' %}">查看详细</a>
-        </div>
+        <h3 class="panel-title">你共选择了：</h3>
+    </div>
+    <div class="panel-body">
+        <ul>
+            <li>{{ count }} 张规格码单</li>
+            <li>共 {{ total_m2 }} m2</li>
+        </ul>
+        <a class="btn btn-default" href="{% url 'cart:index' %}">查看详细</a>
+        <a class="btn btn-danger" href="{% url 'cart:clear' %}">清空列表</a>
     </div>
 </div>

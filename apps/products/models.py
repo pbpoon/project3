@@ -139,7 +139,7 @@ class Slab(models.Model):
             k1 = '({0} x {1})'.format(self.kl1, self.kh1)
         if self.kh2 and self.kl2:
             k2 = '({0} x {1})'.format(self.kl2, self.kh2)
-        return '{0} x {1} {2} {3} = {4}'.format(self.long, self.high, k1, k2, self.m2)
+        return '{0} x {1} {2} {3} '.format(self.long, self.high, k1, k2)
 
 
 class Batch(models.Model):

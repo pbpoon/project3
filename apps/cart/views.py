@@ -43,6 +43,7 @@ def cart_update_price(request):
     return redirect('cart:index')
 
 
-def cart_slablist_detail(request):
+def cart_clear(request):
     cart = Cart(request)
-    item = request.GET.get('item')
+    cart.clear()
+    return redirect('cart:index')

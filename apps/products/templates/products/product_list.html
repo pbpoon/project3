@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load get_verbose_name %}
+{% load cart_tags %}
 
 {% block title %}荒料列表{% endblock %}
 {% block jumbotron %}<h2>荒料列表</h2>{% endblock %}
@@ -37,4 +37,7 @@
         {% endfor %}
     </table>
 
+{% endblock %}
+{% block sidebar %}
+    {% show_cart_info %}
 {% endblock %}

@@ -201,46 +201,46 @@ class STOrderItem(OrderItemBaseModel):
         verbose_name_plural = verbose_name
 
 
-class SlabList(models.Model):
-    order_item = models.ForeignKey('MBOrderItem', related_name='slablist', on_delete=models.CASCADE,
-                                   verbose_name=u'荒料编号')
-    content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
-    order = GenericForeignKey()
-    thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
-    ps = models.CharField(max_length=200, null=True, blank=True, verbose_name=u'备注信息')
-    data_entry_staff = models.ForeignKey(User, related_name='date_entry', verbose_name='数据录入人')
-    created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
-    updated = models.DateTimeField(auto_now=True, verbose_name=u'更新日期')
-
-    class Meta:
-        verbose_name = u'码单信息'
-        verbose_name_plural = verbose_name
-        ordering = ['-updated']
-
-    def __str__(self):
-        return str(self.block_num)
-
-    @property
-    def total(self):
-        part = len(self.item.distinct('part_num'))
-        pic = len(self.item.all())
-        m2 = sum(item.m2 for item in self.item.all())
-        return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
-
-    @property
-    def can_sell(self):
-        part = len(self.item.filter(is_booking=False, is_sell=False).distinct('part_num'))
-        pic = len(self.item.filter(is_booking=False, is_sell=False))
-        m2 = sum(item.m2 for item in self.item.filter(is_booking=False, is_sell=False))
-        return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
-
-    @property
-    def can_pickup(self):
-        part = len(self.item.filter(is_pickup=False).distinct('part_num'))
-        pic = len(self.item.filter(is_pickup=False))
-        m2 = sum(item.m2 for item in self.item.filter(is_pickup=False))
-        return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
+# class SlabList(models.Model):
+#     order_item = models.ForeignKey('MBOrderItem', related_name='slablist', on_delete=models.CASCADE,
+#                                    verbose_name=u'荒料编号')
+#     content_type = models.ForeignKey(ContentType)
+#     object_id = models.PositiveIntegerField()
+#     order = GenericForeignKey()
+#     thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
+#     ps = models.CharField(max_length=200, null=True, blank=True, verbose_name=u'备注信息')
+#     data_entry_staff = models.ForeignKey(User, related_name='date_entry', verbose_name='数据录入人')
+#     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
+#     updated = models.DateTimeField(auto_now=True, verbose_name=u'更新日期')
+#
+#     class Meta:
+#         verbose_name = u'码单信息'
+#         verbose_name_plural = verbose_name
+#         ordering = ['-updated']
+#
+#     def __str__(self):
+#         return str(self.block_num)
+#
+#     @property
+#     def total(self):
+#         part = len(self.item.distinct('part_num'))
+#         pic = len(self.item.all())
+#         m2 = sum(item.m2 for item in self.item.all())
+#         return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
+#
+#     @property
+#     def can_sell(self):
+#         part = len(self.item.filter(is_booking=False, is_sell=False).distinct('part_num'))
+#         pic = len(self.item.filter(is_booking=False, is_sell=False))
+#         m2 = sum(item.m2 for item in self.item.filter(is_booking=False, is_sell=False))
+#         return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
+#
+#     @property
+#     def can_pickup(self):
+#         part = len(self.item.filter(is_pickup=False).distinct('part_num'))
+#         pic = len(self.item.filter(is_pickup=False))
+#         m2 = sum(item.m2 for item in self.item.filter(is_pickup=False))
+#         return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
 
 
 class SlabListItem(models.Model):

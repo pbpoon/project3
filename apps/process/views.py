@@ -1,7 +1,7 @@
 from django.shortcuts import render, HttpResponseRedirect, redirect, HttpResponse
 from django.http import JsonResponse
 from django.core import serializers
-from django.core.serializers.json import DjangoJSONEncoder
+
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
