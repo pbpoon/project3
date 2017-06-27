@@ -22,4 +22,5 @@ urlpatterns = [
     url(r'^remove/$', views.cart_remove, name='remove'),
     url(r'^update-price/$', views.cart_update_price, name='update_price'),
     url(r'^clear/$', views.cart_clear, name='clear'),
+    url(r'^import_slab/$', views.import_slabs, name='import_slab')
 ]

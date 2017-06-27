@@ -11,11 +11,6 @@ from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderIte
 from django.forms import inlineformset_factory
 from utils import AddExcelForm
 
-from django.db.models import Count, Sum
-
-import xlrd
-from decimal import Decimal
-import json
 
 
 class ServiceProviderListView(ListView):
@@ -159,46 +154,41 @@ class GetBlockListView(View):
         return JsonResponse(data, safe=False)
 
 
-class ImportSlabList(View):
-    def post(self, request, *args, **kwargs):
-        item_form = AddExcelForm(request.POST, request.FILES)
-        if item_form.is_valid():
-            f = item_form.files.get('file')
-            if f:
-                data = xlrd.open_workbook(file_contents=f.read())
-                table = data.sheets()[0]
-                nrows = table.nrows  # 总行数
-                colnames = table.row_values(0)  # 表头列名称数据
-                list = []
-                for rownum in range(1, nrows):
-                    rows = table.row_values(rownum)
-                    item = {}
-                    for key, row in zip(colnames, rows):
-                        if key == 'part_num':
-                            item[key] = str(row).split('.')[0]
-                        elif key == 'block_num':
-                            item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0]
-                        elif key == 'line_num':
-                            item[key] = int(row)
-                        else:
-                            if row:
-                                item[key] = Decimal('{0:.2f}'.format(row))
-                            # else:
-                            #     item[key] = ''
-                    list.append(Slab(**item))
-                print(list)
-                id_list = []
-                for i in list:
-                    i.save()
-                    id_list.append(i.id)
-                block_item = Slab.objects.filter(id__in=id_list).values('block_num', 'thickness').annotate(
-                    pics=Count('id'),
-                    m2=Sum('m2'))
-                print(block_item)
-                for item in block_item:
-                    item['item'] = [slab.id for slab in list if
-                                    slab.block_num_id == item['block_num'] and slab.thickness == item['thickness']]
-        return HttpResponse(block_item)
+
+        #         data = xlrd.open_workbook(file_contents=f.read())
+        #         table = data.sheets()[0]
+        #         nrows = table.nrows  # 总行数
+        #         colnames = table.row_values(0)  # 表头列名称数据
+        #         list = []
+        #         for rownum in range(1, nrows):
+        #             rows = table.row_values(rownum)
+        #             item = {}
+        #             for key, row in zip(colnames, rows):
+        #                 if key == 'part_num':
+        #                     item[key] = str(row).split('.')[0]
+        #                 elif key == 'block_num':
+        #                     item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0]
+        #                 elif key == 'line_num':
+        #                     item[key] = int(row)
+        #                 else:
+        #                     if row:
+        #                         item[key] = Decimal('{0:.2f}'.format(row))
+        #                     # else:
+        #                     #     item[key] = ''
+        #             list.append(Slab(**item))
+        #         print(list)
+        #         id_list = []
+        #         for i in list:
+        #             i.save()
+        #             id_list.append(i.id)
+        #         block_item = Slab.objects.filter(id__in=id_list).values('block_num', 'thickness').annotate(
+        #             pics=Count('id'),
+        #             m2=Sum('m2'))
+        #         print(block_item)
+        #         for item in block_item:
+        #             item['item'] = [slab.id for slab in list if
+        #                             slab.block_num_id == item['block_num'] and slab.thickness == item['thickness']]
+        # return HttpResponse(block_item)
         # {block_num: 8801, thickness: 1.5, pics: 48, part: 3, m2: 283.53,
         #  slab: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
 

@@ -3,18 +3,23 @@ from django.views.decorators.http import require_POST
 from .cart import Cart
 from .forms import PriceForm
 
-from utils import str_to_list
+from utils import str_to_list, AddExcelForm
 
 
 def cart_detail(request):
     cart = Cart(request)
-    items = cart.make_slab_list()
-    for item in items:
-        item['price_form'] = PriceForm(
-            initial={'price': cart.cart['price'].get(str(item['block_num']) + str(item['thickness']), 0)})
+    object_list = cart.make_slab_list()
+    import_slabs = cart.show_import_slab_list()
+    import_slab_form = AddExcelForm()
+    for item in object_list:
         item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
+    context = {
+        'object_list': object_list,
+        'import_slabs': import_slabs,
+        'form':import_slab_form,
+    }
 
-    return render(request, 'cart/detail.html', {'object_list': items})
+    return render(request, 'cart/detail.html', context)
 
 
 @require_POST
@@ -46,4 +51,25 @@ def cart_update_price(request):
 def cart_clear(request):
     cart = Cart(request)
     cart.clear()
+    return redirect('cart:index')
+
+
+@require_POST
+def import_slabs(request):
+    item_form = AddExcelForm(request.POST, request.FILES)
+    if item_form.is_valid():
+        f = item_form.files.get('file')
+        if f:
+            from cart.cart import Cart
+            cart = Cart(request)
+            cart.import_slab_list(f)
+    return redirect('cart:index')
+
+
+@require_POST
+def remove_import_slabs(request):
+    cart = Cart(request)
+    block_num = request.POST.get('block_num')
+    thickness = request.POST.get('block_num')
+    cart.remove_import_slabs(block_num, thickness)
     return redirect('cart:index')

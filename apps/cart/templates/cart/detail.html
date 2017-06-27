@@ -6,87 +6,141 @@
 {% endblock %}
 
 {% block main %}
-
-    <table class="table">
-        <tr><th>选择</th>
-            <th>序号</th>
-            <th>荒料编号</th>
-            <th>厚度</th>
-            <th>件数</th>
-            <th>平方</th>
-            <th>单价</th>
-            <th>码单</th>
-            <th>删除</th>
-        </tr>
-
-        {% for object in object_list %}
+    {% if object_list %}
+        <h4 class="page-header">选择了的正式码单</h4>
+        <table class="table">
             <tr>
-            <td><input type="checkbox" value="{{ object.part_num }}"></td>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ object.block_num }}</td>
-                <td>{{ object.thickness }}</td>
-                <td>{{ object.block_pics }}</td>
-                <td>{{ object.block_m2 }}</td>
-                <td>
-                    <form method="post" action="{% url 'cart:update_price' %}">
-                        {{ object.price_form.price }}
-                        <input type="hidden" name="item" value="{{ object.block_num }},{{ object.thickness }}">
-                        <input class="btn btn-default" type="submit" value="更新">
-                        {% csrf_token %}
-                    </form>
-                </td>
-                <td>
-                    <div class="dropdown">
-                        <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
-                           aria-haspopup="true"
-                           aria-expanded="false"><span class="btn btn-default">相关操作</span><span
-                                class="caret"></span></a>
-                        <ul class="dropdown-menu">
-                            <li><a
-                                   href="{% url 'product:slab_list'  object.block_num %}">修改</a></li>
-                            <li role="separator" class="divider"></li>
-                            <li><a
-                                   href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
-                            </li>
-                        </ul>
-                    </div>
-
-
-                </td>
-                <td>
-
-
-                    <form action="{% url 'cart:remove' %}" method="post">
-                        <input type="hidden" name="item" value="{{ object.slab_ids }}">
-                        {% csrf_token %}
-                        <input class="btn btn-danger" type="submit" value="删除">
-                    </form>
-                </td>
+                <th>选择</th>
+                <th>序号</th>
+                <th>荒料编号</th>
+                <th>厚度</th>
+                <th>件数</th>
+                <th>平方</th>
+                <th>码单</th>
+                <th>删除</th>
             </tr>
-            {% empty %}
-            <h4>还没有选择的码单</h4>
-        {% endfor %}
 
-    </table>
-{#    <div class="modal fade" id="slab_list">#}
-{#        <div class="modal-dialog">#}
-{#            <div class="modal-content">#}
-{#                <div class="modal-body">#}
-{##}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{#    </div>#}
-{#    <script>#}
-{#        $("#slab_list").on("hidden.bs.modal", function () {#}
-{#            $(this).removeData("bs.modal");#}
-{#        });#}
-{#    </script>#}
-<div class="btn-group-vertical">
-    <a class="btn btn-default" href="">生成补板单订单</a>
-</div>
+            {% for object in object_list %}
+                <tr>
+                    <td><input type="checkbox" value="{{ object.part_num }}"></td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ object.block_num }}</td>
+                    <td>{{ object.thickness }}</td>
+                    <td>{{ object.block_pics }}</td>
+                    <td>{{ object.block_m2 }}</td>
+                    <td>
+                        <div class="dropdown">
+                            <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-haspopup="true"
+                               aria-expanded="false"><span class="btn btn-default">相关操作</span><span
+                                    class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a
+                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a
+                                        href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                                </li>
+                            </ul>
+                        </div>
+
+
+                    </td>
+                    <td>
+
+
+                        <form action="{% url 'cart:remove' %}" method="post">
+                            <input type="hidden" name="item" value="{{ object.slab_ids }}">
+                            {% csrf_token %}
+                            <input class="btn btn-danger" type="submit" value="删除">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+
+        </table>
+    {% endif %}
+    {% if import_slabs %}
+        <h4 class="page-header">可操作入库的预备码单</h4>
+        <table class="table">
+            <tr>
+                <th>选择</th>
+                <th>序号</th>
+                <th>荒料编号</th>
+                <th>厚度</th>
+                <th>件数</th>
+                <th>平方</th>
+                <th>码单</th>
+                <th>删除</th>
+            </tr>
+
+            {% for object in import_slabs %}
+                <tr>
+                    <td><input type="checkbox" value="{{ object.part_num }}"></td>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ object.block_num }}</td>
+                    <td>{{ object.thickness }}</td>
+                    <td>{{ object.block_pics }}</td>
+                    <td>{{ object.block_m2 }}</td>
+
+                    <td>
+                        <div class="dropdown">
+                            <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                               aria-haspopup="true"
+                               aria-expanded="false"><span class="btn btn-default">相关操作</span><span
+                                    class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a
+                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a></li>
+                                <li role="separator" class="divider"></li>
+                                <li><a
+                                        href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                                </li>
+                            </ul>
+                        </div>
+
+
+                    </td>
+                    <td>
+
+
+                        <form action="{% url 'cart:remove' %}" method="post">
+                            <input type="hidden" name="item" value="{{ object.slab_ids }}">
+                            {% csrf_token %}
+                            <input class="btn btn-danger" type="submit" value="删除">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+
+        </table>
+    {% else %}
+        <h4>没有任何可操作的码单</h4>
+    {% endif %}
+    {#    <div class="modal fade" id="slab_list">#}
+    {#        <div class="modal-dialog">#}
+    {#            <div class="modal-content">#}
+    {#                <div class="modal-body">#}
+    {##}
+    {#                </div>#}
+    {#            </div>#}
+    {#        </div>#}
+    {#    </div>#}
+    {#    <script>#}
+    {#        $("#slab_list").on("hidden.bs.modal", function () {#}
+    {#            $(this).removeData("bs.modal");#}
+    {#        });#}
+    {#    </script>#}
+    <div class="btn-group-vertical">
+        <a class="btn btn-default" href="">生成补板单订单</a>
+    </div>
+    <form action="{% url 'cart:import_slab' %}" method="post" enctype="multipart/form-data">
+        {{ form }}
+        <input type="submit" value="导入码单" class="btn btn-toolbar">
+        {% csrf_token %}
+    </form>
 {% endblock %}
 
 {% block sidebar %}
-{% show_cart_info %}
+    {% show_cart_info %}
 {% endblock %}
