@@ -1,4 +1,4 @@
-from django.shortcuts import render, HttpResponseRedirect, redirect, HttpResponse
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.core import serializers
 
@@ -11,6 +11,7 @@ from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderIte
 from django.forms import inlineformset_factory
 from utils import AddExcelForm
 
+from cart.cart import Cart
 
 
 class ServiceProviderListView(ListView):
@@ -58,12 +59,8 @@ class ProcessOrderDetailView(DetailView):
 
 class OrderFormsetMixin(object):
     def get_inlineformset(self):
-        if self.object is not None:
-            type = self.object.order_type
-        else:
-            type = self.request.GET.get('order_type', None)
-        if type is None:
-            raise '传入数据出错'
+        extra = 1
+        type = self.get_order_type()
         if type == 'TS':
             model = TSOrderItem
             form = TSOrderItemForm
@@ -77,13 +74,19 @@ class OrderFormsetMixin(object):
                 'block_num', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'MB':
-            return MBOrderItemForm
-
+            import_list = self.get_import_list()
+            model = MBOrderItem
+            form = MBOrderItemForm
+            fields = (
+                'block_num', 'thickness', 'pic', 'quantity', 'unit', 'price',
+                'date', 'ps')
+            extra = len(import_list)
         elif type == 'ST':
             model = STOrderItem
             form = STOrderItemForm
-        return inlineformset_factory(self.model, model, form=form, formset=CustomBaseInlineFormset, fields=fields,
-                                     extra=1)
+        return inlineformset_factory(parent_model=self.model, model=model, form=form, formset=CustomBaseInlineFormset,
+                                     fields=fields,
+                                     extra=extra)
 
     def get_context_data(self, **kwargs):
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
@@ -101,8 +104,34 @@ class OrderFormsetMixin(object):
             context['formset'] = formset(self.request.POST, instance=instance)
         else:
             context['form'] = ProcessOrderForm(instance=instance)
+
             context['formset'] = formset(instance=instance)
+            if self.get_order_type() == 'MB':
+                for form, data in zip(context['formset'], self.get_import_list()):
+                    form.initial = {
+                        'block_num': Product.objects.filter(block_num=data['block_num'])[0],
+                        'thickness': data['thickness'],
+                        'pic': data['block_pics'],
+                        'quantity': data['block_m2'],
+                    }
+            context['order_type'] = self.get_order_type()
         return context
+
+    def get_order_type(self):
+        if self.object:
+            type = self.object.order_type
+        elif self.request.POST.get('order_type', None):
+            type = self.request.POST.get('order_type', None)
+        else:
+            type = self.request.GET.get('order_type', None)
+        if type is None:
+            raise ValueError('传入数据出错!')
+        return type
+
+    def get_import_list(self):
+        cart = Cart(self.request)
+        import_list = cart.show_import_slab_list()
+        return import_list
 
 
 class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
@@ -114,7 +143,10 @@ class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
         form = context['form']
         formset = context['formset']
         if form.is_valid() and formset.is_valid():
-            object = form.save()
+            object = form.save(commit=False)
+            object.data_entry_staff = request.user
+            object.save()
+            formset.instance = object
             formset.save()
             # success_url =
             return reverse(object.get_absolute_url)
@@ -137,7 +169,7 @@ class ProcessMbOrderEditView(TemplateView):
             instance = ProcessOrder()
         if self.request.method == 'POST':
             context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
-            context['item_form'] = AddExcelForm(self.request.POST, self.request.FILES)
+            context['item_form'] = MBOrderItemForm(self.request.POST, self.request.FILES)
         else:
             context['form'] = ProcessOrderForm(instance=instance)
             context['item_form'] = AddExcelForm()

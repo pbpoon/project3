@@ -3,11 +3,11 @@
 {% load bootstrap_tags %}
 
 {% block main %}
-    <form action="" method="post" id="formset">
+    <form action="{% url 'process:order_create' %}" method="post" id="formset">
         {% csrf_token %}
         {{ form|as_bootstrap }}
 
-         <table class="table">
+        <table class="table">
             {{ formset.management_form }}
 
             {% for form in formset.forms %}
@@ -72,9 +72,11 @@
         {#            {% endfor %}</tbody>#}
         {#        </table>#}
         <datalist id="block_list">
-            <option v-for="block in block_list" v-bind:value="block.pk">{% verbatim %}{{ block.fields.block_num }}{%endverbatim %}
+            <option v-for="block in block_list" v-bind:value="block.pk">{% verbatim %}{{ block.fields.block_num
+                }}{%endverbatim %}
             </option>
         </datalist>
+        <input type="hidden" name="order_type" value="{{ order_type }}">
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
     <script type="text/javascript">

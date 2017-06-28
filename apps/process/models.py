@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.auth.models import User
-from django.core.urlresolvers import reverse
+from django.shortcuts import reverse
 from datetime import datetime
 from decimal import Decimal
 from django.utils import timezone
@@ -183,9 +183,9 @@ class KSOrderItem(OrderItemBaseModel):
     def get_amount(self):
         cost_by = self.block_num.block_num.order.cost_by
         if cost_by == 'ton':
-            amount = self.quantity / 2.8 * self.price
+            amount = Decimal(self.quantity) / Decimal(2.8) * Decimal(self.price)
         else:
-            amount = self.quantity / self.price
+            amount = Decimal(self.quantity) / Decimal(self.price)
         return Decimal('{0:.2f}'.format(amount))
 
     def get_unit(self):

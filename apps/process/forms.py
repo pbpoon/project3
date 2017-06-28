@@ -43,12 +43,12 @@ class KSOrderItemForm(forms.ModelForm):
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
-            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
-            'thickness': forms.TextInput(attrs={'size': '2'}),
-            'pic': forms.TextInput(attrs={'size': '3'}),
-            'pi': forms.TextInput(attrs={'size': '3'}),
-            'price': forms.TextInput(attrs={'size': '3'}),
+            # 'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
+            'quantity': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
+            'thickness': forms.NumberInput(attrs={'size': '2', 'min': '0', 'type': 'number'}),
+            'pic': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1', 'type': 'number'}),
+            'pi': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1', 'type': 'number'}),
+            'price': forms.NumberInput(attrs={'size': '3'}),
             'date': forms.TextInput(attrs={'type': 'date'}),
         }
 
@@ -59,12 +59,13 @@ class MBOrderItemForm(forms.ModelForm):
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
-            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
-            'think': forms.TextInput(attrs={'size': '2'}),
-            'pic': forms.TextInput(attrs={'size': '3'}),
+            # 'block_num': forms.ChoiceWidget(attrs={'size': '3', 'disabled': 'disabled'}),
+            'quantity': forms.TextInput(
+                attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number', 'disabled': 'disabled'}),
+            'thickness': forms.TextInput(attrs={'size': '2', 'disabled': 'disabled'}),
+            'pic': forms.TextInput(attrs={'size': '3', 'disabled': 'disabled'}),
             'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={ 'type': 'date'}),
+            'date': forms.TextInput(attrs={'type': 'date'}),
         }
 
 
@@ -92,7 +93,7 @@ class SlabListForm(forms.ModelForm):
 class SlabListItemForm(forms.ModelForm):
     class Meta:
         model = Slab
-        exclude =('block_num', 'thickness', 'created', 'updated', 'is_booking', 'is_pickup', 'is_sell', 'm2')
+        exclude = ('block_num', 'thickness', 'created', 'updated', 'is_booking', 'is_pickup', 'is_sell', 'm2')
 
 
 class CustomBaseInlineFormset(forms.BaseInlineFormSet):
