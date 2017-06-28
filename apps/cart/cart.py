@@ -140,7 +140,12 @@ class Cart(object):
         return _list
 
     def remove_import_slabs(self, block_num=None, thickness=None):
-        for item in self.cart['import_slabs']:
+        lst = self.cart['import_slabs']
+        for item in lst[:]:
+            '''
+            lst[:]实际是lst的拷贝，所以遍历删除的时候不会因为删除符合条件的遍历item，令原遍历个数减少而删除不完全
+            可以参考http://www.cnblogs.com/bananaplan/p/remove-listitem-while-iterating.html
+            '''
             if item['block_num'] == block_num and item['thickness'] == thickness:
-                self.cart['import_slabs'].remove(item)
+                lst.remove(item)
         self.save()

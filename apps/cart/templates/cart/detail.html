@@ -104,8 +104,9 @@
                     <td>
 
 
-                        <form action="{% url 'cart:remove' %}" method="post">
-                            <input type="hidden" name="item" value="{{ object.slab_ids }}">
+                        <form action="{% url 'cart:remove_import' %}" method="post">
+                            <input type="hidden" name="block_num" value="{{ object.block_num }}">
+                            <input type="hidden" name="thickness" value="{{ object.thickness }}">
                             {% csrf_token %}
                             <input class="btn btn-danger" type="submit" value="删除">
                         </form>

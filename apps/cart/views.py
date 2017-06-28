@@ -70,6 +70,6 @@ def import_slabs(request):
 def remove_import_slabs(request):
     cart = Cart(request)
     block_num = request.POST.get('block_num')
-    thickness = request.POST.get('block_num')
+    thickness = request.POST.get('thickness')
     cart.remove_import_slabs(block_num, thickness)
     return redirect('cart:index')

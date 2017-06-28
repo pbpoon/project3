@@ -20,6 +20,7 @@ urlpatterns = [
     url(r'^$', views.cart_detail, name='index'),
     url(r'^add/$', views.cart_add, name='add'),
     url(r'^remove/$', views.cart_remove, name='remove'),
+    url(r'^remove-import/$', views.remove_import_slabs, name='remove_import'),
     url(r'^update-price/$', views.cart_update_price, name='update_price'),
     url(r'^clear/$', views.cart_clear, name='clear'),
     url(r'^import_slab/$', views.import_slabs, name='import_slab')
