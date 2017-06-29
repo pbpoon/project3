@@ -4,6 +4,7 @@ from django.core import serializers
 
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
 from products.models import Product, Slab
 from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm, ProcessOrderForm, SlabListForm, \
@@ -146,7 +147,7 @@ class OrderFormsetMixin(object):
         return initial
 
 
-class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
+class ProcessOrderCreateView(LoginRequiredMixin, OrderFormsetMixin, TemplateView):
     model = ProcessOrder
     template_name = 'process/processorder_form.html'
 
@@ -164,7 +165,7 @@ class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
                 cart = Cart(request)
                 for item in items:
                     cart.remove_import_slabs(block_num=item.block_num.block_num_id, thickness=str(item.thickness))
-            success_url = reverse_lazy(self.object.get_absolute_url)
+            success_url = 'process:order_list'
             return redirect(success_url)
         else:
             context = {

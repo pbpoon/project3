@@ -6,6 +6,7 @@ from django.shortcuts import reverse
 from datetime import datetime
 from decimal import Decimal
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 BLOCK_TYPE_CHOICES = (
     ('block', '荒料'),
@@ -91,15 +92,17 @@ class ProcessOrder(models.Model):
         service_type = self.order_type
         date_str = datetime.now().strftime('%y%m')
         if self.order == 'new':
-            last_order =max([item.order for item in ProcessOrder.objects.filter(order_type=service_type)])
-            if last_order:
+            try:
+                last_order = max([item.order for item in ProcessOrder.objects.filter(order_type=service_type)])
                 if date_str in last_order[2:6]:
-                    self.order = service_type + str(int(last_order[2:9]) + 1)
+                    value = service_type + str(int(last_order[2:9]) + 1)
                 else:
-                    self.order = service_type + date_str + '001'  # 新月份
-            else:
-                self.order = service_type + date_str + '001'  # 新记录
-            self.status = 'N'
+                    value = service_type + date_str + '001'  # 新月份
+            except Exception as e:
+                value = service_type + date_str + '001'  # 新记录
+            finally:
+                self.status = 'N'
+                self.order = value
         super(ProcessOrder, self).save(*args, **kwargs)
 
     def get_total_amount(self):

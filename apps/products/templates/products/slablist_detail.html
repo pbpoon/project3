@@ -2,23 +2,32 @@
 {% load cart_tags %}
 {% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}
 {% block main %}
-    <form method="post" id="slab_form" action="{% url 'cart:add' %}">
-        {% for slabs in slab_list %}
+    {#    <form method="post" id="slab_form" action="{% url 'cart:add' %}">#}
+    {% for slabs in slab_list %}
 
 
-            <h2 id="{{ slabs.thickness }}" class="page-header">{{ slabs.thickness }} 厚度/{{ slabs.part_count }}
-                夹/ {{ slabs.block_pics }}
-                件/ {{ slabs.block_m2 }}
-                m2</h2>
-
+        <div id="{{ slabs.thickness }}"><h2 class="page-header">{{ slabs.thickness }} 厚度/{{ slabs.part_count }}
+            夹/ {{ slabs.block_pics }}
+            件/ {{ slabs.block_m2 }}
+            m2</h2>
+            <span class="pull-right"><input type="checkbox" name="{{ slabs.thickness }}all"><a href=""
+                                                                                               class="button">反选</a></span>
             <ul class="list-unstyled">
                 {% for part_key ,part_value in slabs.part_num.items %}
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <li class="panel-title" id="{{ part_key }}">{{ part_key }}# 夹/ {{ part_value.part_pics }}
+                            <li class="panel-title" id="{{ part_key }}">{{ part_key }}#
+                                夹/ {{ part_value.part_pics }}
                                 件/ {{ part_value.part_m2 }} m2
-
-
+                                <span class="pull-right">
+                                        <button class="btn btn-default"
+                                                id="{{ slabs.thickness }}_{{ part_key }}_all"
+                                                onclick="select_all(this.id)" formaction="">全选/不选</button>
+                                        <button
+                                                class="btn btn-default"
+                                                id="{{ slabs.thickness }}_{{ part_key }}_reverse"
+                                                onclick="select_reverse(this.id)" formaction="">反选</button>
+                                    </span>
                         </div>
                         <div class="panel-body">
                             <table class="table">
@@ -30,7 +39,7 @@
                                 </tr>
                                 {% for slab in part_value.slabs %}
                                     <tr>
-                                        <td ><input type="checkbox" name="check_box_list"
+                                        <td><input type="checkbox" name="check_box_list"
                                                    {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
                                                    value="{{ slab.id }}">
                                         </td>
@@ -45,12 +54,12 @@
                     </li>
                 {% endfor %}
             </ul>
+        </div>
 
+    {% endfor %}
 
-        {% endfor %}
-
-        {% csrf_token %}
-    </form>
+    {% csrf_token %}
+    {#    </form>#}
 
 {% endblock %}
 
@@ -63,7 +72,8 @@
             <ul class="list-group">
 
                 {% for item in slab_list %}
-                    <li class="list-group-item"><a href="#{{ item.thickness }}">{{ item.thickness }} 厚度/{{ item.part_count }}
+                    <li class="list-group-item"><a href="#{{ item.thickness }}">{{ item.thickness }}
+                        厚度/{{ item.part_count }}
                         夹/ {{ item.block_pics }}
                         件/ {{ item.block_m2 }}
                         m2</a>
@@ -79,8 +89,24 @@
                 {% endfor %}
 
             </ul>
-        <input class="btn btn-default" type="submit" value="添加到选择列表" form="slab_form">
+            <input class="btn btn-default" type="submit" value="添加到选择列表" form="slab_form">
         </div>
     </div>
+
+    <script>
+        function select_all(id) {
+            var sid = "#" + id;
+            console.log(sid);
+            $(sid + " checkbox").prop("checked", true);
+            $(sid).click(function () {
+                console.log(sid)
+            })
+        }
+
+        function select_reverse(id) {
+            console.log(id)
+        }
+    </script>
+
 
 {% endblock %}
