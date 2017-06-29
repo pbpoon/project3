@@ -88,12 +88,11 @@ class ProcessOrder(models.Model):
 
     def save(self, *args, **kwargs):
         # 格式为 IM1703001
-        service_type = self.service_provider.service_type
+        service_type = self.order_type
         date_str = datetime.now().strftime('%y%m')
         if self.order == 'new':
-            last_record = self.__class__.objects.filter(order__startswith=service_type).last()
-            if last_record:
-                last_order = last_record.order
+            last_order =max([item.order for item in ProcessOrder.objects.filter(order_type=service_type)])
+            if last_order:
                 if date_str in last_order[2:6]:
                     self.order = service_type + str(int(last_order[2:9]) + 1)
                 else:

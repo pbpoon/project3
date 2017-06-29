@@ -59,14 +59,22 @@ class MBOrderItemForm(forms.ModelForm):
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            # 'block_num': forms.ChoiceWidget(attrs={'size': '3', 'disabled': 'disabled'}),
-            'quantity': forms.TextInput(
-                attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number', 'disabled': 'disabled'}),
-            'thickness': forms.TextInput(attrs={'size': '2', 'disabled': 'disabled'}),
-            'pic': forms.TextInput(attrs={'size': '3', 'disabled': 'disabled'}),
-            'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'type': 'date'}),
+            # 'block_num': forms.(attrs={'size': '3', 'disabled': 'disabled'}),
+            'quantity': forms.NumberInput(
+                attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
+            'thickness': forms.NumberInput(attrs={'size': '2', 'type': 'number'}),
+            'pic': forms.NumberInput(attrs={'size': '3', 'type': 'number'}),
+            'price': forms.NumberInput(attrs={'size': '3', 'type': 'number'}),
+            'date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+    def clean(self):
+        cd = self.cleaned_data
+        block_num = cd['block_num']
+        ks_block_num_list = [item.block_num for item in KSOrderItem.objects.filter(order__status='N')]
+        if block_num not in ks_block_num_list:
+            raise forms.ValidationError('荒料编号{}#，没有介石记录请检查清楚'.format(block_num))
+        return self.cleaned_data
 
 
 class STOrderItemForm(forms.ModelForm):

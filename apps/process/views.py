@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.core import serializers
 
@@ -12,6 +12,8 @@ from django.forms import inlineformset_factory
 from utils import AddExcelForm
 
 from cart.cart import Cart
+
+from django.db import transaction
 
 
 class ServiceProviderListView(ListView):
@@ -94,26 +96,28 @@ class OrderFormsetMixin(object):
             self.object = ProcessOrder.objects.get(id=self.kwargs.get('pk'))
         else:
             self.object = None
-        formset = self.get_inlineformset()
         if self.object:
             instance = self.object
         else:
             instance = ProcessOrder()
+        formset = self.get_inlineformset()
         if self.request.method == 'POST':
             context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
             context['formset'] = formset(self.request.POST, instance=instance)
         else:
-            context['form'] = ProcessOrderForm(instance=instance)
+            context['form'] = ProcessOrderForm(instance=instance, initial=self.get_form_initial())
 
             context['formset'] = formset(instance=instance)
             if self.get_order_type() == 'MB':
-                for form, data in zip(context['formset'], self.get_import_list()):
-                    form.initial = {
-                        'block_num': Product.objects.filter(block_num=data['block_num'])[0],
-                        'thickness': data['thickness'],
-                        'pic': data['block_pics'],
-                        'quantity': data['block_m2'],
-                    }
+                if not self.object:
+                    for form, data in zip(context['formset'], self.get_import_list()):
+                        form.initial = {
+                            'block_num': Product.objects.filter(block_num=data['block_num'])[0],
+                            'thickness': data['thickness'],
+                            'pic': data['block_pics'],
+                            'quantity': data['block_m2'],
+                            'unit': 'm2'
+                        }
             context['order_type'] = self.get_order_type()
         return context
 
@@ -130,8 +134,16 @@ class OrderFormsetMixin(object):
 
     def get_import_list(self):
         cart = Cart(self.request)
-        import_list = cart.show_import_slab_list()
-        return import_list
+        return cart.show_import_slab_list()
+
+    def get_form_initial(self):
+        if not self.object:
+            initial = {
+                'order_type': self.get_order_type()
+            }
+        else:
+            initial = {}
+        return initial
 
 
 class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
@@ -143,15 +155,24 @@ class ProcessOrderCreateView(OrderFormsetMixin, TemplateView):
         form = context['form']
         formset = context['formset']
         if form.is_valid() and formset.is_valid():
-            object = form.save(commit=False)
-            object.data_entry_staff = request.user
-            object.save()
-            formset.instance = object
-            formset.save()
-            # success_url =
-            return reverse(object.get_absolute_url)
+            with transaction.atomic():
+                self.object = form.save(commit=False)
+                self.object.data_entry_staff = request.user
+                self.object.save()
+                formset.instance = self.object
+                items = formset.save()
+                cart = Cart(request)
+                for item in items:
+                    cart.remove_import_slabs(block_num=item.block_num.block_num_id, thickness=str(item.thickness))
+            success_url = reverse_lazy(self.object.get_absolute_url)
+            return redirect(success_url)
         else:
-            return self.render_to_response({'form': form, 'formset': formset})
+            context = {
+                'order_type': self.get_order_type(),
+                'form': form,
+                'formset': formset
+            }
+            return self.render_to_response(context)
 
 
 class ProcessMbOrderEditView(TemplateView):

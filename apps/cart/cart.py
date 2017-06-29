@@ -123,7 +123,7 @@ class Cart(object):
     def show_import_slab_list(self):
         lst = self.cart['import_slabs']
         _set = set((item['block_num'], item['thickness']) for item in lst)
-        _list = [dict(block_num=num, thickness=thick) for num, thick in list(_set)]
+        _list = [{'block_num': num, 'thickness': thick} for num, thick in list(_set)]
         for _dict in _list:
             _dict['block_pics'] = len([item for item in lst if
                                        item['block_num'] == _dict['block_num'] and item['thickness'] == _dict[
