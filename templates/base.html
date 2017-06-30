@@ -4,19 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Title{% endblock %}</title>
-{% block head %}
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    {% block head %}
+        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
 
-    {# jQuery #}
-    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+        {# jQuery #}
+        <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
 
-    {# datatables.js #}
-    <script type="text/javascript" charset="utf8"
-            src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
-    <script src="{% static 'js/datatableview.js' %}"></script>
-    <script src="{% static 'js/jquery.formset.js' %}"></script>
-{% endblock %}
+        {# datatables.js #}
+        <script type="text/javascript" charset="utf8"
+                src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
+        <script src="{% static 'js/datatableview.js' %}"></script>
+        <script src="{% static 'js/jquery.formset.js' %}"></script>
+    {% endblock %}
 </head>
 <body>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -42,8 +42,8 @@
             {% block extra_item_3 %}{% endblock %}
         </div>
         <div class="col-md-4">
-                {% block sidebar %}
-                {% endblock %}
+            {% block sidebar %}
+            {% endblock %}
         </div>
     </div>
 {% endblock %}
@@ -51,7 +51,6 @@
 
 <script type="text/javascript">
     $(document).ready(function () {
-        Vue.config.delimiters = ["[[", "]]"]
         {% block domready %}
         {% endblock %}
     })

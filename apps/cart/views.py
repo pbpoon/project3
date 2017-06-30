@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 from .cart import Cart
-from .forms import PriceForm
-
+from django.contrib import messages
 from utils import str_to_list, AddExcelForm
 
 
@@ -16,7 +15,7 @@ def cart_detail(request):
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,
-        'form':import_slab_form,
+        'form': import_slab_form,
     }
 
     return render(request, 'cart/detail.html', context)
@@ -26,8 +25,11 @@ def cart_detail(request):
 def cart_add(request):
     cart = Cart(request)
     chk = request.POST.getlist('check_box_list')
-    cart.add(chk)
-    return redirect('cart:index')
+    block_num = request.POST.get('block_num')
+    cart.add(block_num, chk)
+    path = request.POST.get('path')
+    messages.success(request, '已成功更新选择列表！')
+    return redirect(path)
 
 
 @require_POST

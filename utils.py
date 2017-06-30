@@ -6,7 +6,7 @@ import re
 
 
 def str_to_list(str):
-    s, *t, r = re.split(r'[\[,\]]', str)
+    s, *t, r = re.split(r'[\[,\s\]]\s', str)
     if not t:
         return None
     if s:
