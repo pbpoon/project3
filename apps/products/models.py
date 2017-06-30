@@ -69,7 +69,7 @@ class Product(models.Model):
     def get_slab_list(self, slab_ids=None, object_format=False):
         obj = self.slab.all()
         if slab_ids:
-            obj = self.slab.filter(id__in=slab_ids)
+            obj = obj.filter(id__in=slab_ids)
         slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
                                                                   block_m2=models.Sum('m2'))
         list = []

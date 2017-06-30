@@ -6,28 +6,45 @@
     {% for slabs in slab_list %}
 
 
-        <div id="{{ slabs.thickness }}"><h2 class="page-header">{{ slabs.thickness }} 厚度/{{ slabs.part_count }}
-            夹/ {{ slabs.block_pics }}
-            件/ {{ slabs.block_m2 }}
-            m2</h2>
-            <span class="pull-right"><input type="checkbox" name="{{ slabs.thickness }}all"><a href=""
-                                                                                               class="button">反选</a></span>
+        <div id="{{ slabs.thickness|slugify }}">
+            <h2 class="page-header">{{ slabs.thickness }}
+                厚度/{{ slabs.part_count }}
+                夹/ {{ slabs.block_pics }}
+                件/ {{ slabs.block_m2 }}
+                m2
+                <small class="pull-right">
+                    <div class="checkbox btn btn-default btn-sm">
+                        <label>
+                            <input type="checkbox"
+                                   id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
+                                   onclick="select_all(this.id, this.checked)">全选/不选
+                        </label>
+                    </div>
+                </small>
+            </h2>
+
             <ul class="list-unstyled">
                 {% for part_key ,part_value in slabs.part_num.items %}
-                    <div class="panel panel-default">
+                    <div class="panel panel-default" id="{{ slabs.thickness|slugify }}{{ part_key }}">
                         <div class="panel-heading">
-                            <li class="panel-title" id="{{ part_key }}">{{ part_key }}#
+                            <li class="panel-title">{{ part_key }}#
                                 夹/ {{ part_value.part_pics }}
                                 件/ {{ part_value.part_m2 }} m2
-                                <span class="pull-right">
-                                        <button class="btn btn-default"
-                                                id="{{ slabs.thickness }}_{{ part_key }}_all"
-                                                onclick="select_all(this.id)" formaction="">全选/不选</button>
-                                        <button
-                                                class="btn btn-default"
-                                                id="{{ slabs.thickness }}_{{ part_key }}_reverse"
-                                                onclick="select_reverse(this.id)" formaction="">反选</button>
-                                    </span>
+
+                                <div class="pull-right btn-group">
+                                    <div class="checkbox btn btn-default btn-sm">
+                                        <label>
+                                            <input type="checkbox"
+                                                   id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
+                                                   onclick="select_all(this.id, this.checked)">全选/不选
+                                        </label>
+                                    </div>
+                                    <a
+                                            class="btn btn-default btn-sm"
+                                            id="{{ slabs.thickness|slugify }}{{ part_key }}_reverse"
+                                            onclick="select_reverse(this.id)">反选
+                                    </a>
+                                </div>
                         </div>
                         <div class="panel-body">
                             <table class="table">
@@ -38,14 +55,15 @@
                                     <th>m2</th>
                                 </tr>
                                 {% for slab in part_value.slabs %}
-                                    <tr>
-                                        <td><input type="checkbox" name="check_box_list"
+                                    <tr class="clickable-row">
+                                        <td>
+                                            <input type="checkbox" name="check_box_list"
                                                    {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
                                                    value="{{ slab.id }}">
                                         </td>
                                         <td>{{ slab.line_num }}</td>
                                         <td>{{ slab }}</td>
-                                        <td>{{ slab.m2 }}</td>
+                                        <td id="{{ slab.id }}m2">{{ slab.m2 }}</td>
                                     </tr>
                                 {% endfor %}
                             </table>
@@ -72,14 +90,15 @@
             <ul class="list-group">
 
                 {% for item in slab_list %}
-                    <li class="list-group-item"><a href="#{{ item.thickness }}">{{ item.thickness }}
+                    <li class="list-group-item"><a href="#{{ item.thickness|slugify }}">{{ item.thickness }}
                         厚度/{{ item.part_count }}
                         夹/ {{ item.block_pics }}
                         件/ {{ item.block_m2 }}
                         m2</a>
                         <ul>
                             {% for part_key ,part_value in item.part_num.items %}
-                                <li><a href="#{{ part_key }}">{{ part_key }}# 夹/ {{ part_value.part_pics }}
+                                <li><a href="#{{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#
+                                    夹/ {{ part_value.part_pics }}
                                     件/ {{ part_value.part_m2 }} m2</a></li>
                             {% endfor %}
                         </ul>
@@ -94,18 +113,51 @@
     </div>
 
     <script>
-        function select_all(id) {
-            var sid = "#" + id;
-            console.log(sid);
-            $(sid + " checkbox").prop("checked", true);
-            $(sid).click(function () {
-                console.log(sid)
-            })
+        function select_all(id, vall) {
+            var sid = id.split('_').slice(0, 1).join('_');
+
+            console.log(sid)
+            console.log(vall);
+            $("#" + sid + " :checkbox").each(function () {
+                $(this).prop("checked", vall);
+            });
+            sum_m2(watch_select());
+
         }
+        ;
 
         function select_reverse(id) {
-            console.log(id)
+            var sid = id.split('_').slice(0, 1).join('_');
+            console.log(sid)
+            $("#" + sid + " :checkbox").each(function () {
+                $(this).prop("checked", !this.checked);
+                alert($(this).val())
+            });
         }
+
+        function watch_select() {
+            var all_sid = new Array();
+            console.log("in watch");
+            $(":checkbox").each(function () {
+                if (this.checked) {
+                    all_sid.push($(this).val())
+                }
+
+            });
+            return all_sid
+        };
+
+        function sum_m2(sid_list) {
+            var sum = 0;
+            for (i in sid_list){
+                console.log(i)
+                if (i!=0){
+              var m2 = new Number ($('#'+i+'m2').text())
+                sum += m2
+            }}
+            alert(sum)
+        }
+
     </script>
 
 
