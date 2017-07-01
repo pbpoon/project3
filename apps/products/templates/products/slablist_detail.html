@@ -79,9 +79,8 @@
 
 {% block sidebar %}
 
-    <div class="row">
         <div style="width: 260px;" data-spy="affix"
-             data-offset-top="60">
+             data-offset-top="200">
             {% show_cart_info %}
             <ul class="list-group">
 
@@ -108,10 +107,7 @@
                 </li>
                 <li><input  style="width: 260px" class="btn btn-primary" type="submit" value="添加到选择列表" form="slab_form"></li>
             </ul>
-
-
         </div>
-    </div>
     <script src="{% static "js/myJS.js" %}"></script>
 {% endblock %}
 {% block domready %}

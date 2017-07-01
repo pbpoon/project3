@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.http import JsonResponse
 from django.core import serializers
 
@@ -63,7 +63,7 @@ class ProcessOrderDetailView(DetailView):
 class OrderFormsetMixin(object):
     def get_inlineformset(self):
         extra = 1
-        type = self.get_order_type()
+        type = self.order_type
         if type == 'TS':
             model = TSOrderItem
             form = TSOrderItemForm
@@ -101,7 +101,11 @@ class OrderFormsetMixin(object):
             instance = self.object
         else:
             instance = ProcessOrder()
+
+        self.order_type = self.get_order_type()
+
         formset = self.get_inlineformset()
+
         if self.request.method == 'POST':
             context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
             context['formset'] = formset(self.request.POST, instance=instance)
@@ -109,7 +113,7 @@ class OrderFormsetMixin(object):
             context['form'] = ProcessOrderForm(instance=instance, initial=self.get_form_initial())
 
             context['formset'] = formset(instance=instance)
-            if self.get_order_type() == 'MB':
+            if self.order_type == 'MB':
                 if not self.object:
                     for form, data in zip(context['formset'], self.get_import_list()):
                         form.initial = {
@@ -119,7 +123,8 @@ class OrderFormsetMixin(object):
                             'quantity': data['block_m2'],
                             'unit': 'm2'
                         }
-            context['order_type'] = self.get_order_type()
+            context['order_type'] = self.order_type
+            context['data_list'] = self.get_block_num_datalist()
         return context
 
     def get_order_type(self):
@@ -140,11 +145,22 @@ class OrderFormsetMixin(object):
     def get_form_initial(self):
         if not self.object:
             initial = {
-                'order_type': self.get_order_type()
+                'order_type': self.order_type
             }
         else:
             initial = {}
         return initial
+
+    def get_block_num_datalist(self):
+        if self.order_type == 'KS':
+            block_lst = Product.objects.filter(ksorderitem_cost__isnull=True)
+        elif self.order_type == 'MB':
+            block_lst = Product.objects.filter(ksorderitem_cost__isnull=False)
+        elif self.order_type == 'TS':
+            block_lst = Product.objects.filter(tsorderitem_cost__isnull=True)
+        else:
+            block_lst = Product.objects.all()
+        return block_lst
 
 
 class ProcessOrderCreateView(LoginRequiredMixin, OrderFormsetMixin, TemplateView):
@@ -198,14 +214,12 @@ class ProcessMbOrderEditView(TemplateView):
         return context
 
 
-class GetBlockListView(View):
-    def get(self, request):
-        block_list = Product.objects.filter(id__in=[1, 2, 3])
-        block_list = serializers.serialize('json', block_list)
-        data = {
-            'block_list': block_list
-        }
-        return JsonResponse(data, safe=False)
+import json
+
+
+def get_block_list(request):
+    if request.is_ajax():
+        return HttpResponse(json.dumps({'message': 'awesome'}, ensure_ascii=False), mimetype='application/javascript')
 
 
 

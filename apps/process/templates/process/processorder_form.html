@@ -71,39 +71,22 @@
         {##}
         {#            {% endfor %}</tbody>#}
         {#        </table>#}
-        <datalist id="block_list">
-            <option v-for="block in block_list" v-bind:value="block.pk">{% verbatim %}{{ block.fields.block_num
-                }}{%endverbatim %}
-            </option>
+        <datalist id="block_info">
+            {% for block_num in data_list %}
+                <option value="{{ block_num }}" data-id="{{ block_num.id }}">{{ block_num }}</option>
+            {% endfor %}
         </datalist>
         <input type="hidden" name="order_type" value="{{ order_type }}">
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
     <script type="text/javascript">
-        {#        function selectOnchang(obj) {#}
-        {#            //获取被选中的option标签选项#}
-        {#            a = obj.id.split('-',2)#}
-        {#            var y = $('#'+a.join('-')+'-line_num')#}
-        {#            y.val((parseInt(y.val())+1))#}
-        {#        };#}
-        new Vue({
-            el: '#formset',
-            data: {
-                block_list: ''
-            },
-            methods: {
-                get_list: function () {
-                    console.log(this.data);
-                    axios.get('{% url 'process:get_block_list' %}').then(function (response) {
-                        console.log(response);
-                        this.$set('block_list', response.data.block_lis)
-                        console.log('after');
-                        console.log(this.data);
-                    }).catch(function (error) {
-                        console.log(error);
-                    })
-                }
-            }
-        })
+        function get_source(id) {
+            console.log(id);
+            var block = $('#' + id).val()
+            console.log($('#block_info option').data('id'))
+        }
+
     </script>
+    <script src="http://code.ziqiangxuetang.com/media/django/csrf.js"></script>
+    <script src="//cdn.bootcss.com/typeahead.js/0.11.1/bloodhound.js"></script>
 {% endblock %}

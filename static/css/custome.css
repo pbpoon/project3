@@ -13,3 +13,7 @@
 .breadcrumb a {
     margin: 5px;
 }
+
+.affix {
+    top:30px;
+}

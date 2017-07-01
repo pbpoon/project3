@@ -27,7 +27,8 @@ class TSOrderItemForm(forms.ModelForm):
         exclude = ('amount', 'order')
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            # 'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_list', 'v-on:click': 'get_list'}),
+            'block_num': forms.TextInput(
+                attrs={'size': '4', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}),
             # 'be_from': forms.Select(attrs={'size': '3'}),
             # 'destination': forms.Select(attrs={'size': '3'}),
             'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
@@ -36,6 +37,25 @@ class TSOrderItemForm(forms.ModelForm):
             'date': forms.TextInput(attrs={'type': 'date'}),
         }
 
+    def clean_destination(self):
+        cd = self.cleaned_data
+        block_num = cd['block_num']
+        bf = cd['be_from']
+        de = cd['destination']
+        if bf and de:
+            if bf == de:
+                raise forms.ValidationError('编号{}起始地 与 目的地不能相同!')
+        return de
+
+    def clean_block_num(self):
+        block_num = self.cleaned_data['block_num']
+        block_num = Product.objects.get(block_num_id=block_num).block_num_id
+        return block_num
+
+    def clean(self):
+        cd = self.cleaned_data
+        print(cd)
+        return cd
 
 class KSOrderItemForm(forms.ModelForm):
     class Meta:
@@ -43,7 +63,9 @@ class KSOrderItemForm(forms.ModelForm):
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            # 'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
+            'block_num': forms.TextInput(
+                attrs={'size': '4', 'class': "block_info", 'list': "block_info",
+                       'onchange': 'get_source(this.id)'}),
             'quantity': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
             'thickness': forms.NumberInput(attrs={'size': '2', 'min': '0', 'type': 'number'}),
             'pic': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1', 'type': 'number'}),
@@ -59,7 +81,8 @@ class MBOrderItemForm(forms.ModelForm):
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            # 'block_num': forms.(attrs={'size': '3', 'disabled': 'disabled'}),
+            'block_num': forms.TextInput(
+                attrs={'size': '4', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}),
             'quantity': forms.NumberInput(
                 attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
             'thickness': forms.NumberInput(attrs={'size': '2', 'type': 'number'}),

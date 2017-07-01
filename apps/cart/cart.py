@@ -20,10 +20,12 @@ class Cart(object):
         self.cart = cart
 
     # 添加product 到 cart
-    def add(self, slab_ids):
-        for id in slab_ids:
-            if id not in self.cart['slab_ids']:
-                self.cart['slab_ids'].append(id)
+    def add(self, block_num, slab_ids):
+        obj = [item['id'] for item in Product.objects.get(block_num=block_num).slab.values('id')]
+        cart_lst = self.cart['slab_ids']
+        new_lst = [i for i in cart_lst[:] if int(i) not in obj]
+        new_lst.extend(slab_ids)
+        self.cart['slab_ids']=new_lst
         self.make_price_list()
         self.save()
 
