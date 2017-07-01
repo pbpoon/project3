@@ -68,7 +68,7 @@ class OrderFormsetMixin(object):
             model = TSOrderItem
             form = TSOrderItemForm
             fields = (
-                'block_num', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price',
+                'block_num', 'block_name', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'KS':
             model = KSOrderItem
@@ -89,7 +89,7 @@ class OrderFormsetMixin(object):
             form = STOrderItemForm
         return inlineformset_factory(parent_model=self.model, model=model, form=form, formset=CustomBaseInlineFormset,
                                      fields=fields,
-                                     extra=extra)
+                                     extra=extra, can_delete=True)
 
     def get_context_data(self, **kwargs):
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
@@ -178,9 +178,10 @@ class ProcessOrderCreateView(LoginRequiredMixin, OrderFormsetMixin, TemplateView
                 self.object.save()
                 formset.instance = self.object
                 items = formset.save()
-                cart = Cart(request)
-                for item in items:
-                    cart.remove_import_slabs(block_num=item.block_num.block_num_id, thickness=str(item.thickness))
+                if self.order_type == 'MB':
+                    cart = Cart(request)
+                    for item in items:
+                        cart.remove_import_slabs(block_num=item.block_num.block_num_id, thickness=str(item.thickness))
             success_url = 'process:order_list'
             return redirect(success_url)
         else:

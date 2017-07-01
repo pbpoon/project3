@@ -32,7 +32,7 @@
                         <div class="dropdown">
                             <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
                                aria-haspopup="true"
-                               aria-expanded="false"><span class="btn btn-default">相关操作</span><span
+                               aria-expanded="false"><span class="btn btn-default btn-sm">操作</span><span
                                     class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <li><a
@@ -52,7 +52,7 @@
                         <form action="{% url 'cart:remove' %}" method="post">
                             <input type="hidden" name="item" value="{{ object.slab_ids }}">
                             {% csrf_token %}
-                            <input class="btn btn-danger" type="submit" value="删除">
+                            <input class="btn btn-danger btn-sm" type="submit" value="删除">
                         </form>
                     </td>
                 </tr>

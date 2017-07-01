@@ -7,7 +7,7 @@
         {% csrf_token %}
         {{ form|as_bootstrap }}
 
-        <table class="table">
+        <table class="table" id="formset">
             {{ formset.management_form }}
             {{ formset.errors }}
             {% for form in formset.forms %}
@@ -81,9 +81,15 @@
     </form>
     <script type="text/javascript">
         function get_source(id) {
+            var ids = $('#formset ')
             console.log(id);
-            var block = $('#' + id).val()
-            console.log($('#block_info option').data('id'))
+            var block_num_id = id.split('_').splice(0, 2).join('_') + '_num'
+            console.log(block_num_id)
+            var value = $('#' + id).val()
+            console.log(value)
+            var select_id = $('#block_info').find('option[value="' + value + '"]').data('id')
+            console.log(select_id)
+            $('#'+block_num_id).val(select_id)
         }
 
     </script>

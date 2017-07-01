@@ -21,11 +21,11 @@ class Cart(object):
 
     # 添加product 到 cart
     def add(self, block_num, slab_ids):
-        obj = [item['id'] for item in Product.objects.get(block_num=block_num).slab.values('id')]
+        obj = [item['id'] for item in Product.objects.get(block_num_id=block_num).slab.values('id')]
         cart_lst = self.cart['slab_ids']
-        new_lst = [i for i in cart_lst[:] if int(i) not in obj]
-        new_lst.extend(slab_ids)
-        self.cart['slab_ids']=new_lst
+        cart_lst = [i for i in cart_lst if int(i) not in obj]
+        self.cart['slab_ids'] = cart_lst
+        self.cart['slab_ids'].extend(slab_ids)
         self.make_price_list()
         self.save()
 
@@ -38,7 +38,7 @@ class Cart(object):
     # 把product在cart删除
     def remove(self, slab_ids):
         for id in slab_ids:
-            if id in self.cart['slab_ids']:
+            if id in self.cart['slab_ids'][:]:
                 self.cart['slab_ids'].remove(id)
         self.save()
 
@@ -64,7 +64,6 @@ class Cart(object):
         price_list = self.cart['price']
         for item in slab_list:
             price_list.setdefault(str(item['block_num']) + str(item['thickness']), 0)
-        print(price_list)
 
     def update_price(self, item, price=None):
         price_list = self.cart['price']

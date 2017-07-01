@@ -21,16 +21,16 @@ def block_num_choice():
     return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
 
 
+
 class TSOrderItemForm(forms.ModelForm):
+    block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
+        attrs={'size': '5', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}))
+
     class Meta:
         model = TSOrderItem
-        exclude = ('amount', 'order')
+        fields = ['block_name', 'be_from', 'block_type', 'destination', 'quantity', 'unit', 'price', 'date', 'ps']
         widgets = {
-            # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(
-                attrs={'size': '4', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}),
-            # 'be_from': forms.Select(attrs={'size': '3'}),
-            # 'destination': forms.Select(attrs={'size': '3'}),
+            'block_num': forms.HiddenInput(),
             'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
             'price': forms.TextInput(attrs={'size': '3'}),
             'amount': forms.TextInput(attrs={'size': '3'}),
@@ -39,7 +39,7 @@ class TSOrderItemForm(forms.ModelForm):
 
     def clean_destination(self):
         cd = self.cleaned_data
-        block_num = cd['block_num']
+        block_num = cd.get('block_num', None)
         bf = cd['be_from']
         de = cd['destination']
         if bf and de:
@@ -47,25 +47,28 @@ class TSOrderItemForm(forms.ModelForm):
                 raise forms.ValidationError('编号{}起始地 与 目的地不能相同!')
         return de
 
-    def clean_block_num(self):
-        block_num = self.cleaned_data['block_num']
-        block_num = Product.objects.get(block_num_id=block_num).block_num_id
-        return block_num
-
     def clean(self):
         cd = self.cleaned_data
         print(cd)
         return cd
 
-class KSOrderItemForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        # initial = kwargs.get('initial', {})
+        # initial['block_name'] ='8803'
+        # kwargs['initial'] = initial
+        super(TSOrderItemForm, self).__init__(*args, **kwargs)
+        block_id = self.initial.get('block_num',None)
+        if block_id is not None:
+            self.initial['block_name'] = Product.objects.get(id=block_id).block_num_id
+
+class KSOrderItemForm(TSOrderItemForm):
+
     class Meta:
         model = KSOrderItem
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(
-                attrs={'size': '4', 'class': "block_info", 'list': "block_info",
-                       'onchange': 'get_source(this.id)'}),
+            'block_num': forms.HiddenInput(),
             'quantity': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
             'thickness': forms.NumberInput(attrs={'size': '2', 'min': '0', 'type': 'number'}),
             'pic': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1', 'type': 'number'}),
@@ -101,12 +104,14 @@ class MBOrderItemForm(forms.ModelForm):
 
 
 class STOrderItemForm(forms.ModelForm):
+    block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
+        attrs={'size': '4', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}))
+
     class Meta:
         model = STOrderItem
         exclude = ('amount',)
         widgets = {
-            # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(attrs={'size': '3', 'list': 'block_num', 'v-on:click': 'get_list'}),
+            'block_num': forms.HiddenInput(),
             'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
             'unit': forms.TextInput(attrs={'size': '1'}),
             'think': forms.TextInput(attrs={'size': '2'}),
@@ -129,11 +134,12 @@ class SlabListItemForm(forms.ModelForm):
 
 class CustomBaseInlineFormset(forms.BaseInlineFormSet):
     def clean(self):
-        if any(self.errors):
-            return
+        # if any(self.errors):
+        #     return
         block_list = []
         for form in self.forms:
-            block_num = form.cleaned_data['block_num']
-            if block_num in block_list:
-                raise forms.ValidationError('荒料编号不能重复')
-            block_list.append(block_num)
+            if form.cleaned_data.get('block_num'):
+                block_num = form.cleaned_data['block_num']
+                if block_num in block_list:
+                    raise forms.ValidationError('荒料编号不能重复')
+                block_list.append(block_num)
