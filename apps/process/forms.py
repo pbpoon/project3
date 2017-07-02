@@ -10,16 +10,16 @@ from products.models import Product, Slab
 class ProcessOrderForm(forms.ModelForm):
     class Meta:
         model = ProcessOrder
-        exclude = ('data_entry_staff', 'order', 'line_num')
+        exclude = ('order', 'line_num')
         widgets = {
             'date': forms.TextInput(attrs={'type': 'date'}),
-            'order_type': forms.HiddenInput()
+            'order_type': forms.HiddenInput(),
+            'data_entry_staff': forms.HiddenInput(),
         }
 
 
 def block_num_choice():
     return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
-
 
 
 class TSOrderItemForm(forms.ModelForm):
@@ -44,25 +44,22 @@ class TSOrderItemForm(forms.ModelForm):
         de = cd['destination']
         if bf and de:
             if bf == de:
-                raise forms.ValidationError('编号{}起始地 与 目的地不能相同!')
+                raise forms.ValidationError('编号{}起始地 与 目的地不能相同!'.format(block_num))
         return de
 
-    def clean(self):
-        cd = self.cleaned_data
-        print(cd)
-        return cd
 
     def __init__(self, *args, **kwargs):
         # initial = kwargs.get('initial', {})
         # initial['block_name'] ='8803'
         # kwargs['initial'] = initial
         super(TSOrderItemForm, self).__init__(*args, **kwargs)
-        block_id = self.initial.get('block_num',None)
+        block_id = self.initial.get('block_num', None)
+        self.empty_permitted = False
         if block_id is not None:
             self.initial['block_name'] = Product.objects.get(id=block_id).block_num_id
 
-class KSOrderItemForm(TSOrderItemForm):
 
+class KSOrderItemForm(TSOrderItemForm):
     class Meta:
         model = KSOrderItem
         exclude = ('amount',)
@@ -78,14 +75,13 @@ class KSOrderItemForm(TSOrderItemForm):
         }
 
 
-class MBOrderItemForm(forms.ModelForm):
+class MBOrderItemForm(TSOrderItemForm):
     class Meta:
         model = MBOrderItem
         exclude = ('amount',)
         widgets = {
             # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.TextInput(
-                attrs={'size': '4', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}),
+            'block_num': forms.HiddenInput(),
             'quantity': forms.NumberInput(
                 attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
             'thickness': forms.NumberInput(attrs={'size': '2', 'type': 'number'}),
@@ -94,13 +90,16 @@ class MBOrderItemForm(forms.ModelForm):
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
 
-    def clean(self):
-        cd = self.cleaned_data
-        block_num = cd['block_num']
+    def __init__(self, *args, **kwargs):
+        super(MBOrderItemForm, self).__init__(*args, **kwargs)
+        self.empty_permitted = False
+
+    def clean_block_num(self):
+        block_num = self.cleaned_data.get('block_num')
         ks_block_num_list = [item.block_num for item in KSOrderItem.objects.filter(order__status='N')]
         if block_num not in ks_block_num_list:
             raise forms.ValidationError('荒料编号{}#，没有介石记录请检查清楚'.format(block_num))
-        return self.cleaned_data
+        return block_num
 
 
 class STOrderItemForm(forms.ModelForm):
@@ -133,6 +132,11 @@ class SlabListItemForm(forms.ModelForm):
 
 
 class CustomBaseInlineFormset(forms.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super(CustomBaseInlineFormset, self).__init__(*args, **kwargs)
+        for form in self.forms:
+            form.empty_permitted = False
+
     def clean(self):
         # if any(self.errors):
         #     return
@@ -141,5 +145,6 @@ class CustomBaseInlineFormset(forms.BaseInlineFormSet):
             if form.cleaned_data.get('block_num'):
                 block_num = form.cleaned_data['block_num']
                 if block_num in block_list:
-                    raise forms.ValidationError('荒料编号不能重复')
+                    raise forms.ValidationError('荒料编号{}有重复数据'.format(block_num))
                 block_list.append(block_num)
+                # super(CustomBaseInlineFormset, self).clean()

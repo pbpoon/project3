@@ -74,14 +74,14 @@ class OrderFormsetMixin(object):
             model = KSOrderItem
             form = KSOrderItemForm
             fields = (
-                'block_num', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
+                'block_num', 'block_name', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'MB':
             import_list = self.get_import_list()
             model = MBOrderItem
             form = MBOrderItemForm
             fields = (
-                'block_num', 'thickness', 'pic', 'quantity', 'unit', 'price',
+                'block_num', 'block_name', 'thickness', 'pic', 'quantity', 'unit', 'price',
                 'date', 'ps')
             extra = len(import_list)
         elif type == 'ST':
@@ -93,31 +93,24 @@ class OrderFormsetMixin(object):
 
     def get_context_data(self, **kwargs):
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
-        if self.kwargs.get('pk'):
-            self.object = ProcessOrder.objects.get(id=self.kwargs.get('pk'))
-        else:
-            self.object = None
-        if self.object:
-            instance = self.object
-        else:
-            instance = ProcessOrder()
 
         self.order_type = self.get_order_type()
 
         formset = self.get_inlineformset()
 
         if self.request.method == 'POST':
-            context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
-            context['formset'] = formset(self.request.POST, instance=instance)
+            context['itemformset'] = formset(self.request.POST)
         else:
-            context['form'] = ProcessOrderForm(instance=instance, initial=self.get_form_initial())
+            # context['form'] = ProcessOrderForm(instance=instance, initial=self.get_form_initial())
 
-            context['formset'] = formset(instance=instance)
+            context['itemformset'] = formset(instance =self.object)
             if self.order_type == 'MB':
-                if not self.object:
+                if self.object is None:
                     for form, data in zip(context['formset'], self.get_import_list()):
                         form.initial = {
-                            'block_num': Product.objects.filter(block_num=data['block_num'])[0],
+                            'block_name': data['block_num'],
+                            'block_num': Product.objects.filter(block_num_id=data['block_num'])[0],
+                            # 'block_num': Product.objects.filter(block_num=data['block_num'])[0],
                             'thickness': data['thickness'],
                             'pic': data['block_pics'],
                             'quantity': data['block_m2'],
@@ -142,15 +135,6 @@ class OrderFormsetMixin(object):
         cart = Cart(self.request)
         return cart.show_import_slab_list()
 
-    def get_form_initial(self):
-        if not self.object:
-            initial = {
-                'order_type': self.order_type
-            }
-        else:
-            initial = {}
-        return initial
-
     def get_block_num_datalist(self):
         if self.order_type == 'KS':
             block_lst = Product.objects.filter(ksorderitem_cost__isnull=True)
@@ -162,57 +146,46 @@ class OrderFormsetMixin(object):
             block_lst = Product.objects.all()
         return block_lst
 
-
-class ProcessOrderCreateView(LoginRequiredMixin, OrderFormsetMixin, TemplateView):
-    model = ProcessOrder
-    template_name = 'process/processorder_form.html'
-
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
-        form = context['form']
-        formset = context['formset']
-        if form.is_valid() and formset.is_valid():
-            with transaction.atomic():
-                self.object = form.save(commit=False)
-                self.object.data_entry_staff = request.user
-                self.object.save()
+    def form_valid(self, form):
+        data = self.get_context_data()
+        formset = data['itemformset']
+        self.object = form.save(commit=False)
+        self.object.data_entry_staff = self.request.user
+        with transaction.atomic():
+            self.object.save()
+            if formset.is_valid():
                 formset.instance = self.object
                 items = formset.save()
                 if self.order_type == 'MB':
-                    cart = Cart(request)
+                    cart = Cart(self.request)
                     for item in items:
                         cart.remove_import_slabs(block_num=item.block_num.block_num_id, thickness=str(item.thickness))
-            success_url = 'process:order_list'
-            return redirect(success_url)
-        else:
-            context = {
-                'order_type': self.get_order_type(),
-                'form': form,
-                'formset': formset
-            }
-            return self.render_to_response(context)
+                # success_url = 'process:order_list'
+                # return redirect(success_url)
+                return super(OrderFormsetMixin, self).form_valid(form)
+            else:
+                context = {
+                    'order_type': self.get_order_type(),
+                    'form': form,
+                    'itemformset': formset
+                }
+        return self.render_to_response(context)
+
+    def get_initial(self):
+        if self.object is None:
+            initial = {'data_entry_staff': self.request.user}
+            return initial
+        return super(OrderFormsetMixin, self).get_initial()
 
 
-class ProcessMbOrderEditView(TemplateView):
-    template_name = 'process/processorder_mb_form.html'
+class ProcessOrderCreateView(LoginRequiredMixin, OrderFormsetMixin, CreateView):
+    model = ProcessOrder
+    form_class = ProcessOrderForm
 
-    def get_context_data(self, **kwargs):
-        context = super(ProcessMbOrderEditView, self).get_context_data(**kwargs)
-        if self.kwargs.get('pk'):
-            self.object = ProcessOrder.objects.get(id=self.kwargs.get('pk'))
-        else:
-            self.object = None
-        if self.object:
-            instance = self.object
-        else:
-            instance = ProcessOrder()
-        if self.request.method == 'POST':
-            context['form'] = ProcessOrderForm(self.request.POST, instance=instance)
-            context['item_form'] = MBOrderItemForm(self.request.POST, self.request.FILES)
-        else:
-            context['form'] = ProcessOrderForm(instance=instance)
-            context['item_form'] = AddExcelForm()
-        return context
+
+class ProcessOrderUpdateView(LoginRequiredMixin, OrderFormsetMixin, UpdateView):
+    model = ProcessOrder
+    form_class = ProcessOrderForm
 
 
 import json

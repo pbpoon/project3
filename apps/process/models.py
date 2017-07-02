@@ -147,7 +147,7 @@ class OrderItemBaseModel(models.Model):
 
 
 class TSOrderItem(OrderItemBaseModel):
-    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6, default='block')
+    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6)
     be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地', related_name='TS_from')
     destination = models.ForeignKey('ServiceProvider', related_name='TS_to', verbose_name='目的')
     slab_list = GenericRelation('SlabList')
