@@ -87,6 +87,8 @@ class OrderFormsetMixin(object):
         elif type == 'ST':
             model = STOrderItem
             form = STOrderItemForm
+        if self.object is not None:
+            extra = 0
         return inlineformset_factory(parent_model=self.model, model=model, form=form, formset=CustomBaseInlineFormset,
                                      fields=fields,
                                      extra=extra, can_delete=True)
@@ -101,12 +103,10 @@ class OrderFormsetMixin(object):
         if self.request.method == 'POST':
             context['itemformset'] = formset(self.request.POST)
         else:
-            # context['form'] = ProcessOrderForm(instance=instance, initial=self.get_form_initial())
-
-            context['itemformset'] = formset(instance =self.object)
+            context['itemformset'] = formset(instance=self.object)
             if self.order_type == 'MB':
                 if self.object is None:
-                    for form, data in zip(context['formset'], self.get_import_list()):
+                    for form, data in zip(context['itemformset'], self.get_import_list()):
                         form.initial = {
                             'block_name': data['block_num'],
                             'block_num': Product.objects.filter(block_num_id=data['block_num'])[0],

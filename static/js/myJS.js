@@ -49,3 +49,45 @@ function select_info(pics, m2) {
     $("#selected_info li[name=pics] b").text(pics);
     $("#selected_info li[name=m2] b").text(m2.toFixed(2));
 }
+//获取datalist数据
+function get_source(id) {
+    var ids = $('#formset ');
+    console.log(id);
+    var block_num_id = id.split('_').splice(0, 2).join('_') + '_num';
+    console.log(block_num_id);
+    var value = $('#' + id).val();
+    console.log(value);
+    var select_id = $('#block_info').find('option[value="' + value + '"]').data('id')
+    console.log(select_id);
+    $('#' + block_num_id).val(select_id)
+}
+;
+//formset添加form，一定要在table的id改为formset
+
+function add_form(prefix) {
+    console.log('aaa')
+    // var prefix = formsetprefix;
+    var new_form = $('#formset tbody tr:last').clone(true)
+    var total_count = $('#id_' + prefix + '-TOTAL_FORMS').val();
+    new_form.find(':input').each(function () {
+        var name = $(this).attr('name').replace('-' + (total_count - 1) + '-', '-' + total_count + '-');
+        var id = 'id_' + name;
+        $(this).attr({'name': name, 'id': id}).val('').remove('checked');
+    });
+    total_count++
+    $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
+    $('#formset tbody tr:last').after(new_form);
+}
+;
+//删除一行数据
+function remove_form(prefix) {
+    // var prefix = formsetprefix;
+    var total_count = $('#id_' + prefix + '-TOTAL_FORMS').val();
+    if (total_count >= 2) {
+        $('#formset tbody tr:last').remove();
+        total_count--;
+        $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
+    }
+
+};
+

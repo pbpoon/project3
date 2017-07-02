@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load bootstrap_tags %}
+{#{% load bootstrap_tags %}#}
+{% load crispy_forms_tags %}
 
 {% block main %}
-    <form action="{% url 'process:order_create' %}" method="post" id="myformset">
+    <form action="" method="post" id="myformset">
         {% csrf_token %}
-        {{ form|as_bootstrap }}
-
+        {% crispy form %}
         <table class="table" id="formset">
             {{ itemformset.management_form }}
             {{ itemformset.errors }}
@@ -20,7 +20,7 @@
                     </tr>
                     </thead>
                 {% endif %}
-                <tr class="formset_row">
+                <tr class="form-inline">
                     {% for field in form.visible_fields %}
                         <td>
                             {# Include the hidden fields in the form #}
@@ -38,84 +38,20 @@
                 </tr>
             {% endfor %}
         </table>
-
-        {#        <table class="table-responsive" >#}
-        {#            <tr>#}
-        {#                <th>序号</th>#}
-        {#                <th>编号</th>#}
-        {#                <th>形态</th>#}
-        {#                <th>起始地</th>#}
-        {#                <th>目的地</th>#}
-        {#                <th>数量</th>#}
-        {#                <th>单位</th>#}
-        {#                <th>金额</th>#}
-        {#                <th>日期</th>#}
-        {#                <th>备注</th>#}
-        {#            </tr>#}
-        {#            <tbody>#}
-        {#            {{ formset.management_form }}#}
-        {#            {% for form in formset %}#}
-        {#                {{ form }}#}
-        {#            {% endfor %}#}
-        {##}
-        {##}
-        {#                <tr>#}
-        {#                    <td>{{ form.line_num }}</td>#}
-        {#                    <td>{{ form.block_num }}</td>#}
-        {#                    <td>{{ form.block_type }}</td>#}
-        {#                    <td>{{ form.be_from }}</td>#}
-        {#                    <td>{{ form.destination }}</td>#}
-        {#                    <td>{{ form.quantity }}</td>#}
-        {#                    <td>{{ form.unit }}</td>#}
-        {#                    <td>{{ form.amount }}</td>#}
-        {#                    <td>{{ form.date }}</td>#}
-        {#                    <td>{{ form.ps }}</td>#}
-        {#                </tr>#}
-        {##}
-        {#            {% endfor %}</tbody>#}
-        {#        </table>#}
         <datalist id="block_info">
             {% for block_num in data_list %}
                 <option value="{{ block_num }}" data-id="{{ block_num.id }}">{{ block_num }}</option>
             {% endfor %}
         </datalist>
-        <input type="button" name="add_more_button" id="add_m" value="+++++" onclick="add_more()">
+        <input class="btn btn-default" type="button" name="add_button" id="add_f" value="添加一行">
+        <input class="btn btn-danger" type="button" name="remove_button" id="remove_f" value="删除一行">
         <input type="hidden" name="order_type" value="{{ order_type }}">
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
-    <script src="{% static 'js/jquery.formset.js' %}"></script>
-    <script type="text/javascript">
-        function get_source(id) {
-            var ids = $('#formset ');
-            console.log(id);
-            var block_num_id = id.split('_').splice(0, 2).join('_') + '_num';
-            console.log(block_num_id);
-            var value = $('#' + id).val();
-            console.log(value);
-            var select_id = $('#block_info').find('option[value="' + value + '"]').data('id')
-            console.log(select_id);
-            $('#' + block_num_id).val(select_id)
-        }
-        ;
-
-        function add_more() {
-            console.log('aaaaa')
-            var prefix = '{{ itemformset.prefix }}'
-            var new_form = $('#myformset tbody tr').clone(true)
-            console.log(new_form)
-            var total_count = $('#myformset input[name='+prefix+']').val()
-            console.log(prefix, total_count)
-        }
-
-
-    </script>
-
-    {#    <script src="http://code.ziqiangxuetang.com/media/django/csrf.js"></script>#}
-    {#    <script src="{% static 'js/jquery.formset.js' %}"></script>#}
 {% endblock %}
 {% block domready %}
-    console.log('{{ itemformset.prefix }}');
-
-    $('#myformset tbody tr').formset();
-    console.log('{{ itemformset.prefix }}');
+    $('#add_f').click(function(){
+    add_form('{{ itemformset.prefix }}')})
+    $('#remove_f').click(function(){
+    remove_form('{{ itemformset.prefix }}')})
 {% endblock %}

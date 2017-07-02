@@ -5,6 +5,7 @@ __date__ = '2017/6/14 11:34'
 from django import forms
 from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem, SlabList
 from products.models import Product, Slab
+from crispy_forms.helper import FormHelper
 
 
 class ProcessOrderForm(forms.ModelForm):
@@ -17,6 +18,10 @@ class ProcessOrderForm(forms.ModelForm):
             'data_entry_staff': forms.HiddenInput(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(ProcessOrderForm, self).__init__(*args, **kwargs)
+        self.helper = FormHelper()
+
 
 def block_num_choice():
     return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
@@ -24,17 +29,19 @@ def block_num_choice():
 
 class TSOrderItemForm(forms.ModelForm):
     block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
-        attrs={'size': '5', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}))
+        attrs={'size': '5',  'list': "block_info",
+               'onchange': 'get_source(this.id)'}))
 
     class Meta:
         model = TSOrderItem
         fields = ['block_name', 'be_from', 'block_type', 'destination', 'quantity', 'unit', 'price', 'date', 'ps']
         widgets = {
             'block_num': forms.HiddenInput(),
-            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
-            'price': forms.TextInput(attrs={'size': '3'}),
-            'amount': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'type': 'date'}),
+            'quantity': forms.TextInput(
+                attrs={'class': 'form-control', 'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+            'price': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
+            'amount': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
+            'date': forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
     def clean_destination(self):
@@ -47,7 +54,6 @@ class TSOrderItemForm(forms.ModelForm):
                 raise forms.ValidationError('编号{}起始地 与 目的地不能相同!'.format(block_num))
         return de
 
-
     def __init__(self, *args, **kwargs):
         # initial = kwargs.get('initial', {})
         # initial['block_name'] ='8803'
@@ -55,6 +61,8 @@ class TSOrderItemForm(forms.ModelForm):
         super(TSOrderItemForm, self).__init__(*args, **kwargs)
         block_id = self.initial.get('block_num', None)
         self.empty_permitted = False
+        for i in self.fields:
+            self.fields[i].widget.attrs.update({'class': 'form-control'})
         if block_id is not None:
             self.initial['block_name'] = Product.objects.get(id=block_id).block_num_id
 

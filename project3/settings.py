@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'jquery',
     'djangoformsetjs',
     'import_export',#导入导出数据功能
+    'crispy_forms'
 ]
 
 MIDDLEWARE = [
@@ -147,3 +148,5 @@ CART_SESSION_ID = 'cart'
 IMPORT_EXPORT_USE_TRANSACTIONS = True
 
 LOGIN_URL ='/admin/'
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'

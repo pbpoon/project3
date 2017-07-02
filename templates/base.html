@@ -7,23 +7,11 @@
     {% block head %}
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/custome.css' %}">
-        {# jQuery #}
-
-
-
-        {# datatables.js #}
-        <script type="text/javascript" charset="utf8"
-                src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.min.js"></script>
         <link rel="stylesheet" type="text/css" href="http://cdn.datatables.net/1.10.0/css/jquery.dataTables.css">
-        <script src="{% static 'js/datatableview.js' %}"></script>
     {% endblock %}
 </head>
 <body>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-<script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="{% static 'js/vue.js' %}"></script>
-<script src="{% static 'js/bootstrap.js' %}"></script>
+
 {% block messages %}
     {% include 'messages.html' %}
 {% endblock %}
@@ -49,14 +37,23 @@
         </div>
     </div>
 {% endblock %}
-{#<script src="{% static 'js/datatableview.js' %}"></script>#}
-
+{% block js %}
+    <script src="{% static 'js/datatableview.js' %}"></script>
+    <script type="text/javascript" charset="utf8"
+            src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.min.js"></script>
+    <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="{% static 'js/vue.js' %}"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/myJS.js' %}"></script>
+    <script src="{% static 'js/datatableview.js' %}"></script>
+{% endblock %}
 <script type="text/javascript">
-        $(document).ready(function () {
-            {% block domready %}
-            {% endblock %}
-        })
+    $(document).ready(function () {
+        {% block domready %}
+        {% endblock %}
+    })
 </script>
-<script src="/media/jquery.formset.js"></script>
+
 </body>
 </html>
