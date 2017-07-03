@@ -6,7 +6,8 @@
 {% block main %}
     <form action="" method="post" id="myformset">
         {% csrf_token %}
-        {% crispy form %}
+        {#        {% crispy form %}#}
+        {{ form }}
         <table class="table" id="formset">
             {{ itemformset.management_form }}
             {{ itemformset.errors }}
@@ -27,9 +28,11 @@
                             {% if forloop.first %}
                                 {% for hidden in form.hidden_fields %}
                                     {{ hidden }}
+
                                 {% endfor %}
+                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
                             {% endif %}
-                            {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+
                             {{ field.errors.as_ul }}
                             {{ field }}
                         </td>
@@ -43,8 +46,8 @@
                 <option value="{{ block_num }}" data-id="{{ block_num.id }}">{{ block_num }}</option>
             {% endfor %}
         </datalist>
-        <input class="btn btn-default" type="button" name="add_button" id="add_f" value="添加一行">
-        <input class="btn btn-danger" type="button" name="remove_button" id="remove_f" value="删除一行">
+        <input class="btn btn-default" type="button" id="add_f" value="添加一行">
+        <input class="btn btn-default" type="button" id="remove_f" value="删除最后一行">
         <input type="hidden" name="order_type" value="{{ order_type }}">
         <input type="submit" class="btn btn-primary" value="提交">
     </form>

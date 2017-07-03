@@ -65,15 +65,19 @@ function get_source(id) {
 //formset添加form，一定要在table的id改为formset
 
 function add_form(prefix) {
-    console.log('aaa')
+
     // var prefix = formsetprefix;
-    var new_form = $('#formset tbody tr:last').clone(true)
+    var new_form = $('#formset tbody tr:last').clone(true);
     var total_count = $('#id_' + prefix + '-TOTAL_FORMS').val();
     new_form.find(':input').each(function () {
-        var name = $(this).attr('name').replace('-' + (total_count - 1) + '-', '-' + total_count + '-');
+        // var count = $(this).attr('name').split('-').slice(1, 2)
+        // var c = count[0]
+        // console.log(c)
+        var name = $(this).attr('name').replace('-' + (total_count-1) + '-', '-' + (total_count) + '-');
         var id = 'id_' + name;
         $(this).attr({'name': name, 'id': id}).val('').remove('checked');
     });
+    // new_form.find('td:last').html('<button class="btn btn-danger" type="button" name="remove_button" value="' + prefix + '" id="remove_' + total_count + '" onclick="remove_form(this.id)">删除</button>');
     total_count++
     $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
     $('#formset tbody tr:last').after(new_form);
@@ -81,13 +85,10 @@ function add_form(prefix) {
 ;
 //删除一行数据
 function remove_form(prefix) {
-    // var prefix = formsetprefix;
+    // var prefix = $('#' + id).val()
     var total_count = $('#id_' + prefix + '-TOTAL_FORMS').val();
-    if (total_count >= 2) {
-        $('#formset tbody tr:last').remove();
-        total_count--;
-        $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
-    }
-
+    $('#formset tbody tr:last').remove();
+    // $('#' + id).parent('td').parent('tr').remove();
+    total_count--;
+    $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
 };
-
