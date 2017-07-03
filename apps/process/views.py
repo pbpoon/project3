@@ -68,20 +68,20 @@ class OrderFormsetMixin(object):
             model = TSOrderItem
             form = TSOrderItemForm
             fields = (
-                'id','block_num', 'block_name', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price',
+                'id', 'block_num', 'block_name', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'KS':
             model = KSOrderItem
             form = KSOrderItemForm
             fields = (
-                'id','block_num', 'block_name', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
+                'id', 'block_num', 'block_name', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'MB':
             import_list = self.get_import_list()
             model = MBOrderItem
             form = MBOrderItemForm
             fields = (
-                'id','block_num', 'block_name', 'thickness', 'pic', 'quantity', 'unit', 'price',
+                'id', 'block_num', 'block_name', 'thickness', 'pic', 'quantity', 'unit', 'price',
                 'date', 'ps')
             extra = len(import_list)
         elif type == 'ST':
@@ -91,7 +91,7 @@ class OrderFormsetMixin(object):
             extra = 0
         return inlineformset_factory(parent_model=self.model, model=model, form=form, formset=CustomBaseInlineFormset,
                                      fields=fields,
-                                     extra=extra,can_delete=True)
+                                     extra=extra, can_delete=True)
 
     def get_context_data(self, **kwargs):
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
@@ -101,9 +101,9 @@ class OrderFormsetMixin(object):
         formset = self.get_inlineformset()
 
         if self.request.method == 'POST':
-            context['itemformset'] = formset(self.request.POST, prefix='fs')
+            context['itemformset'] = formset(self.request.POST, prefix='fs', instance=self.object)
         else:
-            context['itemformset'] = formset(prefix='fs',instance=self.object)
+            context['itemformset'] = formset(prefix='fs', instance=self.object)
             if self.order_type == 'MB':
                 if self.object is None:
                     for form, data in zip(context['itemformset'], self.get_import_list()):
@@ -140,7 +140,7 @@ class OrderFormsetMixin(object):
             block_lst = Product.objects.filter(ksorderitem_cost__isnull=True)
         elif self.order_type == 'MB':
             block_lst = Product.objects.filter(ksorderitem_cost__isnull=False)
-        elif self.order_type == 'TS':
+        elif self.order_type == 'ST':
             block_lst = Product.objects.filter(tsorderitem_cost__isnull=True)
         else:
             block_lst = Product.objects.all()
@@ -165,7 +165,8 @@ class OrderFormsetMixin(object):
                 context = {
                     'order_type': self.get_order_type(),
                     'form': form,
-                    'itemformset': formset
+                    'itemformset': formset,
+                    'data_list': self.get_block_num_datalist()
                 }
         return self.render_to_response(context)
 

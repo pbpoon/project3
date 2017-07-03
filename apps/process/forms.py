@@ -13,7 +13,7 @@ class ProcessOrderForm(forms.ModelForm):
         model = ProcessOrder
         exclude = ('order', 'line_num')
         widgets = {
-            'date': forms.TextInput(attrs={'type': 'date'}),
+            'date': forms.TextInput(attrs={'class': 'dt'}),
             'order_type': forms.HiddenInput(),
             'data_entry_staff': forms.HiddenInput(),
         }
@@ -27,22 +27,28 @@ def block_num_choice():
     return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
 
 
+WIDGETS_VALUES = {
+    'block_num': forms.HiddenInput(),
+    'quantity': forms.TextInput(
+        attrs={'class': 'form-control', 'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+    'price': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
+    'amount': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
+    'date': forms.TextInput(attrs={'class': 'dt', 'size': '6'}),
+    'pic': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+    'pi': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+    'thickness': forms.NumberInput(attrs={'style': 'width:7em', 'min': '1.5'}),
+}
+
+
 class TSOrderItemForm(forms.ModelForm):
     block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
-        attrs={'size': '5',  'list': "block_info",
+        attrs={'size': '5', 'list': "block_info",
                'onchange': 'get_source(this.id)'}))
 
     class Meta:
         model = TSOrderItem
         fields = ['block_name', 'be_from', 'block_type', 'destination', 'quantity', 'unit', 'price', 'date', 'ps']
-        widgets = {
-            'block_num': forms.HiddenInput(),
-            'quantity': forms.TextInput(
-                attrs={'class': 'form-control', 'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
-            'price': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
-            'amount': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
-            'date': forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}),
-        }
+        widgets = WIDGETS_VALUES
 
     def clean_destination(self):
         cd = self.cleaned_data
@@ -55,14 +61,15 @@ class TSOrderItemForm(forms.ModelForm):
         return de
 
     def __init__(self, *args, **kwargs):
-        # initial = kwargs.get('initial', {})
-        # initial['block_name'] ='8803'
-        # kwargs['initial'] = initial
         super(TSOrderItemForm, self).__init__(*args, **kwargs)
         block_id = self.initial.get('block_num', None)
         self.empty_permitted = False
         for i in self.fields:
-            self.fields[i].widget.attrs.update({'class': 'form-control'})
+            attr_cls = self.fields[i].widget.attrs.get('class')
+            if attr_cls:
+                self.fields[i].widget.attrs['class'] += ' form-control'
+            else:
+                self.fields[i].widget.attrs.update({'class': 'form-control'})
         if block_id is not None:
             self.initial['block_name'] = Product.objects.get(id=block_id).block_num_id
 
@@ -70,33 +77,19 @@ class TSOrderItemForm(forms.ModelForm):
 class KSOrderItemForm(TSOrderItemForm):
     class Meta:
         model = KSOrderItem
+        fields = '__all__'
         exclude = ('amount',)
-        widgets = {
-            # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.HiddenInput(),
-            'quantity': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
-            'thickness': forms.NumberInput(attrs={'size': '2', 'min': '0', 'type': 'number'}),
-            'pic': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1', 'type': 'number'}),
-            'pi': forms.NumberInput(attrs={'size': '3', 'min': '0', 'step': '1', 'type': 'number'}),
-            'price': forms.NumberInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'type': 'date'}),
-        }
+        widgets = WIDGETS_VALUES
 
+    def __init__(self, *args, **kwargs):
+        super(KSOrderItemForm, self).__init__(*args, **kwargs)
+        self.fields['quantity'].widget.attrs.update({'readonly': True})
 
 class MBOrderItemForm(TSOrderItemForm):
     class Meta:
         model = MBOrderItem
         exclude = ('amount',)
-        widgets = {
-            # 'line_num': forms.TextInput(attrs={'size': '2'}),
-            'block_num': forms.HiddenInput(),
-            'quantity': forms.NumberInput(
-                attrs={'style': 'width:5em', 'min': '0', 'type': 'number'}),
-            'thickness': forms.NumberInput(attrs={'size': '2', 'type': 'number'}),
-            'pic': forms.NumberInput(attrs={'size': '3', 'type': 'number'}),
-            'price': forms.NumberInput(attrs={'size': '3', 'type': 'number'}),
-            'date': forms.DateInput(attrs={'type': 'date'}),
-        }
+        widgets = WIDGETS_VALUES
 
     def __init__(self, *args, **kwargs):
         super(MBOrderItemForm, self).__init__(*args, **kwargs)
@@ -111,20 +104,10 @@ class MBOrderItemForm(TSOrderItemForm):
 
 
 class STOrderItemForm(forms.ModelForm):
-    block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
-        attrs={'size': '4', 'class': "block_info", 'list': "block_info", 'onchange': 'get_source(this.id)'}))
-
     class Meta:
         model = STOrderItem
         exclude = ('amount',)
-        widgets = {
-            'block_num': forms.HiddenInput(),
-            'quantity': forms.TextInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
-            'unit': forms.TextInput(attrs={'size': '1'}),
-            'think': forms.TextInput(attrs={'size': '2'}),
-            'price': forms.TextInput(attrs={'size': '3'}),
-            'date': forms.TextInput(attrs={'size': '2', 'type': 'date'}),
-        }
+        widgets = WIDGETS_VALUES
 
 
 class SlabListForm(forms.ModelForm):

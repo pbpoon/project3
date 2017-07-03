@@ -1,16 +1,30 @@
 {% extends 'base.html' %}
 {% load static %}
-{#{% load bootstrap_tags %}#}
-{% load crispy_forms_tags %}
+{% load bootstrap_tags %}
+{#{% load crispy_forms_tags %}#}
 
 {% block main %}
     <form action="" method="post" id="myformset">
         {% csrf_token %}
         {#        {% crispy form %}#}
-        {{ form }}
+        {{ form|as_bootstrap_horizontal }}
+
         <table class="table" id="formset">
             {{ itemformset.management_form }}
-            {{ itemformset.errors }}
+            {% if  itemformset.non_form_errors %}
+                {% for error in  itemformset.non_form_errors %}
+                    <p class="bg-warning">{{ itemformset.non_form_errors }}</p>
+                {% endfor %}
+            {% endif %}
+            {#            {% if itemformset.errors %}#}
+            {#                <ul>#}
+            {#                    {% for  error in itemformset.errors %}#}
+            {#                        <li>={{ error }}</li>#}
+            {#                    {% endfor %}#}
+            {#                </ul>#}
+            {#            {% endif %}#}
+
+
             {% for form in itemformset.forms %}
                 {% if forloop.first %}
                     <thead>
@@ -28,11 +42,9 @@
                             {% if forloop.first %}
                                 {% for hidden in form.hidden_fields %}
                                     {{ hidden }}
-
                                 {% endfor %}
-                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}
+                                {#                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}#}
                             {% endif %}
-
                             {{ field.errors.as_ul }}
                             {{ field }}
                         </td>
@@ -54,7 +66,17 @@
 {% endblock %}
 {% block domready %}
     $('#add_f').click(function(){
-    add_form('{{ itemformset.prefix }}')})
+    add_form('{{ itemformset.prefix }}')})//formset添加一行
     $('#remove_f').click(function(){
-    remove_form('{{ itemformset.prefix }}')})
+    remove_form('{{ itemformset.prefix }}')})//删去formset最后一行
+
+    $('.dt').datetimepicker({
+    minView : "day", //  选择时间时，最小可以选择到那层；默认是‘hour’也可用0表示
+    language: 'zh-CN', // 语言
+    autoclose : true, //  true:选择时间后窗口自动关闭
+    format : 'yyyy-mm-dd ', // 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00  //hh:00:00
+    todayBtn : 'linked', // 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today" 按钮用以选择当前日期。
+{#    startDate : new Date() ,  // 窗口可选时间从今天开始#}
+{#    endDate : new Date()   // 窗口最大时间直至今天#}
+    })
 {% endblock %}
