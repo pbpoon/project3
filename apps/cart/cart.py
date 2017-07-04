@@ -17,6 +17,7 @@ class Cart(object):
             cart['slab_ids'] = []
             cart['price'] = {}
             cart['import_slabs'] = []
+            cart['import_block'] = []
         self.cart = cart
 
     # 添加product 到 cart
@@ -150,3 +151,4 @@ class Cart(object):
             if item['block_num'] == block_num and item['thickness'] == thickness:
                 lst.remove(item)
         self.save()
+

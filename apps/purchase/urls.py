@@ -43,3 +43,7 @@ urlpatterns += [
     url(r'^payment/create/$', views.PaymentCreateView.as_view(), name='payment_create'),
     url(r'^payment/update/(?P<pk>\d+)/$', views.PaymentUpdateView.as_view(), name='payment_update'),
 ]
+
+urlpatterns += [
+    url(r'^import-data/$', views.ImportDataView.as_view(), name='import_block_list')
+]

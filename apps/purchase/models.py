@@ -99,7 +99,7 @@ class PurchaseOrder(OrderAbstract):
 
 class PurchaseOrderItem(models.Model):
     order = models.ForeignKey('PurchaseOrder', related_name='item', verbose_name='采购订单')
-    block_num = models.CharField('荒料编号', max_length=20, unique=True, db_index=True)
+    block_num = models.OneToOneField('products.Product', related_name='purchase', verbose_name='荒料编号')
     price = models.DecimalField('单价', max_digits=9, decimal_places=2, null=True, blank=True)
 
     class Meta:
@@ -163,7 +163,7 @@ class ImportOrder(OrderAbstract):
 
 class ImportOrderItem(models.Model):
     order = models.ForeignKey('ImportOrder', related_name='item', verbose_name='进口代理订单')
-    block_num = models.ForeignKey('PurchaseOrderItem', to_field='block_num', db_constraint=False,
+    block_num = models.OneToOneField('PurchaseOrderItem', db_constraint=False,
                                   related_name='import_order',
                                   verbose_name='荒料编号')
     weight = models.DecimalField('重量', decimal_places=2, max_digits=9)

@@ -6,9 +6,7 @@ BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板�
 
 
 class Product(models.Model):
-    block_num = models.OneToOneField('purchase.PurchaseOrderItem', to_field='block_num', db_constraint=False,
-                                     related_name='block',
-                                     verbose_name='荒料编号')
+    block_num = models.CharField('荒料编号', max_length=16, unique=True)
     weight = models.DecimalField('重量', max_digits=5, decimal_places=2, null=True)
     long = models.IntegerField('长', null=True)
     width = models.IntegerField('宽', null=True)
@@ -32,40 +30,6 @@ class Product(models.Model):
 
     def get_absolute_url(self):
         return reverse('product:detail', args=[self.id])
-
-    '''
-    注释的代码为返回码单为字典类型
-    '''
-
-    # def get_slab_list(self, slab_ids=None, object_format=False):
-    #     obj = self.slab.all()
-    #     if slab_ids:
-    #         obj = self.slab.filter(id__in=slab_ids)
-    #     slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
-    #                                                               block_m2=models.Sum('m2'))
-    #     lst = {}
-    #     lst[self.block_num_id] = {}
-    #     # lst[self.block_num_id]['block_num'] = self.block_num_id
-    #     for part in slab_list:
-    #         lst[self.block_num_id][part['thickness']] = {'block_pics': part['block_pics'],
-    #                                                      'block_m2': part['block_m2'], 'part_num': {}}
-    #         part_list = [part for part in
-    #                      obj.values('part_num').filter(thickness=part['thickness']).distinct()]
-    #         for item in part_list:
-    #             slabs = [slab for slab in
-    #                      obj.filter(thickness=part['thickness'],
-    #                                 part_num=item['part_num']).order_by('line_num')]
-    #             part_num = item['part_num']
-    #             # lst[self.block_num_id][part['thickness']]['part_num'] = {}
-    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num] = {}
-    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_pics'] = len(slabs)
-    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_m2'] = sum(s.m2 for s in slabs)
-    #             slab = [s.id for s in slabs]
-    #             if object_format:
-    #                 slab = [s for s in slabs]
-    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['slabs'] = slab
-    #     return lst
-
 
     def get_slab_list(self, slab_ids=None, object_format=False):
         obj = self.slab.all()
@@ -181,3 +145,37 @@ class Quarry(models.Model):
 
     def __str__(self):
         return self.name
+
+
+    '''
+    注释的代码为返回码单为字典类型
+    '''
+
+    # def get_slab_list(self, slab_ids=None, object_format=False):
+    #     obj = self.slab.all()
+    #     if slab_ids:
+    #         obj = self.slab.filter(id__in=slab_ids)
+    #     slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
+    #                                                               block_m2=models.Sum('m2'))
+    #     lst = {}
+    #     lst[self.block_num_id] = {}
+    #     # lst[self.block_num_id]['block_num'] = self.block_num_id
+    #     for part in slab_list:
+    #         lst[self.block_num_id][part['thickness']] = {'block_pics': part['block_pics'],
+    #                                                      'block_m2': part['block_m2'], 'part_num': {}}
+    #         part_list = [part for part in
+    #                      obj.values('part_num').filter(thickness=part['thickness']).distinct()]
+    #         for item in part_list:
+    #             slabs = [slab for slab in
+    #                      obj.filter(thickness=part['thickness'],
+    #                                 part_num=item['part_num']).order_by('line_num')]
+    #             part_num = item['part_num']
+    #             # lst[self.block_num_id][part['thickness']]['part_num'] = {}
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num] = {}
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_pics'] = len(slabs)
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['part_m2'] = sum(s.m2 for s in slabs)
+    #             slab = [s.id for s in slabs]
+    #             if object_format:
+    #                 slab = [s for s in slabs]
+    #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['slabs'] = slab
+    #     return lst

@@ -3,24 +3,8 @@ __author__ = 'pbpoon'
 __date__ = '2017/6/4 22:37'
 
 from django import forms
-from .models import PurchaseOrderItem, PurchaseOrder, ImportOrderItem, ImportOrder, PaymentHistory
+from .models import PurchaseOrderItem, PurchaseOrder, ImportOrder, PaymentHistory
 from products.models import Product, Batch
-# from djangoformsetjs.utils import formset_media_js
-
-
-# class ImportOrdetItemForm(forms.ModelForm):
-#     class Meta:
-#         model = ImportOrderItem
-#         fields = '__all__'
-#         widgets = {
-#             'block_num': forms.TextInput(attrs={'size': '10'})
-#         }
-#
-#     class MyForm(forms.Form):
-#         class Media(object):
-#             js = formset_media_js + (
-#                 # Other form media here
-#             )
 
 
 class ImportOrderForm(forms.ModelForm):
@@ -35,7 +19,7 @@ class PurchaseOrderForm(forms.ModelForm):
         fields = ['finish_pay', 'handler', 'date', 'supplier', 'cost_money', 'cost_by', 'ps', 'file']
 
 
-COST_TYPE_CHOICES = (('1', '按重量'), ('2', '按立方'))
+COST_TYPE_CHOICES = (('ton', '按重量'), ('m3', '按立方'))
 
 
 class PurchaseOrderItemForm(forms.ModelForm):

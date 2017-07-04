@@ -9,3 +9,4 @@ from import_export import resources
 class ImportOrderItemResources(resources.ModelResource):
     class Meta:
         model = ImportOrderItem
+

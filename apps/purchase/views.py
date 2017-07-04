@@ -1,18 +1,16 @@
-from django.shortcuts import render, get_object_or_404, HttpResponseRedirect
-from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView, View, FormView
+from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, redirect
+from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView, View, FormView, TemplateView
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib import messages
 
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder, PaymentHistory
-from .forms import  PurchaseOrderForm, ImportOrderForm, PaymentForm
+from .forms import PurchaseOrderForm, ImportOrderForm, PaymentForm
 from products.models import Product, Batch
-from utils import  AddExcelForm
+from cart.cart import Cart
+from utils import AddExcelForm, ImportData
 
 import xlrd
 from decimal import Decimal
-
-from tablib import Dataset
-from .resource import ImportOrderItemResources
 
 
 class SupplierListView(ListView):
@@ -48,7 +46,7 @@ class PurchaseOrderListView(ListView):
     template_name = 'purchase/list.html'
 
 
-class PurchaseOrderDetailView( DetailView):
+class PurchaseOrderDetailView(DetailView):
     model = PurchaseOrder
     template_name = 'purchase/purchaseorder.html'
 
@@ -60,6 +58,32 @@ class PurchaseOrderDetailView( DetailView):
         else:
             kwargs['form'] = AddExcelForm()
         return super(PurchaseOrderDetailView, self).get_context_data(**kwargs)
+
+
+class ImportDataView(TemplateView):
+    template_name = 'purchase/purchaseorder_form.html'
+
+    def get_context_data(self, **kwargs):
+        cart = Cart(self.request)
+        import_block_list = cart['import_block_list']
+        if import_block_list:
+            kwargs['block_list'] = import_block_list
+        else:
+            if self.request.method == 'GET':
+                kwargs['file_form'] = AddExcelForm()
+            else:
+                kwargs['file_form'] = AddExcelForm(self.request.POST, self.request.FILES)
+        return super(ImportDataView, self).get_context_data(**kwargs)
+
+    def post(self, request, *args, **kwargs):
+        file_form = AddExcelForm(self.request.POST, self.request.FILES)
+        if file_form.is_valid():
+            f = file_form.files.get('file')
+            importer = ImportData(f, data_type='block_list')
+            cart = Cart(self.request)
+            cart['import_block'] = importer.data
+            cart.save()
+            return redirect('process:import_data')
 
 
 class PurchaseOrderCreateView(FormView):
@@ -77,75 +101,86 @@ class PurchaseOrderCreateView(FormView):
         if form.is_valid() and file_form.is_valid():
             object = form.save(commit=False)
             object.data_entry_staff = self.request.user
-            block_lst = []
-            order_item = []
-            error = []
             f = form.files.get('file')
-            if f:
-                data = xlrd.open_workbook(file_contents=f.read())
-                table = data.sheets()[0]
-                nrows = table.nrows  # 总行数
-                colnames = table.row_values(0)  # 表头列名称数据
-                for rownum in range(1, nrows):
-                    row = table.row_values(rownum)
-                    for index, i in enumerate(range(len(colnames))):
-                        if row:
-                            if index == 0:
-                                row[i] = str(row[i])
-                            elif index == 1 or index == 7:
-                                row[i] = Decimal('{0:.2f}'.format(row[i]))
-                            elif index == 5:
-                                if row[i]:
-                                    row[i] = Decimal('{0:.2f}'.format(row[i]))
-                                else:
-                                    row[i] = Decimal('{0:.2f}'.format(
-                                        float(row[2]) * float(row[3]) * float(row[4]) * 0.000001))
-                            elif index == 6:
-                                row[i] = Batch.objects.filter(name=str(row[i]))[0]
-                            else:
-                                row[i] = int(row[i])
-                    if not Product.objects.filter(block_num=row[0], batch=row[6]):
-                        order_item.append(PurchaseOrderItem(block_num=row[0]))
-                        block_lst.append(
-                            Product(weight=row[1], long=row[2], width=row[4], high=row[4], m3=row[5], batch=row[6],
-                                    price=row[7]))
-                    else:
-                        error.append(row[0])
-                if len(error) != 0:
-                    messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
-                    context = {
-                        'object': object,
-                        'form': form,
-                        'file_form': file_form,
-                    }
-                    return render(self.request, self.template_name, context)
-            if self.request.POST.get('save'):
-                object.save()
-            block_list = []
-            for block_id, block in zip(order_item, block_lst):
-                block_id.order = object
-                if self.request.POST.get('save'):
-                    block_id.save()
-                block.block_num = block_id
-                if self.request.POST.get('save'):
-                    block.save()
-                block_list.append(block)
-            messages.success(self.request, '数据已经成功导入!')
-            if self.request.POST.get('save'):
-                success_url = object.get_absolute_url()
-                return HttpResponseRedirect(success_url)
-            context = {
-                # 'object': object,
-                'block_list': block_list,
-                'form': form,
-                'file_form': file_form,
-                'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
-                'total_count': len(block_list),
-            }
-            return render(self.request, self.template_name, context)
+            pass
 
 
-class ImportOrderListView( ListView):
+            # def post(self, request, *args, **kwargs):
+            #     form = self.get_form()
+            #     file_form = AddExcelForm(self.request.POST, self.request.FILES)
+            #     if form.is_valid() and file_form.is_valid():
+            #         object = form.save(commit=False)
+            #         object.data_entry_staff = self.request.user
+            #         block_lst = []
+            #         order_item = []
+            #         error = []
+            #         f = form.files.get('file')
+            #         if f:
+            #             data = xlrd.open_workbook(file_contents=f.read())
+            #             table = data.sheets()[0]
+            #             nrows = table.nrows  # 总行数
+            #             colnames = table.row_values(0)  # 表头列名称数据
+            #             for rownum in range(1, nrows):
+            #                 row = table.row_values(rownum)
+            #                 for name, r in zip(colnames, row):
+            #                     # 遍历每行数据
+            #                     if row:
+            #                         if index == 0:
+            #                             row[i] = str(row[i])
+            #                         elif index == 1 or index == 7:
+            #                             row[i] = Decimal('{0:.2f}'.format(row[i]))
+            #                         elif index == 5:
+            #                             if row[i]:
+            #                                 row[i] = Decimal('{0:.2f}'.format(row[i]))
+            #                             else:
+            #                                 row[i] = Decimal('{0:.2f}'.format(
+            #                                     float(row[2]) * float(row[3]) * float(row[4]) * 0.000001))
+            #                         elif index == 6:
+            #                             row[i] = Batch.objects.filter(name=str(row[i]))[0]
+            #                         else:
+            #                             row[i] = int(row[i])
+            #                 if not Product.objects.filter(block_num=row[0], batch=row[6]):
+            #                     order_item.append(PurchaseOrderItem(block_num=row[0]))
+            #                     block_lst.append(
+            #                         Product(weight=row[1], long=row[2], width=row[4], high=row[4], m3=row[5], batch=row[6],
+            #                                 price=row[7]))
+            #                 else:
+            #                     error.append(row[0])
+            #             if len(error) != 0:
+            #                 messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
+            #                 context = {
+            #                     'object': object,
+            #                     'form': form,
+            #                     'file_form': file_form,
+            #                 }
+            #                 return render(self.request, self.template_name, context)
+            #         if self.request.POST.get('save'):
+            #             object.save()
+            #         block_list = []
+            #         for block_id, block in zip(order_item, block_lst):
+            #             block_id.order = object
+            #             if self.request.POST.get('save'):
+            #                 block_id.save()
+            #             block.block_num = block_id
+            #             if self.request.POST.get('save'):
+            #                 block.save()
+            #             block_list.append(block)
+            #         messages.success(self.request, '数据已经成功导入!')
+            #         if self.request.POST.get('save'):
+            #             success_url = object.get_absolute_url()
+            #             return HttpResponseRedirect(success_url)
+            #         context = {
+            #             # 'object': object,
+            #             'block_list': block_list,
+            #             'form': form,
+            #             'file_form': file_form,
+            #             'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
+            #             'total_count': len(block_list),
+            #         }
+            #         return render(self.request, self.template_name, context)
+
+
+class ImportOrderListView(ListView):
     template_name = 'purchase/import_order_list.html'
     model = ImportOrder
 
@@ -273,7 +308,7 @@ class PaymentListView(ListView):
     template_name = 'purchase/payment_list.html'
 
 
-class PaymentDetailView( DetailView):
+class PaymentDetailView(DetailView):
     model = PaymentHistory
     template_name = 'purchase/payment.html'
 

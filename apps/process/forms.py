@@ -16,6 +16,7 @@ class ProcessOrderForm(forms.ModelForm):
             'date': forms.TextInput(attrs={'class': 'dt'}),
             'order_type': forms.HiddenInput(),
             'data_entry_staff': forms.HiddenInput(),
+            'status': forms.TextInput(attrs={'readonly': True}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -71,7 +72,7 @@ class TSOrderItemForm(forms.ModelForm):
             else:
                 self.fields[i].widget.attrs.update({'class': 'form-control'})
         if block_id is not None:
-            self.initial['block_name'] = Product.objects.get(id=block_id).block_num_id
+            self.initial['block_name'] = Product.objects.get(id=block_id).block_num
 
 
 class KSOrderItemForm(TSOrderItemForm):
@@ -84,6 +85,7 @@ class KSOrderItemForm(TSOrderItemForm):
     def __init__(self, *args, **kwargs):
         super(KSOrderItemForm, self).__init__(*args, **kwargs)
         self.fields['quantity'].widget.attrs.update({'readonly': True})
+
 
 class MBOrderItemForm(TSOrderItemForm):
     class Meta:
