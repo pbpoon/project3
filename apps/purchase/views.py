@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, HttpResponseRedirect, re
 from django.views.generic import ListView, DetailView, DeleteView, CreateView, UpdateView, View, FormView, TemplateView
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.contrib import messages
+from django.db import transaction
 
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder, PaymentHistory
 from .forms import PurchaseOrderForm, ImportOrderForm, PaymentForm
@@ -65,14 +66,13 @@ class ImportDataView(TemplateView):
 
     def get_context_data(self, **kwargs):
         cart = Cart(self.request)
-        import_block_list = cart['import_block_list']
+        import_block_list = cart.cart['import_block']
         if import_block_list:
             kwargs['block_list'] = import_block_list
         else:
             if self.request.method == 'GET':
                 kwargs['file_form'] = AddExcelForm()
-            else:
-                kwargs['file_form'] = AddExcelForm(self.request.POST, self.request.FILES)
+
         return super(ImportDataView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -81,9 +81,29 @@ class ImportDataView(TemplateView):
             f = file_form.files.get('file')
             importer = ImportData(f, data_type='block_list')
             cart = Cart(self.request)
-            cart['import_block'] = importer.data
+            cart.cart['import_block'] = importer.data
             cart.save()
-            return redirect('process:import_data')
+            return redirect('purchase:import_data')
+
+
+def check_import_data(import_block_list):
+    batch_lst = []
+    block_lst = []
+    error_list = []
+    for item in import_block_list:
+        if item['batch'] not in batch_lst:
+            batch_lst.append(item['batch'])
+        if not Product.objects.filter(block_num=item['block_num']):
+            block_lst.append(Product(**item))
+        else:
+            error_list.append(item['block_num'])
+    if len(error_list) != 0:
+        return {'error': error_list}
+    else:
+        return {
+            'block_list': block_lst,
+            'batch': batch_lst
+        }
 
 
 class PurchaseOrderCreateView(FormView):
@@ -92,8 +112,25 @@ class PurchaseOrderCreateView(FormView):
 
     def get_context_data(self, **kwargs):
         if self.request.method == 'GET':
-            kwargs['file_form'] = AddExcelForm()
+            cart = Cart(self.request)
+            kwargs['block_list'] = cart.cart.get('import_block')
         return super(self.__class__, self).get_context_data(**kwargs)
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            object = form.save(commit=False)
+            object.data_entry_staff = self.request.user
+            import_block_list = self.kwargs.get('import_block_list')
+            data = check_import_data(import_block_list)
+            if data.get('error', None) is None:
+                messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format(", ".join(data['error'])))
+                return
+            else:
+                for item in data['block_list']:
+                    item['batch'] = Batch.objects.get_or_create(name=item['batch'])
+            products = list(map(lambda item: Product.objects.get_or_create(**item), data['block_list']))
+
+            object.save()
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()

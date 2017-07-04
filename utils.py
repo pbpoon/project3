@@ -35,7 +35,6 @@ class ImportData:
         colnames = table.row_values(0)  # 表头列名称数据
         lst = []
         if self.data_type is None:
-
             for rownum in range(1, nrows):
                 rows = table.row_values(rownum)
                 item = {}
@@ -69,28 +68,29 @@ class ImportData:
                 item['m2'] = '{0:.2f}'.format(Decimal(item['long']) * Decimal(item['high']) / 10000 + k1 + k2)
                 lst.append(item)
 
-        if self.data_type == 'block_list':
-            for rownum in range(1, nrows):
-                item = {}
-                for rownum in range(1, nrows):
-                    rows = table.row_values(rownum)
-                    for name, row in zip(colnames, rows):
-                        # 遍历每行数据
-                        if name == 'block_num':
-                            item[name] = str(row)
-                        elif name == 'weight' or name == 'price':
+        elif self.data_type == 'block_list':
+            for rownum in range(1, nrows): # 遍历全部数据行
+                item = {}  # 刷新装本行数据的字典
+                rows = table.row_values(rownum) # 取出一行数据
+                # 遍历这行数据
+                for name, row in zip(colnames, rows):
+
+                    # 遍历每个单元格数据
+                    if name == 'block_num':
+                        item[name] = str(row)
+                    elif name == 'weight' or name == 'price':
+                        item[name] = '{0:.2f}'.format(row)
+                    elif name == 'm3':
+                        if row:
                             item[name] = '{0:.2f}'.format(row)
-                        elif name == 'm3':
-                            if row:
-                                item[name] = '{0:.2f}'.format(row)
-                            else:
-                                item[name] = '{0:.2f}'.format(
-                                    float(row[2]) * float(row[3]) * float(row[4]) * 0.000001)
-                        elif name == 'batch':
-                            item[name] = str(row).split('.')[0]
                         else:
-                            item[name] = int(row)
-                    lst.append(item)
+                            item[name] = '{0:.2f}'.format(
+                                float(row[2]) * float(row[3]) * float(row[4]) * 0.000001)
+                    elif name == 'batch':
+                        item[name] = str(row).split('.')[0]
+                    else:
+                        item[name] = int(row)
+                lst.append(item)
         return lst
 
 def default_decimal(obj):

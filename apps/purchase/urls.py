@@ -45,5 +45,5 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    url(r'^import-data/$', views.ImportDataView.as_view(), name='import_block_list')
+    url(r'^import-data/$', views.ImportDataView.as_view(), name='import_data')
 ]

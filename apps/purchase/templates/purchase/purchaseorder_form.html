@@ -10,8 +10,9 @@
                 <div class="panel-heading">
                     <div class="panel-title">{{ object }}</div>
                     <div class="panel-body">
-
-
+                    {% if form %}
+                        {{ form|as_bootstrap_horizontal }}
+                    {% endif %}
                     </div>
                 </div>
             </div>
@@ -61,11 +62,18 @@
                 <div class="panel-heading">操作侧边栏</div>
                 <div class="panel-body">
                     {% if not block_list %}
-                        <form action="{% url 'purchase:import_block_list' %}"
+                        <form action="{% url 'purchase:import_data' %}"
                               enctype="multipart/form-data"
                               method="post">{% csrf_token %}
                             {{ file_form }}<input type="submit" name="import"
                                                   value="导入">
+                        </form>
+                        {% else %}
+                        <form action="{% url 'purchase:purchase_order_create' %}"
+                              enctype="multipart/form-data"
+                              method="post">{% csrf_token %}
+                            {{ file_form }}<input type="submit" name="import"
+                                                  value="下一步">
                         </form>
                     {% endif %}
                     <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
