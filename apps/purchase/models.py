@@ -64,7 +64,7 @@ COST_BY_CHOICES = (('ton', '按重量'), ('m3', '按立方'))
 
 
 class PurchaseOrder(OrderAbstract):
-    date = models.DateField('采购日期', default='django.utils.timezone.now')
+    date = models.DateField('采购日期')
     type = models.CharField('订单类型', default='PC', max_length=2)
     supplier = models.ForeignKey('Supplier', related_name='sale_order', verbose_name='供应商')
     cost_money = models.CharField('结算货币', choices=(('USD', '$美元'), ('CNY', '￥人民币'), ('EUR', '€欧元')), default='USD',
@@ -87,14 +87,19 @@ class PurchaseOrder(OrderAbstract):
     total_count = property(_get_total_count)
 
     def _get_total_weight(self):
-        return sum(i.block.weight for i in self.item.all())
+        return sum(i.block_num.weight for i in self.item.all())
 
     total_weight = property(_get_total_weight)
 
     def _get_total_m3(self):
-        return sum(i.m3 for i in self.item.all())
+        return sum(i.block_num.m3 for i in self.item.all())
 
     total_m3 = property(_get_total_m3)
+
+    def _get_total_buy_cost(self):
+        return sum(i.price * i.block_num.weight for i in self.item.all())
+
+    total_cost = property(_get_total_buy_cost)
 
 
 class PurchaseOrderItem(models.Model):
@@ -110,12 +115,12 @@ class PurchaseOrderItem(models.Model):
         return str(self.block_num)
 
     def _get_weight(self):
-        return self.block.weight
+        return self.block_num.weight
 
     weight = property(_get_weight)
 
     def _get_m3(self):
-        return self.block.m3
+        return self.block_num.m3
 
     m3 = property(_get_m3)
 
@@ -164,8 +169,8 @@ class ImportOrder(OrderAbstract):
 class ImportOrderItem(models.Model):
     order = models.ForeignKey('ImportOrder', related_name='item', verbose_name='进口代理订单')
     block_num = models.OneToOneField('PurchaseOrderItem', db_constraint=False,
-                                  related_name='import_order',
-                                  verbose_name='荒料编号')
+                                     related_name='import_order',
+                                     verbose_name='荒料编号')
     weight = models.DecimalField('重量', decimal_places=2, max_digits=9)
 
     class Meta:

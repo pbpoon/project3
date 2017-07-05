@@ -4,7 +4,8 @@ __date__ = '2017/6/4 22:37'
 
 from django import forms
 from .models import PurchaseOrderItem, PurchaseOrder, ImportOrder, PaymentHistory
-from products.models import Product, Batch
+from products.models import Product, Batch, Quarry, Category
+from decimal import Decimal
 
 
 class ImportOrderForm(forms.ModelForm):
@@ -23,49 +24,107 @@ COST_TYPE_CHOICES = (('ton', '按重量'), ('m3', '按立方'))
 
 
 class PurchaseOrderItemForm(forms.ModelForm):
+    # order = forms.CharField(label='采购单号', max_length=16, widget=forms.HiddenInput())
+    category = forms.CharField(label='品种', max_length=16)
+    quarry = forms.CharField(label='矿口', max_length=16)
+    batch = forms.CharField(label='批次', max_length=16)
+    block_num = forms.CharField(label='荒料编号', max_length=16, required=True)
     weight = forms.DecimalField(label='重量', max_digits=9, decimal_places=2, help_text='单位为：吨', required=False)
     long = forms.IntegerField(label='长', help_text='单位：厘米', required=False)
     width = forms.IntegerField(label='宽', help_text='单位：厘米', required=False)
     high = forms.IntegerField(label='高', help_text='单位：厘米', required=False)
     m3 = forms.DecimalField(label='立方', max_digits=9, decimal_places=2, help_text='单位为：立方米', required=False)
-    batch = forms.ChoiceField(label='批次')
+    price = forms.DecimalField(label='价格', max_digits=9, decimal_places=2)
     ps = forms.CharField(label='备注信息', required=False)
 
     class Meta:
         model = PurchaseOrderItem
         fields = '__all__'
+        widgets = {
+            # 'order': forms.HiddenInput(),
+            'block_num': forms.TextInput(attrs={'size': '4'}),
+            'price': forms.TextInput(attrs={'size': '4'})
+        }
 
-    def __init__(self, *args, **kwargs):
-        # super(self.__class__, self).__init__(*args, **kwargs)
-        if kwargs.get('instance'):
-            initial = kwargs.setdefault('initial', {})
-            initial['batch'] = [(x.id, x.name) for x in Batch.objects.all()]
-        forms.ModelForm.__init__(self, *args, **kwargs)
-
-    def clean_block_num(self):
-        block_num = self.cleaned_data['block_num']
-        bk = Product.objects.get(block_num=block_num)
-        return bk
 
     def clean(self):
         cd = self.cleaned_data
-        if cd['cost_type'] == 1:
-            if cd['weight'] is None or cd['weight'] <= 0:
+        cost_by = cd['order'].cost_by
+        weight = cd['weight']
+        block_num = cd['block_num']
+        # cd['block_num'], _ = Product.objects.get_or_create(block_num=block_num)
+        if cost_by == 'ton':
+            if weight is None or weight <= 0:
                 raise forms.ValidationError('重量不能为空或为零')
+        if cost_by == 'm3':
+            if not cd['m3'] or cd['m3'] == 0:
+                if not cd['long'] or not cd['high'] or not cd['width']:
+                    raise forms.ValidationError('重量不能为空或为零')
+                cd['m3'] = Decimal('{0:.2f}'.format(int(cd['long'] * cd['high'] * cd['width'] * 0.000001)))
+        cd['batch'], _ = Batch.objects.get_or_create(name=cd['batch'].upper())
+        cd['quarry'], _ = Quarry.objects.get_or_create(name=cd['quarry'].upper())
+        cd['category'], _ = Category.objects.get_or_create(name=cd['category'].upper())
+        product_dict = {'weight': cd['weight'], 'long': cd['long'], 'width': cd['width'],
+                        'high': cd['high'], 'm3': cd['m3'], 'batch': cd['batch'],
+                        'ps': cd['ps'], 'quarry': cd['quarry'], 'category': cd['category']}
+        cd['block_num'], _ = Product.objects.get_or_create(block_num=block_num, defaults=product_dict)
         return self.cleaned_data
 
-    def save(self, commit=True):
-        block_num = self.save(commit=False)
-        cd = forms.ModelForm.cleaned_data
-        if cd['cost_type'] == 'ton':
-            cd['m3'] = (cd['long'] * cd['width'] * cd['high']) / 100000
-        cd['batch'] = Batch.objects.filter(name=cd['batch'])[0]
-        if commit:
-            block_num.save()
-            Product.objects.create(block_num=block_num, weight=cd['weight'], long=cd['long'], width=cd['width'],
-                                   high=cd['high'], m3=cd['m3'], batch=cd['batch'], cost_type=cd['cost_type'],
-                                   ps=cd['ps'])
-        return block_num
+
+    def __init__(self, *args, **kwargs):
+        super(PurchaseOrderItemForm, self).__init__(*args, **kwargs)
+        if self.instance.order_id is not None:
+            product = Product.objects.get(pk=self.fields['block_num'])
+            self.fields['batch'] = product.batch.name
+            self.fields['quarry'] = product.quarry.name
+            self.fields['categorry'] = product.category.name
+            self.fields['block_num'] = product.block_num
+
+
+# class PurchaseOrderItemForm(forms.ModelForm):
+#     weight = forms.DecimalField(label='重量', max_digits=9, decimal_places=2, help_text='单位为：吨', required=False)
+#     long = forms.IntegerField(label='长', help_text='单位：厘米', required=False)
+#     width = forms.IntegerField(label='宽', help_text='单位：厘米', required=False)
+#     high = forms.IntegerField(label='高', help_text='单位：厘米', required=False)
+#     m3 = forms.DecimalField(label='立方', max_digits=9, decimal_places=2, help_text='单位为：立方米', required=False)
+#     batch = forms.ChoiceField(label='批次')
+#     ps = forms.CharField(label='备注信息', required=False)
+#
+#     class Meta:
+#         model = PurchaseOrderItem
+#         fields = '__all__'
+#
+#     def __init__(self, *args, **kwargs):
+#         # super(self.__class__, self).__init__(*args, **kwargs)
+#         if kwargs.get('instance'):
+#             initial = kwargs.setdefault('initial', {})
+#             initial['batch'] = [(x.id, x.name) for x in Batch.objects.all()]
+#         forms.ModelForm.__init__(self, *args, **kwargs)
+#
+#     def clean_block_num(self):
+#         block_num = self.cleaned_data['block_num']
+#         bk = Product.objects.get(block_num=block_num)
+#         return bk
+#
+#     def clean(self):
+#         cd = self.cleaned_data
+#         if cd['cost_type'] == 1:
+#             if cd['weight'] is None or cd['weight'] <= 0:
+#                 raise forms.ValidationError('重量不能为空或为零')
+#         return self.cleaned_data
+#
+#     def save(self, commit=True):
+#         block_num = self.save(commit=False)
+#         cd = forms.ModelForm.cleaned_data
+#         if cd['cost_type'] == 'ton':
+#             cd['m3'] = (cd['long'] * cd['width'] * cd['high']) / 100000
+#         cd['batch'] = Batch.objects.filter(name=cd['batch'])[0]
+#         if commit:
+#             block_num.save()
+#             Product.objects.create(block_num=block_num, weight=cd['weight'], long=cd['long'], width=cd['width'],
+#                                    high=cd['high'], m3=cd['m3'], batch=cd['batch'], cost_type=cd['cost_type'],
+#                                    ps=cd['ps'])
+#         return block_num
 
 
 def get_choices_list():
@@ -99,4 +158,3 @@ class CustomBaseInlineFormset(forms.BaseInlineFormSet):
                 if block_num in block_list:
                     raise forms.ValidationError('荒料编号[{}]有重复数据'.format(block_num))
                 block_list.append(block_num)
-

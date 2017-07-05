@@ -11,17 +11,12 @@
                     <div class="panel-body">
 
                         <ul>
-                            <li>{{ object.supplier }}</li>
-                            <li>{{ object.handler }}</li>
-                            <li>{{ object.created|date }}</li>
-                            {#                            {% if not block_list %}#}
-                            {#                                <li>#}
-                            {#                                    <form action="{% url 'purchase:purchase_order_create_import_item' %}?order_id={{ object.id }}"#}
-                            {#                                          enctype="multipart/form-data"#}
-                            {#                                          method="post">{{ form }}{% csrf_token %}<input type="submit"#}
-                            {#                                                                                         value="提交">#}
-                            {#                                    </form>#}
-                            {#                                </li>{% endif %}#}
+                            <li>供应商：{{ object.supplier }}</li>
+                            <li>经办人：{{ object.handler }}</li>
+                            <li>总颗数：{{ object.total_count }}</li>
+                            <li>总立方：{{ object.total_m3 }}</li>
+                            <li>总重量：{{ object.total_weight }}</li>
+                            <li>总价：{{ object.total_cost }}</li>
                         </ul>
                     </div>
                 </div>
@@ -36,7 +31,10 @@
                         <th>宽</th>
                         <th>高</th>
                         <th>立方</th>
+                        <th>价格</th>
                         <th>批次</th>
+                        <th>矿口</th>
+                        <th>品种</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -49,16 +47,19 @@
                             <td>{{ block.width }}</td>
                             <td>{{ block.high }}</td>
                             <td>{{ block.m3 }}</td>
+                            <td>{{ block.purchase.price }}</td>
                             <td>{{ block.batch }}</td>
+                            <td>{{ block.quarry }}</td>
+                            <td>{{ block.category }}</td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
             {% endif %}
-        <div class="divider"></div>
+            <div class="divider"></div>
             {% if payment_history %}
                 <div class="panel panel-default">
-                <div class="panel-heading">本订单付款记录</div>
+                    <div class="panel-heading">本订单付款记录</div>
                     <div class="panel-body">
                         <ul class="list-unstyled">
                             {% for payment in payment_history %}
@@ -71,19 +72,19 @@
                 </div>
             {% endif %}
         </div>
-            <div class="col-md-4">
-                <div class="panel panel-default">
-                    <div class="panel-heading">操作侧边栏</div>
-                    <div class="panel-body">
-                        <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
-                    </div>
+        <div class="col-md-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">操作侧边栏</div>
+                <div class="panel-body">
+                    <a href="{% url 'purchase:purchase_order_create' %}" class="btn btn-default">新建订单</a>
                 </div>
             </div>
         </div>
-        <script>
-            var editor; // use a global for the submit and return data rendering in the examples
-            $(document).ready(function () {
-                $('#myForm').DataTable(
-                )
-            });</script>
+    </div>
+    <script>
+        var editor; // use a global for the submit and return data rendering in the examples
+        $(document).ready(function () {
+            $('#myForm').DataTable(
+            )
+        });</script>
 {% endblock %}

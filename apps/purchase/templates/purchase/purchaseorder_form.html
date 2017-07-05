@@ -10,9 +10,48 @@
                 <div class="panel-heading">
                     <div class="panel-title">{{ object }}</div>
                     <div class="panel-body">
-                    {% if form %}
-                        {{ form|as_bootstrap_horizontal }}
-                    {% endif %}
+                        <form action="" method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            {% if form %}
+                                {{ form|as_bootstrap }}
+                            {% endif %}
+                            <table class="table" id="formset">
+                                {{ formset.management_form }}
+                                {% if  formset.non_form_errors %}
+                                    {% for error in  formset.non_form_errors %}
+                                        <p class="bg-warning">{{ formset.non_form_errors }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                                {% for form in formset.forms %}
+                                    {% if forloop.first %}
+                                        <thead>
+                                        <tr>
+                                            {% for field in form.visible_fields %}
+                                                <th>{{ field.label|capfirst }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                        </thead>
+                                    {% endif %}
+                                    <tr class="form-inline">
+                                        {% for field in form.visible_fields %}
+                                            <td>
+                                                {# Include the hidden fields in the form #}
+                                                {% if forloop.first %}
+                                                    {% for hidden in form.hidden_fields %}
+                                                        {{ hidden }}
+                                                    {% endfor %}
+                                                    {#                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}#}
+                                                {% endif %}
+                                                {{ field.errors.as_ul }}
+                                                {{ field }}
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        <input type="submit" class="btn btn-primary" value="提交">
+                        </form>
                     </div>
                 </div>
             </div>
@@ -72,7 +111,7 @@
                             {{ file_form }}<input type="submit" name="import"
                                                   value="导入">
                         </form>
-                        {% else %}
+                    {% else %}
                         <form action="{% url 'purchase:purchase_order_create' %}"
                               enctype="multipart/form-data"
                               method="post">{% csrf_token %}
@@ -85,10 +124,4 @@
             </div>
         </div>
     </div>
-    <script>
-        var editor; // use a global for the submit and return data rendering in the examples
-        $(document).ready(function () {
-            $('#myForm').DataTable(
-            )
-        });</script>
 {% endblock %}
