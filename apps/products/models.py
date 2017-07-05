@@ -17,7 +17,6 @@ class Product(models.Model):
     batch = models.ForeignKey('Batch', null=False, verbose_name=u'批次')
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
-    price = models.DecimalField('单价', max_digits=9, decimal_places=2)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
     # is_del = models.BooleanField('删除', default=False)
 

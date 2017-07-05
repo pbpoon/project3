@@ -29,7 +29,6 @@ class PurchaseOrderItemForm(forms.ModelForm):
     high = forms.IntegerField(label='高', help_text='单位：厘米', required=False)
     m3 = forms.DecimalField(label='立方', max_digits=9, decimal_places=2, help_text='单位为：立方米', required=False)
     batch = forms.ChoiceField(label='批次')
-    cost_type = forms.ChoiceField(label='成本计算方式', choices=COST_TYPE_CHOICES)
     ps = forms.CharField(label='备注信息', required=False)
 
     class Meta:
@@ -43,6 +42,11 @@ class PurchaseOrderItemForm(forms.ModelForm):
             initial['batch'] = [(x.id, x.name) for x in Batch.objects.all()]
         forms.ModelForm.__init__(self, *args, **kwargs)
 
+    def clean_block_num(self):
+        block_num = self.cleaned_data['block_num']
+        bk = Product.objects.get(block_num=block_num)
+        return bk
+
     def clean(self):
         cd = self.cleaned_data
         if cd['cost_type'] == 1:
@@ -53,7 +57,7 @@ class PurchaseOrderItemForm(forms.ModelForm):
     def save(self, commit=True):
         block_num = self.save(commit=False)
         cd = forms.ModelForm.cleaned_data
-        if cd['cost_type'] == 2:
+        if cd['cost_type'] == 'ton':
             cd['m3'] = (cd['long'] * cd['width'] * cd['high']) / 100000
         cd['batch'] = Batch.objects.filter(name=cd['batch'])[0]
         if commit:
@@ -62,9 +66,6 @@ class PurchaseOrderItemForm(forms.ModelForm):
                                    high=cd['high'], m3=cd['m3'], batch=cd['batch'], cost_type=cd['cost_type'],
                                    ps=cd['ps'])
         return block_num
-
-
-purchase_form = forms.inlineformset_factory(PurchaseOrder, PurchaseOrderItem, form=PurchaseOrderItemForm)
 
 
 def get_choices_list():
@@ -82,3 +83,20 @@ class PaymentForm(forms.ModelForm):
         super(PaymentForm, self).__init__(*args, **kwargs)
         self.fields['order'] = forms.ChoiceField(label='相关订单号', widget=forms.Select, required=False,
                                                  choices=get_choices_list())
+
+
+class CustomBaseInlineFormset(forms.BaseInlineFormSet):
+    def __init__(self, *args, **kwargs):
+        super(CustomBaseInlineFormset, self).__init__(*args, **kwargs)
+        for form in self.forms:
+            form.empty_permitted = False
+
+    def clean(self):
+        block_list = []
+        for form in self.forms:
+            if form.cleaned_data.get('block_num'):
+                block_num = form.cleaned_data['block_num']
+                if block_num in block_list:
+                    raise forms.ValidationError('荒料编号[{}]有重复数据'.format(block_num))
+                block_list.append(block_num)
+

@@ -5,8 +5,9 @@ from django.contrib import messages
 from django.db import transaction
 
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder, PaymentHistory
-from .forms import PurchaseOrderForm, ImportOrderForm, PaymentForm
-from products.models import Product, Batch
+from .forms import PurchaseOrderItemForm, ImportOrderForm, PaymentForm, CustomBaseInlineFormset
+from django.forms import inlineformset_factory
+from products.models import Product, Batch, Category, Quarry
 from cart.cart import Cart
 from utils import AddExcelForm, ImportData
 
@@ -86,60 +87,88 @@ class ImportDataView(TemplateView):
             return redirect('purchase:import_data')
 
 
-def check_import_data(import_block_list):
-    batch_lst = []
-    block_lst = []
-    error_list = []
-    for item in import_block_list:
-        if item['batch'] not in batch_lst:
-            batch_lst.append(item['batch'])
-        if not Product.objects.filter(block_num=item['block_num']):
-            block_lst.append(Product(**item))
-        else:
-            error_list.append(item['block_num'])
-    if len(error_list) != 0:
-        return {'error': error_list}
-    else:
-        return {
-            'block_list': block_lst,
-            'batch': batch_lst
-        }
+class PurchaseOrderCreateView(CreateView):
+    model = PurchaseOrder
+    item_model = PurchaseOrderItem
 
+    def get_formset(self, **kwargs):
 
-class PurchaseOrderCreateView(FormView):
-    template_name = 'purchase/purchaseorder_form.html'
-    form_class = PurchaseOrderForm
+        extra = len(kwargs['data_list'])
+        return inlineformset_factory(self.model, self.item_model, form=PurchaseOrderItemForm,
+                                     formset=CustomBaseInlineFormset,
+                                     extra=extra, can_delete=True)
+
+    def get_formset_initial(self, **kwargs):
+
+        formset = kwargs.get('formset')
+        data_list = kwargs.get('data_list')
+        for form, data in zip(formset, data_list):
+            form.initial = data
 
     def get_context_data(self, **kwargs):
+        cart = Cart(self.request)
+        kwargs['import_data_list'] = cart.cart['import_block_list']
         if self.request.method == 'GET':
-            cart = Cart(self.request)
-            kwargs['block_list'] = cart.cart.get('import_block')
-        return super(self.__class__, self).get_context_data(**kwargs)
+            formset = self.get_formset()(instance=self.object)
+            for form, data in zip(formset, kwargs['import_data_list']):
+                form.initial = data
 
-    def form_valid(self, form):
-        with transaction.atomic():
-            object = form.save(commit=False)
-            object.data_entry_staff = self.request.user
-            import_block_list = self.kwargs.get('import_block_list')
-            data = check_import_data(import_block_list)
-            if data.get('error', None) is None:
-                messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format(", ".join(data['error'])))
-                return
-            else:
-                for item in data['block_list']:
-                    item['batch'] = Batch.objects.get_or_create(name=item['batch'])
-            products = list(map(lambda item: Product.objects.get_or_create(**item), data['block_list']))
 
-            object.save()
 
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        file_form = AddExcelForm(self.request.POST, self.request.FILES)
-        if form.is_valid() and file_form.is_valid():
-            object = form.save(commit=False)
-            object.data_entry_staff = self.request.user
-            f = form.files.get('file')
-            pass
+            # class PurchaseOrderCreateView(FormView):
+            #     template_name = 'purchase/purchaseorder_form.html'
+            #     form_class = PurchaseOrderForm
+            #
+            #     def get_context_data(self, **kwargs):
+            #         if self.request.method == 'GET':
+            #             cart = Cart(self.request)
+            #             kwargs['block_list'] = cart.cart.get('import_block')
+            #         return super(self.__class__, self).get_context_data(**kwargs)
+            #
+            #     def form_valid(self, form):
+            #         with transaction.atomic():
+            #             object = form.save(commit=False)
+            #             object.data_entry_staff = self.request.user
+            #             import_block_list = self.kwargs.get('import_block_list')
+            #             check_data = self.check_import_data()
+            #             if check_data:
+            #                 messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format(", ".join(check_data)))
+            #                 return self.form_invalid(form)
+            #             else:
+            #                 object.save()
+            #                 for item in import_block_list:
+            #                     item['batch'], _ = Batch.objects.get_or_create(name=item['batch'])
+            #                     item['category'], _ = Category.objects.get_or_create(name=item['category'])
+            #                     item['quarry'], _ = Category.objects.get_or_create(name=item['quarry'].upper())
+            #                     product = Product.objects.create(block_num=item['block_num'], weight=item['weight'], long=item['long'],
+            #                                                      width=item['width'], high=item['high'], m3=item['m3'], quarry=item['quarry'],
+            #                                                      batch=item['batch'], category=item['category'], ps=item['ps'])
+            #                     PurchaseOrderItem.objects.create(order=object,
+            #                                                      block_num=product,
+            #                                                      price=item['price'])
+            #                 return super(PurchaseOrderCreateView, self).form_valid(form)
+
+            #
+            # def check_import_data(self, **kwargs):
+            #     error_list = []
+            #     for item in self.kwargs.get('import_block_list'):
+            #         if not Product.objects.filter(block_num=item['block_num']):
+            #             pass
+            #         else:
+            #             error_list.append(item['block_num'])
+            #     if len(error_list) != 0:
+            #         return error_list
+            #     else:
+            #         return False
+
+            # def post(self, request, *args, **kwargs):
+            #     form = self.get_form()
+            #     file_form = AddExcelForm(self.request.POST, self.request.FILES)
+            #     if form.is_valid() and file_form.is_valid():
+            #         object = form.save(commit=False)
+            #         object.data_entry_staff = self.request.user
+            #         f = form.files.get('file')
+            #         pass
 
 
             # def post(self, request, *args, **kwargs):

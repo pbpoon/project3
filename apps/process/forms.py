@@ -138,6 +138,6 @@ class CustomBaseInlineFormset(forms.BaseInlineFormSet):
             if form.cleaned_data.get('block_num'):
                 block_num = form.cleaned_data['block_num']
                 if block_num in block_list:
-                    raise forms.ValidationError('荒料编号{}有重复数据'.format(block_num))
+                    raise forms.ValidationError('荒料编号[{}]有重复数据'.format(block_num))
                 block_list.append(block_num)
                 # super(CustomBaseInlineFormset, self).clean()
