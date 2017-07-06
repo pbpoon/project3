@@ -18,6 +18,9 @@
                             {% endif %}
                             <table class="table" id="formset">
                                 {{ formset.management_form }}
+                                {% if  formset.errors %}
+                                        <p class="bg-warning">{{ formset.errors }}</p>
+                                {% endif %}
                                 {% if  formset.non_form_errors %}
                                     {% for error in  formset.non_form_errors %}
                                         <p class="bg-warning">{{ formset.non_form_errors }}</p>
@@ -50,7 +53,7 @@
                                     </tr>
                                 {% endfor %}
                             </table>
-                        <input type="submit" class="btn btn-primary" value="提交">
+                            <input type="submit" class="btn btn-primary" value="提交">
                         </form>
                     </div>
                 </div>

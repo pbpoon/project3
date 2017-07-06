@@ -6,9 +6,9 @@ from django.contrib import messages
 from django.db import transaction
 
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem, ImportOrder, PaymentHistory
-from .forms import PurchaseOrderItemForm, ImportOrderForm, PaymentForm, CustomBaseInlineFormset
+from .forms import PurchaseOrderItemForm, ImportOrderForm, PaymentForm, PurchaseOrderItemBaseInlineFormset
 from django.forms import inlineformset_factory
-from products.models import Product, Batch, Category, Quarry
+from products.models import Product, Batch
 from cart.cart import Cart
 from utils import AddExcelForm, ImportData
 
@@ -68,7 +68,7 @@ class ImportDataView(TemplateView):
 
     def get_context_data(self, **kwargs):
         cart = Cart(self.request)
-        import_block_list = cart.cart['import_block']
+        import_block_list = cart.cart.get('import_block')
         if import_block_list:
             kwargs['block_list'] = import_block_list
         else:
@@ -96,7 +96,7 @@ class PurchaseOrderEditMixin(object):
         if self.import_data_list:
             extra = len(self.import_data_list)
         return inlineformset_factory(self.model, self.item_model, form=PurchaseOrderItemForm,
-                                     formset=CustomBaseInlineFormset,
+                                     formset=PurchaseOrderItemBaseInlineFormset,
                                      fields='__all__',
                                      extra=extra, can_delete=True)
 
@@ -107,6 +107,7 @@ class PurchaseOrderEditMixin(object):
             kwargs['formset'] = self.get_formset()(instance=self.object)
             if self.object is None:
                 for form, data in zip(kwargs['formset'], self.import_data_list):
+                    data['block_name'] = data.pop('block_num')
                     form.initial.update(data)
         else:
             kwargs['formset'] = self.get_formset()(self.request.POST, self.request.FILES)
@@ -116,20 +117,20 @@ class PurchaseOrderEditMixin(object):
         context = self.get_context_data()
         formset = context['formset']
         with transaction.atomic():
+            sid = transaction.savepoint()
             form.instance.data_entry_staff = self.request.user
             self.object = form.save()
             formset.instance = self.object
             if formset.is_valid():
-                formset.instance = self.object
                 formset.save()
                 cart = Cart(self.request)
-                cart.cart['import'].remove()
-                cart.save()
+                del cart.cart['import_block']
+                transaction.on_commit(cart.save)
             else:
-                transaction.rollback()
+                transaction.savepoint_rollback(sid)
                 context = {
                     'form': form,
-                    'formst': formset,
+                    'formset': formset,
                 }
                 return render(self.request, self.get_template_names(), context)
         return super(PurchaseOrderEditMixin, self).form_valid(form)

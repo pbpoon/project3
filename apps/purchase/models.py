@@ -104,7 +104,7 @@ class PurchaseOrder(OrderAbstract):
 
 class PurchaseOrderItem(models.Model):
     order = models.ForeignKey('PurchaseOrder', related_name='item', verbose_name='采购订单')
-    block_num = models.OneToOneField('products.Product', related_name='purchase', verbose_name='荒料编号')
+    block_num = models.OneToOneField('products.Product', related_name='purchase', verbose_name='荒料编号', null=True, blank=True)
     price = models.DecimalField('单价', max_digits=9, decimal_places=2, null=True, blank=True)
 
     class Meta:

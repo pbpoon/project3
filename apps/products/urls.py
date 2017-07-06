@@ -16,14 +16,11 @@ Including another URLconf
 from django.conf.urls import url
 from . import views
 
-from django.views.generic import TemplateView
-
 '''服务商'''
 urlpatterns = [
     url(r'^$', views.ProductListView.as_view(), name='list'),
     url(r'^(?P<pk>\d+)/$', views.ProductDetailView.as_view(), name='detail'),
     url(r'^slab-list/(?P<block_num>\w+)/$', views.ProductSlabListView.as_view(), name='slab_list'),
-    url(r'^test/$', TemplateView.as_view(template_name='products/test.html'), name='test')
 ]
 # '''生产订单'''
 # urlpatterns += [
