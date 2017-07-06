@@ -39,17 +39,16 @@
     </div>
 {% endblock %}
 {% block js %}
-    <script src="{% static 'js/datatableview.js' %}"></script>
+{#    <script src="{% static 'js/datatableview.js' %}"></script>#}
     <script type="text/javascript" charset="utf8"
             src="http://cdn.datatables.net/1.10.0/js/jquery.dataTables.min.js"></script>
     <script src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="{% static 'js/vue.js' %}"></script>
+{#    <script src="{% static 'js/vue.js' %}"></script>#}
     <script src="{% static 'js/bootstrap.js' %}"></script>
-    <script src="{% static 'js/myJS.js' %}"></script>
-    <script src="{% static 'js/datatableview.js' %}"></script>
     <script src="{% static 'js/bootstrap-datetimepicker.js' %}"></script>
     <script src="{% static 'js/locales/bootstrap-datetimepicker.zh-CN.js' %}"></script>
+    <script src="{% static 'js/myJS.js' %}"></script>
 {% endblock %}
 <script type="text/javascript">
     $(document).ready(function () {

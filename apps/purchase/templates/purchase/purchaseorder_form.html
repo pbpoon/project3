@@ -19,7 +19,7 @@
                             <table class="table" id="formset">
                                 {{ formset.management_form }}
                                 {% if  formset.errors %}
-                                        <p class="bg-warning">{{ formset.errors }}</p>
+                                    <p class="bg-warning">{{ formset.errors }}</p>
                                 {% endif %}
                                 {% if  formset.non_form_errors %}
                                     {% for error in  formset.non_form_errors %}
@@ -53,6 +53,8 @@
                                     </tr>
                                 {% endfor %}
                             </table>
+                            <input class="btn btn-default" type="button" id="add_f" value="添加一行">
+                            <input class="btn btn-default" type="button" id="remove_f" value="删除最后一行">
                             <input type="submit" class="btn btn-primary" value="提交">
                         </form>
                     </div>
@@ -127,4 +129,18 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block domready %}
+    $('#add_f').click(function(){
+    add_form('{{ formset.prefix }}')})//formset添加一行
+    $('#remove_f').click(function(){
+    remove_form('{{ formset.prefix }}')})//删去formset最后一行
+
+    $('.dt').datetimepicker({
+    minView : "day", //  选择时间时，最小可以选择到那层；默认是‘hour’也可用0表示
+    language: 'zh-CN', // 语言
+    autoclose : true, //  true:选择时间后窗口自动关闭
+    format : 'yyyy-mm-dd ', // 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00  //hh:00:00
+    todayBtn : 'linked', // 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today" 按钮用以选择当前日期。
+    })
 {% endblock %}

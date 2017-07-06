@@ -14,11 +14,48 @@
                         <form action="{% url 'purchase:import_order_create' %}"
                               enctype="multipart/form-data"
                               method="post">{{ form|as_bootstrap }}{% csrf_token %}
-                            {{ file_form }}<input type="submit" name="import"
-                                                  value="导入">
-{#                            <input type="file" name="myfile">#}
-                            <input type="submit" name="save"
-                                   value="保存">
+                            {{ file_form }}<table class="table" id="formset">
+                                {{ formset.management_form }}
+                                {% if  formset.errors %}
+                                    {% for error in formset.errors %}
+                                    <p class="bg-warning">{{ error.as_ul }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if  formset.non_form_errors %}
+                                    {% for error in  formset.non_form_errors.values %}
+                                        <p class="bg-warning">{{ error }}</p>
+                                    {% endfor %}
+                                {% endif %}
+                                {% for form in formset.forms %}
+                                    {% if forloop.first %}
+                                        <thead>
+                                        <tr>
+                                            {% for field in form.visible_fields %}
+                                                <th>{{ field.label|capfirst }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                        </thead>
+                                    {% endif %}
+                                    <tr class="form-inline">
+                                        {% for field in form.visible_fields %}
+                                            <td>
+                                                {# Include the hidden fields in the form #}
+                                                {% if forloop.first %}
+                                                    {% for hidden in form.hidden_fields %}
+                                                        {{ hidden }}
+                                                    {% endfor %}
+                                                    {#                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}#}
+                                                {% endif %}
+{#                                                {{ field.errors.as_ul }}#}
+                                                {{ field }}
+                                            </td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                            <input class="btn btn-default" type="button" id="add_f" value="添加一行">
+                            <input class="btn btn-default" type="button" id="remove_f" value="删除最后一行">
+                            <input type="submit" class="btn btn-primary" value="提交">
                         </form>
                     </div>
                 </div>

@@ -73,7 +73,7 @@ function add_form(prefix) {
         // var count = $(this).attr('name').split('-').slice(1, 2)
         // var c = count[0]
         // console.log(c)
-        var name = $(this).attr('name').replace('-' + (total_count-1) + '-', '-' + (total_count) + '-');
+        var name = $(this).attr('name').replace('-' + (total_count - 1) + '-', '-' + (total_count) + '-');
         var id = 'id_' + name;
         $(this).attr({'name': name, 'id': id}).val('').remove('checked');
     });
@@ -87,8 +87,11 @@ function add_form(prefix) {
 function remove_form(prefix) {
     // var prefix = $('#' + id).val()
     var total_count = $('#id_' + prefix + '-TOTAL_FORMS').val();
-    $('#formset tbody tr:last').remove();
-    // $('#' + id).parent('td').parent('tr').remove();
-    total_count--;
-    $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
+    if (total_count >= 2) {
+        $('#formset tbody tr:last').remove();
+        total_count--;
+        $('#id_' + prefix + '-TOTAL_FORMS').val(total_count);
+        // $('#' + id).parent('td').parent('tr').remove();
+    }
+
 };

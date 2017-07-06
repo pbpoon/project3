@@ -31,7 +31,7 @@
                 <td>{{ object.quarry }}</td>
                 <td>{{ object.batch }}</td>
                 <td>{{ object.ps }}</td>
-                <td><a class="button" href="{% url 'product:slab_list' object.block_num_id %}">打开</a></td>
+                <td><a class="button" href="{% url 'product:slab_list' object.block_num %}">打开</a></td>
                 <td>{{ object.updated }}</td>
             </tr>
         {% endfor %}
