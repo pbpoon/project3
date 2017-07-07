@@ -76,7 +76,9 @@
             <div class="panel panel-default">
                 <div class="panel-heading">操作侧边栏</div>
                 <div class="panel-body">
-                    <a href="{% url 'purchase:purchase_order_update' object.id %}" class="btn btn-default">编辑订单</a>
+                   <li><a href="{% url 'purchase:purchase_order_update' object.id %}" class="btn btn-default">编辑订单</a></li>
+                    <li><a class="btn btn-default" href="
+{% url 'purchase:purchase_order_delete' object.id %}">删除订单</a></li>
                 </div>
             </div>
         </div>

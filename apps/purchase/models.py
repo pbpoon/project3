@@ -4,11 +4,13 @@ from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-SUPPLIER_TYPE_CHOICES = (('trade', '贸易公司'), ('quarry', '矿山'), ('shipping', '进口代理'))
+SUPPLIER_TYPE_CHOICES = (
+    ('trade', '贸易公司'), ('quarry', '矿山'), ('shipping', '进口代理'))
 
 
 class Supplier(models.Model):
-    type = models.CharField('供应商类型', choices=SUPPLIER_TYPE_CHOICES, max_length=12)
+    type = models.CharField('供应商类型', choices=SUPPLIER_TYPE_CHOICES,
+                            max_length=12)
     name = models.CharField('名称', max_length=20)
     address = models.CharField('地址', max_length=100, null=True, blank=True)
 
@@ -28,12 +30,16 @@ def file_get_upload_to(instance, filename):
 
 
 class OrderAbstract(models.Model):
-    order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
+    order = models.CharField('订单号', max_length=16, unique=True, db_index=True,
+                             default='new')
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
-    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
-    handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
-    file = models.FileField('相关文件', upload_to=file_get_upload_to, null=True, blank=True)
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
+                                         verbose_name='数据录入人')
+    handler = models.ForeignKey(User, related_name='%(class)s_handler',
+                                verbose_name='经办人')
+    file = models.FileField('相关文件', upload_to=file_get_upload_to, null=True,
+                            blank=True)
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     finish_pay = models.BooleanField('完成付款', default=False)
 
@@ -66,10 +72,13 @@ COST_BY_CHOICES = (('ton', '按重量'), ('m3', '按立方'))
 class PurchaseOrder(OrderAbstract):
     date = models.DateField('采购日期')
     type = models.CharField('订单类型', default='PC', max_length=2)
-    supplier = models.ForeignKey('Supplier', related_name='sale_order', verbose_name='供应商')
-    cost_money = models.CharField('结算货币', choices=(('USD', '$美元'), ('CNY', '￥人民币'), ('EUR', '€欧元')), default='USD',
+    supplier = models.ForeignKey('Supplier', related_name='sale_order',
+                                 verbose_name='供应商')
+    cost_money = models.CharField('结算货币', choices=(
+        ('USD', '$美元'), ('CNY', '￥人民币'), ('EUR', '€欧元')), default='USD',
                                   max_length=8)
-    cost_by = models.CharField('成本计算方式', choices=COST_BY_CHOICES, default='ton', max_length=4)
+    cost_by = models.CharField('成本计算方式', choices=COST_BY_CHOICES, default='ton',
+                               max_length=4)
 
     class Meta:
         verbose_name = '采购订单'
@@ -103,10 +112,15 @@ class PurchaseOrder(OrderAbstract):
 
 
 class PurchaseOrderItem(models.Model):
-    order = models.ForeignKey('PurchaseOrder', related_name='item', verbose_name='采购订单')
-    block_num = models.OneToOneField('products.Product', related_name='purchase', verbose_name='荒料编号', null=True,
+    order = models.ForeignKey('PurchaseOrder', related_name='item',
+                              verbose_name='采购订单')
+    block_num = models.OneToOneField('products.Product',
+                                     on_delete=models.CASCADE,
+                                     related_name='purchase',
+                                     verbose_name='荒料编号', null=True,
                                      blank=True)
-    price = models.DecimalField('单价', max_digits=9, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField('单价', max_digits=9, decimal_places=2, null=True,
+                                blank=True)
 
     class Meta:
         verbose_name = '采购订单明细'
@@ -150,7 +164,8 @@ class PurchaseOrderExtraCost(models.Model):
 
 class ImportOrder(OrderAbstract):
     type = models.CharField('订单类型', default='IM', max_length=2)
-    supplier = models.ForeignKey('Supplier', related_name='shipping_order', verbose_name='供应商',
+    supplier = models.ForeignKey('Supplier', related_name='shipping_order',
+                                 verbose_name='供应商',
                                  limit_choices_to={'type': 'shipping'})
     container = models.IntegerField('货柜数', null=True)
     price = models.DecimalField('单价', max_digits=9, decimal_places=2)
@@ -168,8 +183,11 @@ class ImportOrder(OrderAbstract):
 
 
 class ImportOrderItem(models.Model):
-    order = models.ForeignKey('ImportOrder', related_name='item', verbose_name='进口代理订单')
-    block_num = models.OneToOneField('products.Product', on_delete=models.CASCADE, related_name='import_detail',
+    order = models.ForeignKey('ImportOrder', related_name='item',
+                              verbose_name='进口代理订单')
+    block_num = models.OneToOneField('products.Product',
+                                     on_delete=models.CASCADE,
+                                     related_name='import_detail',
                                      null=True, blank=True,
                                      verbose_name='荒料编号')
     weight = models.DecimalField('重量', decimal_places=2, max_digits=9)
@@ -187,7 +205,8 @@ def get_upload_to(instance, filename):
 
 
 USE_TYPE_CHOICES = (
-    ('tt', 'TT'), ('lc', 'LC'), ('freight', '运费'), ('advance', '预付款'), ('kickback', '佣金'))
+    ('tt', 'TT'), ('lc', 'LC'), ('freight', '运费'), ('advance', '预付款'),
+    ('kickback', '佣金'))
 
 
 def payee_setdefault():
@@ -199,16 +218,23 @@ class PaymentHistory(models.Model):
     date = models.DateField('日期')
     amount = models.DecimalField('金额', max_digits=9, decimal_places=2)
     use_type = models.CharField('款项用途', choices=USE_TYPE_CHOICES, max_length=16)
-    payee = models.ForeignKey('Supplier', on_delete=models.SET(payee_setdefault), verbose_name='收款人')
+    payee = models.ForeignKey('Supplier',
+                              on_delete=models.SET(payee_setdefault),
+                              verbose_name='收款人')
     payee_account = models.CharField('收款人账户', max_length=20)
-    usd_amount = models.DecimalField('美金金额', max_digits=9, decimal_places=2, null=True, blank=True)
-    exchange_rate = models.DecimalField('汇率', max_digits=9, decimal_places=2, null=True, blank=True)
+    usd_amount = models.DecimalField('美金金额', max_digits=9, decimal_places=2,
+                                     null=True, blank=True)
+    exchange_rate = models.DecimalField('汇率', max_digits=9, decimal_places=2,
+                                        null=True, blank=True)
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
-    file = models.FileField('相关文件', upload_to=get_upload_to, null=True, blank=True)
+    file = models.FileField('相关文件', upload_to=get_upload_to, null=True,
+                            blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
-    data_entry_staff = models.ForeignKey(User, related_name='payment_entry', verbose_name='数据录入人')
-    handler = models.ForeignKey(User, related_name='payment_handler', verbose_name='经办人')
+    data_entry_staff = models.ForeignKey(User, related_name='payment_entry',
+                                         verbose_name='数据录入人')
+    handler = models.ForeignKey(User, related_name='payment_handler',
+                                verbose_name='经办人')
 
     class Meta:
         verbose_name = '付款记录'

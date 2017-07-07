@@ -7,7 +7,7 @@
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
-                        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}重要: {% endif %}
+                        {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}{% endif %}
                         <h4>{{ message }}</h4>
                     </li>
                 {% endif %}

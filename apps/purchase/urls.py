@@ -29,6 +29,8 @@ urlpatterns += [
     url(r'^purchase-order/$', views.PurchaseOrderListView.as_view(), name='purchase_order_list'),
     url(r'^purchase-order/update/(?P<pk>\d+)/$', views.PurchaseOrderUpdateView.as_view(), name='purchase_order_update'),
     url(r'^purchase-order/(?P<pk>\d+)/$', views.PurchaseOrderDetailView.as_view(), name='purchase_order'),
+    url(r'^purchase-order/delete/(?P<pk>\d+)/$',
+        views.PurchaseOrderDeleteView.as_view(), name='purchase_order_delete'),
     url(r'^purchase-order/create/$', views.PurchaseOrderCreateView.as_view(), name='purchase_order_create'),
 ]
 '''运输订单'''
