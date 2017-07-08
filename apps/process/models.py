@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.fields import GenericForeignKey, \
+    GenericRelation
 from django.contrib.auth.models import User
 from django.shortcuts import reverse
 from datetime import datetime
@@ -42,8 +43,10 @@ UNIT_CHOICES = (
 
 class ServiceProvider(models.Model):
     name = models.CharField('名称', max_length=80, unique=True, db_index=True)
-    service_type = models.CharField('服务类型', max_length=2, choices=SERVICE_TYPE_CHOICES)
-    default_price = models.DecimalField('默认单价', max_digits=9, decimal_places=2, default=0)
+    service_type = models.CharField('服务类型', max_length=2,
+                                    choices=SERVICE_TYPE_CHOICES)
+    default_price = models.DecimalField('默认单价', max_digits=9, decimal_places=2,
+                                        default=0)
     unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
     address = models.CharField('地址', max_length=100, null=True, blank=True)
     desc = models.CharField('补充说明', max_length=200, null=True, blank=True)
@@ -64,14 +67,20 @@ class ServiceProvider(models.Model):
 
 
 class ProcessOrder(models.Model):
-    status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES, default='N')
-    order_type = models.CharField('订单类型', max_length=2, choices=ORDER_TYPE_CHOICES)
-    order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
+    status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES,
+                              default='N')
+    order_type = models.CharField('订单类型', max_length=2,
+                                  choices=ORDER_TYPE_CHOICES)
+    order = models.CharField('订单号', max_length=16, unique=True, db_index=True,
+                             default='new')
     date = models.DateField('订单日期', db_index=True)
     service_provider = models.ForeignKey('ServiceProvider', verbose_name='服务商')
-    service_provider_order = models.CharField('对方单号', null=True, blank=True, max_length=20)
-    handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
-    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
+    service_provider_order = models.CharField('对方单号', null=True, blank=True,
+                                              max_length=20)
+    handler = models.ForeignKey(User, related_name='%(class)s_handler',
+                                verbose_name='经办人')
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
+                                         verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
@@ -93,7 +102,9 @@ class ProcessOrder(models.Model):
         date_str = datetime.now().strftime('%y%m')
         if self.order == 'new':
             try:
-                last_order = max([item.order for item in ProcessOrder.objects.filter(order_type=service_type)])
+                last_order = max([item.order for item in
+                                  ProcessOrder.objects.filter(
+                                      order_type=service_type)])
                 if date_str in last_order[2:6]:
                     value = service_type + str(int(last_order[2:9]) + 1)
                 else:
@@ -108,22 +119,26 @@ class ProcessOrder(models.Model):
     def get_total_amount(self):
         order_type = self.order_type
         model_name = '{0}OrderItem'.format(order_type[:1].upper())
-        total_amount = sum(item.amount for item in model_name.objects.filter(order=self.id))
+        total_amount = sum(
+            item.amount for item in model_name.objects.filter(order=self.id))
         return Decimal('{0:.2f}'.format(total_amount))
 
     total_amount = property(get_total_amount)
 
 
 class OrderItemBaseModel(models.Model):
-    order = models.ForeignKey('ProcessOrder', related_name='%(class)s', verbose_name='加工订单号')
+    order = models.ForeignKey('ProcessOrder', related_name='%(class)s',
+                              verbose_name='加工订单号')
     line_num = models.SmallIntegerField('序号', null=True, blank=True)
-    block_num = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='%(class)s_cost',
+    block_num = models.ForeignKey('products.Product', on_delete=models.CASCADE,
+                                  related_name='%(class)s_cost',
                                   verbose_name='荒料编号')
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
     price = models.DecimalField('价格', max_digits=9, decimal_places=2)
-    amount = models.DecimalField('金额', decimal_places=2, max_digits=6, null=True, blank=True)
-    date = models.DateField('日期', default=timezone.now)
+    amount = models.DecimalField('金额', decimal_places=2, max_digits=6,
+                                 null=True, blank=True)
+    date = models.DateField('日期')
     ps = models.CharField('备注信息', max_length=100, null=True, blank=True)
 
     class Meta:
@@ -136,7 +151,8 @@ class OrderItemBaseModel(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.line_num:
-            self.line_num = self.__class__.objects.filter(order=self.order).count()
+            self.line_num = self.__class__.objects.filter(
+                order=self.order).count()
         if not self.unit:
             self.unit = self.get_unit()
         self.amount = self.get_amount()
@@ -147,9 +163,12 @@ class OrderItemBaseModel(models.Model):
 
 
 class TSOrderItem(OrderItemBaseModel):
-    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES, max_length=6)
-    be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地', related_name='TS_from')
-    destination = models.ForeignKey('ServiceProvider', related_name='TS_to', verbose_name='目的')
+    block_type = models.CharField('形态', choices=BLOCK_TYPE_CHOICES,
+                                  max_length=6)
+    be_from = models.ForeignKey('ServiceProvider', verbose_name='起始地',
+                                related_name='TS_from')
+    destination = models.ForeignKey('ServiceProvider', related_name='TS_to',
+                                    verbose_name='目的')
     slab_list = GenericRelation('SlabList')
 
     class Meta:
@@ -204,14 +223,18 @@ class STOrderItem(OrderItemBaseModel):
 
 
 class SlabList(models.Model):
-    order_item = models.ForeignKey('MBOrderItem', related_name='slablist', on_delete=models.CASCADE,
+    order_item = models.ForeignKey('MBOrderItem', related_name='slablist',
+                                   on_delete=models.CASCADE,
                                    verbose_name=u'荒料编号')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     order = GenericForeignKey()
-    thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
-    ps = models.CharField(max_length=200, null=True, blank=True, verbose_name=u'备注信息')
-    data_entry_staff = models.ForeignKey(User, related_name='date_entry', verbose_name='数据录入人')
+    thickness = models.DecimalField(max_digits=4, decimal_places=2,
+                                    db_index=True, verbose_name=u'厚度')
+    ps = models.CharField(max_length=200, null=True, blank=True,
+                          verbose_name=u'备注信息')
+    data_entry_staff = models.ForeignKey(User, related_name='date_entry',
+                                         verbose_name='数据录入人')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
     updated = models.DateTimeField(auto_now=True, verbose_name=u'更新日期')
 
@@ -232,9 +255,11 @@ class SlabList(models.Model):
 
     @property
     def can_sell(self):
-        part = len(self.item.filter(is_booking=False, is_sell=False).distinct('part_num'))
+        part = len(self.item.filter(is_booking=False, is_sell=False).distinct(
+            'part_num'))
         pic = len(self.item.filter(is_booking=False, is_sell=False))
-        m2 = sum(item.m2 for item in self.item.filter(is_booking=False, is_sell=False))
+        m2 = sum(item.m2 for item in
+                 self.item.filter(is_booking=False, is_sell=False))
         return {'part': part, 'pic': pic, 'm2': Decimal('{0:.2f}'.format(m2))}
 
     @property
@@ -246,10 +271,12 @@ class SlabList(models.Model):
 
 
 class SlabListItem(models.Model):
-    item = models.ForeignKey('SlabList', related_name='item', verbose_name=u'对应码单')
+    item = models.ForeignKey('SlabList', related_name='item',
+                             verbose_name=u'对应码单')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
     line_num = models.SmallIntegerField(u'序号')
-    slab = models.ForeignKey('products.Slab', on_delete=models.CASCADE, verbose_name='板材编号')
+    slab = models.ForeignKey('products.Slab', on_delete=models.CASCADE,
+                             verbose_name='板材编号')
 
     def __str__(self):
         return str(self.slab)

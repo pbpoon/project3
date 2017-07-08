@@ -3,7 +3,8 @@ __author__ = 'pb'
 __date__ = '2017/6/14 11:34'
 
 from django import forms
-from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem, SlabList
+from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, \
+    STOrderItem, SlabList
 from products.models import Product, Slab
 from crispy_forms.helper import FormHelper
 
@@ -25,18 +26,23 @@ class ProcessOrderForm(forms.ModelForm):
 
 
 def block_num_choice():
-    return ((item.id, item.block_num) for item in Product.objects.values_list('id', 'block_num'))
+    return ((item.id, item.block_num) for item in
+            Product.objects.values_list('id', 'block_num'))
 
 
 WIDGETS_VALUES = {
     'block_num': forms.HiddenInput(),
     'quantity': forms.TextInput(
-        attrs={'class': 'form-control', 'style': 'width:7em', 'min': '0'}),
-    'price': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
-    'amount': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
+        attrs={'style': 'width:7em', 'min': '0'}),
+    'price': forms.TextInput(attrs={'size': '3'}),
+    'amount': forms.TextInput(attrs={'size': '3'}),
     'date': forms.TextInput(attrs={'class': 'dt', 'size': '6'}),
-    'pic': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
-    'pi': forms.NumberInput(attrs={'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+    'pic': forms.NumberInput(
+        attrs={'style': 'width:5em', 'min': '0', 'step': '1',
+               'type': 'number'}),
+    'pi': forms.NumberInput(
+        attrs={'style': 'width:5em', 'min': '0', 'step': '1',
+               'type': 'number'}),
     'thickness': forms.NumberInput(attrs={'style': 'width:7em', 'min': '1.5'}),
 }
 
@@ -48,7 +54,8 @@ class TSOrderItemForm(forms.ModelForm):
 
     class Meta:
         model = TSOrderItem
-        fields = ['block_name', 'be_from', 'block_type', 'destination', 'quantity', 'unit', 'price', 'date', 'ps']
+        fields = ['block_name', 'be_from', 'block_type', 'destination',
+                  'quantity', 'unit', 'price', 'date', 'ps']
         widgets = WIDGETS_VALUES
 
     def clean_destination(self):
@@ -58,21 +65,23 @@ class TSOrderItemForm(forms.ModelForm):
         de = cd['destination']
         if bf and de:
             if bf == de:
-                raise forms.ValidationError('编号{}起始地 与 目的地不能相同!'.format(block_num))
+                raise forms.ValidationError(
+                    '编号{}起始地 与 目的地不能相同!'.format(block_num))
         return de
 
     def __init__(self, *args, **kwargs):
         super(TSOrderItemForm, self).__init__(*args, **kwargs)
         block_id = self.initial.get('block_num', None)
         self.empty_permitted = False
-        for i in self.fields:
-            attr_cls = self.fields[i].widget.attrs.get('class')
-            if attr_cls:
-                self.fields[i].widget.attrs['class'] += ' form-control'
-            else:
-                self.fields[i].widget.attrs.update({'class': 'form-control'})
+        # for i in self.fields:
+        #     attr_cls = self.fields[i].widget.attrs.get('class')
+        #     if attr_cls:
+        #         self.fields[i].widget.attrs['class'] += ' form-control'
+        #     else:
+        #         self.fields[i].widget.attrs.update({'class': 'form-control'})
         if block_id is not None:
-            self.initial['block_name'] = Product.objects.get(id=block_id).block_num
+            self.initial['block_name'] = Product.objects.get(
+                id=block_id).block_num
 
 
 class KSOrderItemForm(TSOrderItemForm):
@@ -85,6 +94,7 @@ class KSOrderItemForm(TSOrderItemForm):
     def __init__(self, *args, **kwargs):
         super(KSOrderItemForm, self).__init__(*args, **kwargs)
         self.fields['quantity'].widget.attrs.update({'readonly': True})
+        self.fields['unit'].widget.attrs.update({'readonly': True})
 
 
 class MBOrderItemForm(TSOrderItemForm):
@@ -99,7 +109,8 @@ class MBOrderItemForm(TSOrderItemForm):
 
     def clean_block_num(self):
         block_num = self.cleaned_data.get('block_num')
-        ks_block_num_list = [item.block_num for item in KSOrderItem.objects.filter(order__status='N')]
+        ks_block_num_list = [item.block_num for item in
+                             KSOrderItem.objects.filter(order__status='N')]
         if block_num not in ks_block_num_list:
             raise forms.ValidationError('荒料编号{}#，没有介石记录请检查清楚'.format(block_num))
         return block_num
@@ -121,7 +132,8 @@ class SlabListForm(forms.ModelForm):
 class SlabListItemForm(forms.ModelForm):
     class Meta:
         model = Slab
-        exclude = ('block_num', 'thickness', 'created', 'updated', 'is_booking', 'is_pickup', 'is_sell', 'm2')
+        exclude = ('block_num', 'thickness', 'created', 'updated', 'is_booking',
+                   'is_pickup', 'is_sell', 'm2')
 
 
 class CustomBaseInlineFormset(forms.BaseInlineFormSet):
@@ -138,6 +150,7 @@ class CustomBaseInlineFormset(forms.BaseInlineFormSet):
             if form.cleaned_data.get('block_num'):
                 block_num = form.cleaned_data['block_num']
                 if block_num in block_list:
-                    raise forms.ValidationError('荒料编号[{}]有重复数据'.format(block_num))
+                    raise forms.ValidationError(
+                        '荒料编号[{}]有重复数据'.format(block_num))
                 block_list.append(block_num)
                 # super(CustomBaseInlineFormset, self).clean()

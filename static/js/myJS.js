@@ -56,10 +56,11 @@ function get_source(id) {
     console.log(block_num_id); //block_num_id input框的id
     var value = $('#' + id).val(); //输入的荒料编号
     console.log(value);
-    var select = $('#block_info').find('option[value="' + value + '"]').data('id')
+    var select = $('#block_info').find('option[value="' + value + '"]')
     //荒料对应的id
     console.log(select.data('id'));
-    if (!select_id) {
+
+    if (!select.data('id')) {
         alert('荒料编号['+value+'],不是本订单内容合法的编号，请检查！')
         setfocus(id)
     }else{
@@ -72,14 +73,15 @@ function get_source(id) {
 function setfocus(id) {
     $('#'+id).focus()
 }
-
+//界石订单选择编号后设置重量
 function set_quantity(id,se) {
-    var order_type= $(':input[name=order_type]').val()
+    var order_type= $('#order_type').val()
     console.log(order_type)
     if(order_type=='KS'){
-        var quantity = id.split('_').splice(0, 2).join('_') + '_quantity';
+        console.log(id)
+        var quantity = id.split('-').splice(0, 2).join('-') + '-quantity';
         console.log(quantity)
-        quantity.val(se.data('quantity'))
+        $('#'+quantity).val(se.data('quantity'))
     }
 }
 

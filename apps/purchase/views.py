@@ -19,7 +19,6 @@ from process.models import TSOrderItem, KSOrderItem, MBOrderItem, STOrderItem
 from utils import AddExcelForm, ImportData
 
 
-
 class SupplierListView(ListView):
     model = Supplier
     template_name = 'purchase/supplier_list.html'
@@ -226,7 +225,6 @@ class OrderDeleteMixin(DeleteView):
     def check_item(self):
         """
         函数功能：检查删除的items中有没有产生其他订单，而导致删除后其他数据出错
-        :return:
         """
         error = False
         error_lst = []
