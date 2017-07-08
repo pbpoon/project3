@@ -3,11 +3,14 @@ from django.http import JsonResponse
 from django.core import serializers
 
 from django.core.urlresolvers import reverse_lazy, reverse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, View, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, \
+    DeleteView, View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, KSOrderItem, STOrderItem
+from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, \
+    KSOrderItem, STOrderItem
 from products.models import Product, Slab
-from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, STOrderItemForm, ProcessOrderForm, SlabListForm, \
+from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, \
+    STOrderItemForm, ProcessOrderForm, SlabListForm, \
     SlabListItemForm, CustomBaseInlineFormset
 from django.forms import inlineformset_factory
 from utils import AddExcelForm
@@ -68,20 +71,23 @@ class OrderFormsetMixin(object):
             model = TSOrderItem
             form = TSOrderItemForm
             fields = (
-                'id', 'block_num', 'block_name', 'block_type', 'be_from', 'destination', 'quantity', 'unit', 'price',
+                'id', 'block_num', 'block_name', 'block_type', 'be_from',
+                'destination', 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'KS':
             model = KSOrderItem
             form = KSOrderItemForm
             fields = (
-                'id', 'block_num', 'block_name', 'thickness', 'pic', 'pi', 'quantity', 'unit', 'price',
+                'id', 'block_num', 'block_name', 'thickness', 'pic', 'pi',
+                'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'MB':
             import_list = self.get_import_list()
             model = MBOrderItem
             form = MBOrderItemForm
             fields = (
-                'id', 'block_num', 'block_name', 'thickness', 'pic', 'quantity', 'unit', 'price',
+                'id', 'block_num', 'block_name', 'thickness', 'pic', 'quantity',
+                'unit', 'price',
                 'date', 'ps')
             extra = len(import_list)
         elif type == 'ST':
@@ -89,7 +95,8 @@ class OrderFormsetMixin(object):
             form = STOrderItemForm
         if self.object is not None:
             extra = 0
-        return inlineformset_factory(parent_model=self.model, model=model, form=form, formset=CustomBaseInlineFormset,
+        return inlineformset_factory(parent_model=self.model, model=model,
+                                     form=form, formset=CustomBaseInlineFormset,
                                      fields=fields,
                                      extra=extra, can_delete=True)
 
@@ -99,23 +106,33 @@ class OrderFormsetMixin(object):
         self.order_type = self.get_order_type()
 
         formset = self.get_inlineformset()
-
+        error = []
         if self.request.method == 'POST':
-            context['itemformset'] = formset(self.request.POST, prefix='fs', instance=self.object)
+            context['itemformset'] = formset(self.request.POST, prefix='fs',
+                                             instance=self.object)
         else:
             context['itemformset'] = formset(prefix='fs', instance=self.object)
             if self.order_type == 'MB':
                 if self.object is None:
-                    for form, data in zip(context['itemformset'], self.get_import_list()):
-                        form.initial = {
-                            'block_name': data['block_num'],
-                            'block_num': Product.objects.filter(block_num_id=data['block_num'])[0],
-                            # 'block_num': Product.objects.filter(block_num=data['block_num'])[0],
-                            'thickness': data['thickness'],
-                            'pic': data['block_pics'],
-                            'quantity': data['block_m2'],
-                            'unit': 'm2'
-                        }
+                    for form, data in zip(context['itemformset'],
+                                          self.get_import_list()):
+                        try:
+                            block_num = Product.objects.get(
+                                block_num=data['block_num'])
+                        except Exception as e:
+                            error.append('导入的码单中：荒料编号[{}]不存在，请查询'.format(
+                                data['block_num']))
+                        else:
+                            form.initial = {
+                                'block_name': data['block_num'],
+                                'block_num': block_num,
+                                # 'block_num': Product.objects.filter(block_num=data['block_num'])[0],
+                                'thickness': data['thickness'],
+                                'pic': data['block_pics'],
+                                'quantity': data['block_m2'],
+                                'unit': 'm2'
+                            }
+            context['errors'] = error
             context['order_type'] = self.order_type
             context['data_list'] = self.get_block_num_datalist()
         return context
@@ -157,7 +174,9 @@ class OrderFormsetMixin(object):
                 if self.order_type == 'MB':
                     cart = Cart(self.request)
                     for item in items:
-                        cart.remove_import_slabs(block_num=item.block_num.block_num_id, thickness=str(item.thickness))
+                        cart.remove_import_slabs(
+                            block_num=item.block_num.block_num_id,
+                            thickness=str(item.thickness))
                 # success_url = 'process:order_list'
                 # return redirect(success_url)
                 return super(OrderFormsetMixin, self).form_valid(form)
@@ -192,7 +211,9 @@ import json
 
 def get_block_list(request):
     if request.is_ajax():
-        return HttpResponse(json.dumps({'message': 'awesome'}, ensure_ascii=False), mimetype='application/javascript')
+        return HttpResponse(
+            json.dumps({'message': 'awesome'}, ensure_ascii=False),
+            mimetype='application/javascript')
 
 
 

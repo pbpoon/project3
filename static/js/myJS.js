@@ -51,17 +51,38 @@ function select_info(pics, m2) {
 }
 //获取datalist数据
 function get_source(id) {
-    var ids = $('#formset ');
     console.log(id);
     var block_num_id = id.split('_').splice(0, 2).join('_') + '_num';
-    console.log(block_num_id);
-    var value = $('#' + id).val();
+    console.log(block_num_id); //block_num_id input框的id
+    var value = $('#' + id).val(); //输入的荒料编号
     console.log(value);
-    var select_id = $('#block_info').find('option[value="' + value + '"]').data('id')
-    console.log(select_id);
-    $('#' + block_num_id).val(select_id)
+    var select = $('#block_info').find('option[value="' + value + '"]').data('id')
+    //荒料对应的id
+    console.log(select.data('id'));
+    if (!select_id) {
+        alert('荒料编号['+value+'],不是本订单内容合法的编号，请检查！')
+        setfocus(id)
+    }else{
+        $('#' + block_num_id).val(select.data('id'))
+    }
+    set_quantity(id,select)
 }
 ;
+
+function setfocus(id) {
+    $('#'+id).focus()
+}
+
+function set_quantity(id,se) {
+    var order_type= $(':input[name=order_type]').val()
+    console.log(order_type)
+    if(order_type=='KS'){
+        var quantity = id.split('_').splice(0, 2).join('_') + '_quantity';
+        console.log(quantity)
+        quantity.val(se.data('quantity'))
+    }
+}
+
 //formset添加form，一定要在table的id改为formset
 
 function add_form(prefix) {

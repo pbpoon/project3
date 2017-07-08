@@ -35,7 +35,6 @@ class ImportData:
         nrows = table.nrows  # 总行数
         colnames = table.row_values(0)  # 表头列名称数据
         lst = []
-        price_lst = []
         if self.data_type is None:
             for rownum in range(1, nrows):
                 rows = table.row_values(rownum)
@@ -43,7 +42,7 @@ class ImportData:
                 for key, row in zip(colnames, rows):
                     if not row:
                         if key == 'long' and key == 'high':
-                            raise ValueError('有长或宽没有数值!')
+                            raise ValueError('长或宽没有数值!')
                     if key == 'part_num':
                         if not row:
                             raise ValueError('有夹号没有数值！')
@@ -51,7 +50,7 @@ class ImportData:
                     elif key == 'block_num':
                         if not row:
                             raise ValueError('有荒料编号没有数值！')
-                        item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0].block_num
+                        item[key] = str(row).split('.')[0]
                     elif key == 'line_num':
                         if not row:
                             raise ValueError('有序号号没有数值！')

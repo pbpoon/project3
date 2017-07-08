@@ -11,7 +11,7 @@ from crispy_forms.helper import FormHelper
 class ProcessOrderForm(forms.ModelForm):
     class Meta:
         model = ProcessOrder
-        exclude = ('order', 'line_num')
+        exclude = ('order', 'line_num', 'status')
         widgets = {
             'date': forms.TextInput(attrs={'class': 'dt'}),
             'order_type': forms.HiddenInput(),
@@ -31,7 +31,7 @@ def block_num_choice():
 WIDGETS_VALUES = {
     'block_num': forms.HiddenInput(),
     'quantity': forms.TextInput(
-        attrs={'class': 'form-control', 'style': 'width:5em', 'min': '0', 'step': '1', 'type': 'number'}),
+        attrs={'class': 'form-control', 'style': 'width:7em', 'min': '0'}),
     'price': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
     'amount': forms.TextInput(attrs={'class': 'form-control', 'size': '3'}),
     'date': forms.TextInput(attrs={'class': 'dt', 'size': '6'}),

@@ -3,27 +3,53 @@
 {% load bootstrap_tags %}
 {#{% load crispy_forms_tags %}#}
 
+{% block jumbotron %}
+    <h2 class="page-header">{{ object.order }}
+        <small>{{ object.status }}</small>
+    </h2>
+{% endblock %}
 {% block main %}
+
     <form action="" method="post" id="myformset">
         {% csrf_token %}
-        {#        {% crispy form %}#}
-        {{ form|as_bootstrap_horizontal }}
+        {{ form|as_bootstrap }}
 
         <table class="table" id="formset">
             {{ itemformset.management_form }}
-            {% if  itemformset.non_form_errors %}
-                {% for error in  itemformset.non_form_errors %}
-                    <p class="bg-warning">{{ itemformset.non_form_errors }}</p>
-                {% endfor %}
+            {% if errors %}
+                <div class="alert alert-danger">
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endif %}
-            {#            {% if itemformset.errors %}#}
-            {#                <ul>#}
-            {#                    {% for  error in itemformset.errors %}#}
-            {#                        <li>={{ error }}</li>#}
-            {#                    {% endfor %}#}
-            {#                </ul>#}
-            {#            {% endif %}#}
+            {% if  itemformset.errors %}
+                <div class="alert alert-danger">
+                    <p class="bg-warning">
+                    <ul>
+                        {% for errors in  itemformset.errors %}
+                            {% for key, error in errors.items %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}</ul>
+                    </p>
+                </div>
+            {% endif %}
 
+            {% if  itemformset.non_form_errors %}
+                <div class="alert alert-danger">
+                    <p class="bg-warning">
+                    <ul>
+                        {% for errors in  itemformset.non_form_errors %}
+                            {% for key, error in errors.items %}
+                                <li>{{ itemformset.non_form_errors }}</li>
+                            {% endfor %}
+                        {% endfor %}</ul>
+                    </p>
+                </div>
+            {% endif %}
 
             {% for form in itemformset.forms %}
                 {% if forloop.first %}
@@ -55,11 +81,13 @@
         </table>
         <datalist id="block_info">
             {% for block_num in data_list %}
-                <option value="{{ block_num }}" data-id="{{ block_num.id }}">{{ block_num }}</option>
+                <option value="{{ block_num }}"
+                        data-id="{{ block_num.id }}" data-quantity="{{ block_num.weight }}">{{ block_num }}</option>
             {% endfor %}
         </datalist>
         <input class="btn btn-default" type="button" id="add_f" value="添加一行">
-        <input class="btn btn-default" type="button" id="remove_f" value="删除最后一行">
+        <input class="btn btn-default" type="button" id="remove_f"
+               value="删除最后一行">
         <input type="hidden" name="order_type" value="{{ order_type }}">
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
@@ -74,7 +102,9 @@
     minView : "day", //  选择时间时，最小可以选择到那层；默认是‘hour’也可用0表示
     language: 'zh-CN', // 语言
     autoclose : true, //  true:选择时间后窗口自动关闭
-    format : 'yyyy-mm-dd ', // 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00  //hh:00:00
-    todayBtn : 'linked', // 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today" 按钮用以选择当前日期。
+    format : 'yyyy-mm-dd ', /* 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00
+    //hh:00:00*/
+    todayBtn : 'linked', /* 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today"
+    按钮用以选择当前日期。*/
     })
 {% endblock %}

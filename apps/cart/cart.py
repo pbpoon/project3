@@ -5,7 +5,7 @@ __date__ = '2017/6/6 11:15'
 from decimal import Decimal
 from django.conf import settings
 from products.models import Product, Slab
-import xlrd
+from utils import ImportData
 
 
 class Cart(object):
@@ -81,45 +81,46 @@ class Cart(object):
         total_m2 = sum(Decimal(i['block_m2']) for i in slab_list)
         return {'count': count, 'total_m2': total_m2}
 
-    def import_slab_list(self, f):
-        data = xlrd.open_workbook(file_contents=f.read())
-        table = data.sheets()[0]
-        nrows = table.nrows  # 总行数
-        colnames = table.row_values(0)  # 表头列名称数据
-        lst = []
-        for rownum in range(1, nrows):
-            rows = table.row_values(rownum)
-            item = {}
-            for key, row in zip(colnames, rows):
-                if not row:
-                    if key == 'long' and key == 'high':
-                        raise ValueError('有长或宽没有数值!')
-                if key == 'part_num':
-                    if not row:
-                        raise ValueError('有夹号没有数值！')
-                    item[key] = str(row).split('.')[0]
-                elif key == 'block_num':
-                    if not row:
-                        raise ValueError('有荒料编号没有数值！')
-                    item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0].block_num_id
-                elif key == 'line_num':
-                    if not row:
-                        raise ValueError('有序号号没有数值！')
-                    item[key] = int(row)
-                else:
-                    if row:
-                        item[key] = '{0:.2f}'.format(row)
-                    else:
-                        item[key] = 0
-            k1 = 0
-            k2 = 0
-            if item.get('kl1') and item.get('kh1'):
-                k1 = Decimal(item['kl1']) * Decimal(item['kh1']) / 100000
-            if item.get('kl2') and item.get('kh2'):
-                k2 = Decimal(item['kl2']) * Decimal(item['kh2']) / 100000
-            item['m2'] = '{0:.2f}'.format(Decimal(item['long']) * Decimal(item['high']) / 10000 + k1 + k2)
-            lst.append(item)
-        self.cart['import_slabs'].extend(lst)
+    def import_slab_list(self,f):
+        # data = xlrd.open_workbook(file_contents=f.read())
+        # table = data.sheets()[0]
+        # nrows = table.nrows  # 总行数
+        # colnames = table.row_values(0)  # 表头列名称数据
+        # lst = []
+        # for rownum in range(1, nrows):
+        #     rows = table.row_values(rownum)
+        #     item = {}
+        #     for key, row in zip(colnames, rows):
+        #         if not row:
+        #             if key == 'long' and key == 'high':
+        #                 raise ValueError('有长或宽没有数值!')
+        #         if key == 'part_num':
+        #             if not row:
+        #                 raise ValueError('有夹号没有数值！')
+        #             item[key] = str(row).split('.')[0]
+        #         elif key == 'block_num':
+        #             if not row:
+        #                 raise ValueError('有荒料编号没有数值！')
+        #             item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0].block_num
+        #         elif key == 'line_num':
+        #             if not row:
+        #                 raise ValueError('有序号号没有数值！')
+        #             item[key] = int(row)
+        #         else:
+        #             if row:
+        #                 item[key] = '{0:.2f}'.format(row)
+        #             else:
+        #                 item[key] = 0
+        #     k1 = 0
+        #     k2 = 0
+        #     if item.get('kl1') and item.get('kh1'):
+        #         k1 = Decimal(item['kl1']) * Decimal(item['kh1']) / 100000
+        #     if item.get('kl2') and item.get('kh2'):
+        #         k2 = Decimal(item['kl2']) * Decimal(item['kh2']) / 100000
+        #     item['m2'] = '{0:.2f}'.format(Decimal(item['long']) * Decimal(item['high']) / 10000 + k1 + k2)
+        #     lst.append(item)
+        importer = ImportData(f)
+        self.cart['import_slabs'].extend(importer.data)
         self.save()
 
     def show_import_slab_list(self):
