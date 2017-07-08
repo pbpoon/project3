@@ -3,17 +3,22 @@
     {% if errors %}
         采购订单：{{ object }}
         <ul>
-        {% for error in errors %}
-        <li>{{ error }}</li>
-        {% endfor %}
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
         </ul>
     {% else %}
-    <form action="" method="post">{% csrf_token %}
-        <p>您确认真的要删除 "{{ object }}" 和一下荒料编号的资料吗?</p>
-        {% for item in item_list %}
-            {{ item }}
-        {% endfor %}
-        <input type="submit" value="Confirm"/>
-    </form>
+        <form action="" method="post">{% csrf_token %}
+            <p>您确认真的要删除 "{{ object }}" 和以下荒料编号的资料吗?</p>
+            <ul>
+                {% for item in item_list %}
+                    <li>
+                        {{ item }}
+                    </li>
+                {% endfor %}
+            </ul>
+            <br>
+            <input class="btn btn-danger" type="submit" value="确认删除">
+        </form>
     {% endif %}
 {% endblock %}

@@ -21,7 +21,7 @@
                                 {{ formset.management_form }}
                                 {% if  formset.errors %}
                                     {% for error in formset.errors %}
-                                    <p class="bg-warning">{{ error.values }}</p>
+                                        <p class="bg-warning">{{ error.values }}</p>
                                     {% endfor %}
                                 {% endif %}
                                 {% if  formset.non_form_errors %}
@@ -149,7 +149,7 @@
     autoclose : true, //  true:选择时间后窗口自动关闭
     format : 'yyyy-mm-dd ', // 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00
     //hh:00:00
-    todayBtn : 'linked', // 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today"
-    按钮用以选择当前日期。
+    todayBtn : 'linked', /* 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today"
+    按钮用以选择当前日期。*/
     })
 {% endblock %}

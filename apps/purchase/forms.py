@@ -14,6 +14,9 @@ class ImportOrderForm(forms.ModelForm):
         model = ImportOrder
         fields = ['finish_pay', 'supplier', 'order_date', 'container', 'price',
                   'handler', 'ps', 'file']
+        widgets = {
+            'order_date': forms.TextInput(attrs={'class': 'dt'})
+        }
 
 
 class PurchaseOrderForm(forms.ModelForm):
@@ -24,6 +27,20 @@ class PurchaseOrderForm(forms.ModelForm):
         widgets = {
             'date': forms.TextInput(attrs={'class': 'dt'})
         }
+
+
+WIDGETS = {
+    'block_name': forms.TextInput(attrs={'size': '4'}),
+    'block_num': forms.HiddenInput(),
+    'price': forms.TextInput(attrs={'size': '4'}),
+    'category': forms.TextInput(attrs={'size': '4'}),
+    'quarry': forms.TextInput(attrs={'size': '4'}),
+    'weight': forms.TextInput(attrs={'size': '4'}),
+    'long': forms.TextInput(attrs={'size': '4'}),
+    'width': forms.TextInput(attrs={'size': '4'}),
+    'high': forms.TextInput(attrs={'size': '4'}),
+    'm3': forms.TextInput(attrs={'size': '4'}),
+}
 
 
 class PurchaseOrderItemForm(forms.ModelForm):
@@ -44,11 +61,7 @@ class PurchaseOrderItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseOrderItem
         fields = '__all__'
-        widgets = {
-            'block_name': forms.TextInput(attrs={'size': '4'}),
-            'block_num': forms.HiddenInput(),
-            'price': forms.TextInput(attrs={'size': '4'})
-        }
+        widgets = WIDGETS
 
     def clean(self):
         cd = self.cleaned_data
@@ -58,16 +71,17 @@ class PurchaseOrderItemForm(forms.ModelForm):
         if cd['id'] is None:
             if Product.objects.filter(block_num=block_num).exists():
                 raise forms.ValidationError(
-                    '荒料编号[{}]已经有数据，请确保将保存的订单明细列表内的荒料编号的资料为全新！'.format(block_num))
-        if cost_by == 'ton':
-            if weight is None or weight <= 0:
-                raise forms.ValidationError('重量不能为空或为零')
-        if cost_by == 'm3':
-            if not cd['m3'] or cd['m3'] == 0:
-                if not cd['long'] or not cd['high'] or not cd['width']:
+                    '荒料编号[{}]已经有数据，请确保将保存的订单明细列表内的荒料编号的资料为全新！'.format(
+                        block_num))
+            if cost_by == 'ton':
+                if weight is None or weight <= 0:
                     raise forms.ValidationError('重量不能为空或为零')
-                cd['m3'] = Decimal('{0:.2f}'.format(
-                    int(cd['long'] * cd['high'] * cd['width'] * 0.000001)))
+            if cost_by == 'm3':
+                if not cd['m3'] or cd['m3'] == 0:
+                    if not cd['long'] or not cd['high'] or not cd['width']:
+                        raise forms.ValidationError('重量不能为空或为零')
+                    cd['m3'] = Decimal('{0:.2f}'.format(
+                        int(cd['long'] * cd['high'] * cd['width'] * 0.000001)))
 
         return self.cleaned_data
 
@@ -117,33 +131,31 @@ class ImportOrderItemForm(forms.ModelForm):
     quarry = forms.CharField(label='矿口', max_length=16)
     batch = forms.CharField(label='批次', max_length=16)
     block_name = forms.CharField(label='荒料编号', max_length=16, required=True)
-    # weight = forms.DecimalField(label='重量', max_digits=9, decimal_places=2, help_text='单位为：吨', required=False)
     long = forms.IntegerField(label='长', help_text='单位：厘米', required=False)
     width = forms.IntegerField(label='宽', help_text='单位：厘米', required=False)
     high = forms.IntegerField(label='高', help_text='单位：厘米', required=False)
     m3 = forms.DecimalField(label='立方', max_digits=9, decimal_places=2,
                             help_text='单位为：立方米', required=False)
-    price = forms.DecimalField(label='价格', max_digits=9, decimal_places=2)
     ps = forms.CharField(label='备注信息', required=False)
 
     class Meta:
         model = ImportOrderItem
         fields = '__all__'
-        widgets = {
-            'block_num': forms.HiddenInput()
-        }
+        widgets = WIDGETS
 
-    def clean_block_name(self):
-        block_num = self.cleaned_data['block_name']
+    def clean(self):
+        cd = self.cleaned_data
+        block_num = cd['block_name']
         try:
             product = Product.objects.get(block_num=block_num)
         except Exception as e:
             raise forms.ValidationError(f'荒料编号[{block_num}]不存在采购资料，请检查！')
         else:
-            if ImportOrderItem.objects.filter(block_num=product):
-                raise forms.ValidationError(
-                    f'荒料编号[{block_num}]已有进口报关运输资料，不能重复输入，请检查！')
-        return block_num
+            if cd['id'] is None:
+                if ImportOrderItem.objects.filter(block_num=product):
+                    raise forms.ValidationError(
+                        f'荒料编号[{block_num}]已有进口报关运输资料，不能重复输入，请检查！')
+        return cd
 
     def save(self, commit=True):
         cd = self.cleaned_data

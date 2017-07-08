@@ -11,15 +11,13 @@ from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrderItem,
     ImportOrder, PaymentHistory
 from .forms import PurchaseOrderItemForm, ImportOrderForm, PaymentForm, \
     PurchaseOrderItemBaseInlineFormset, \
-    ImportOrderItemForm
+    ImportOrderItemForm, PurchaseOrderForm
 from django.forms import inlineformset_factory
 from cart.cart import Cart
 from process.models import TSOrderItem, KSOrderItem, MBOrderItem, STOrderItem
 
 from utils import AddExcelForm, ImportData
 
-import xlrd
-from decimal import Decimal
 
 
 class SupplierListView(ListView):
@@ -129,7 +127,8 @@ class PurchaseOrderEditMixin(object):
         cart = Cart(self.request)
         self.import_data_list = cart.cart.get('import_block')
         if self.request.method == 'GET':
-            kwargs['formset'] = self.get_formset()(instance=self.object)
+            kwargs['formset'] = self.get_formset()(instance=self.object,
+                                                   prefix='fs')
             if self.object is None:
                 if self.import_data_list:
                     for form, data in zip(kwargs['formset'],
@@ -138,7 +137,9 @@ class PurchaseOrderEditMixin(object):
                         form.initial.update(data)
         else:
             kwargs['formset'] = self.get_formset()(self.request.POST,
-                                                   self.request.FILES)
+                                                   self.request.FILES,
+                                                   prefix='fs',
+                                                   instance=self.object)
         return super(PurchaseOrderEditMixin, self).get_context_data(**kwargs)
 
     def form_valid(self, form):
@@ -146,9 +147,10 @@ class PurchaseOrderEditMixin(object):
         formset = context['formset']
         with transaction.atomic():
             sid = transaction.savepoint()
-            form.instance.data_entry_staff = self.request.user
-            self.object = form.save()
-            formset.instance = self.object
+            if self.object is None:
+                form.instance.data_entry_staff = self.request.user
+            form.save()
+            # formset.instance = self.object
             if formset.is_valid():
                 formset.save()
                 cart = Cart(self.request)
@@ -170,10 +172,7 @@ class PurchaseOrderEditMixin(object):
 class PurchaseOrderCreateView(LoginRequiredMixin, PurchaseOrderEditMixin,
                               CreateView):
     model = PurchaseOrder
-    fields = (
-        'finish_pay', 'supplier', 'handler', 'date', 'cost_money', 'cost_by',
-        'ps',
-        'file')
+    form_class = PurchaseOrderForm
     item_model = PurchaseOrderItem
     itemform_class = PurchaseOrderItemForm
     itemform_fields = (
@@ -184,10 +183,7 @@ class PurchaseOrderCreateView(LoginRequiredMixin, PurchaseOrderEditMixin,
 class PurchaseOrderUpdateView(LoginRequiredMixin, PurchaseOrderEditMixin,
                               UpdateView):
     model = PurchaseOrder
-    fields = (
-        'finish_pay', 'supplier', 'handler', 'date', 'cost_money', 'cost_by',
-        'ps', 'file'
-    )
+    form_class = PurchaseOrderForm
     item_model = PurchaseOrderItem
     itemform_class = PurchaseOrderItemForm
     itemform_fields = (
@@ -195,9 +191,14 @@ class PurchaseOrderUpdateView(LoginRequiredMixin, PurchaseOrderEditMixin,
         'high', 'm3', 'price', 'ps')
 
 
-class PurchaseOrderDeleteView(DeleteView):
-    model = PurchaseOrder
-    success_url = 'purchase:purchase_order_list'
+class OrderDeleteMixin(DeleteView):
+    """
+    这个是基于delete view来改的，直接套到purchase order中，定义好model 和success_url就可以了
+    如果要放到其他order去，需要改写check_item和get_delete_data
+    """
+    model = None
+    success_url = None
+    template_name = 'purchase/purchaseorder_confirm_delete.html'
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -209,15 +210,24 @@ class PurchaseOrderDeleteView(DeleteView):
             }
             return render(request, self.get_template_names(), context)
         else:
-            kk = [item.block_num for item in
-                  self.object.item.all()]
-            print(kk)
-            success_url = self.get_success_url()
-            # self.object.delete()
-            map(lambda x: x.delete(), kk)
-            return HttpResponseRedirect(success_url)
+            self.object.delete()
+            for block_num in self.get_delete_items():
+                block_num.delete()
+            messages.success(request, '订单操作成功！')
+            return redirect(self.success_url)
+
+    def get_delete_items(self):
+        """
+        由于purchaseorder删除的是product的荒编号，不是单单删除order item，
+        所以次方法在应用到import order中要改写
+        """
+        return [item.block_num for item in self.object.item.all()]
 
     def check_item(self):
+        """
+        函数功能：检查删除的items中有没有产生其他订单，而导致删除后其他数据出错
+        :return:
+        """
         error = False
         error_lst = []
         self.object = self.get_object()
@@ -249,6 +259,7 @@ class PurchaseOrderDeleteView(DeleteView):
                              STOrderItem.objects.filter(
                                  block_num__in=items).all()]
                 error_lst.append('荒料编号：' + ', '.join(block_num) + '有荒料到货订单记录。')
+        if self.object.type == 'PC':
             if ImportOrderItem.objects.filter(block_num_id__in=items).exists():
                 error = True
                 block_num = [item.block_num.block_num for item in \
@@ -264,21 +275,24 @@ class PurchaseOrderDeleteView(DeleteView):
             }
         else:
             return {
-                'error': False
+                'error': False,
             }
 
     def get_context_data(self, **kwargs):
         kwargs['item_list'] = [i.block_num for i in self.object.item.all()]
-        return super(PurchaseOrderDeleteView, self).get_context_data(**kwargs)
+        return super(OrderDeleteMixin, self).get_context_data(**kwargs)
+
+
+class PurchaseOrderDeleteView(OrderDeleteMixin):
+    model = PurchaseOrder
+    success_url = 'purchase:purchase_order_list'
 
 
 class ImportOrderListView(ListView):
-    template_name = 'purchase/import_order_list.html'
     model = ImportOrder
 
 
 class ImportOrderDetailView(DetailView):
-    template_name = 'purchase/import_order.html'
     model = ImportOrder
 
     def get_context_data(self, **kwargs):
@@ -291,7 +305,6 @@ class ImportOrderDetailView(DetailView):
 
 class ImportOrderCreateView(LoginRequiredMixin, PurchaseOrderEditMixin,
                             CreateView):
-    template_name = 'purchase/import_order_form.html'
     model = ImportOrder
     form_class = ImportOrderForm
     item_model = ImportOrderItem
@@ -300,82 +313,25 @@ class ImportOrderCreateView(LoginRequiredMixin, PurchaseOrderEditMixin,
         'block_name', 'category', 'quarry', 'batch', 'weight', 'long', 'width',
         'high', 'm3', 'ps')
 
-    #
-    # def post(self, request, *args, **kwargs):
-    #     form = self.get_form()
-    #     file_form = AddExcelForm(self.request.POST, self.request.FILES)
-    #     if form.is_valid() and file_form.is_valid():
-    #         object = form.save(commit=False)
-    #         object.data_entry_staff = self.request.user
-    #         block_list = []
-    #         order_item = []
-    #         error = []
-    #         f = form.files.get('file')
-    #         if f:
-    #             data = xlrd.open_workbook(file_contents=f.read())
-    #             table = data.sheets()[0]
-    #             nrows = table.nrows  # 总行数
-    #             colnames = table.row_values(0)  # 表头列名称数据
-    #             for rownum in range(1, nrows):
-    #                 row = table.row_values(rownum)
-    #                 for index, i in enumerate(range(len(colnames))):
-    #                     if row:
-    #                         if index == 0:
-    #                             row[i] = str(row[i])
-    #                         elif index == 1 or index == 7:
-    #                             row[i] = Decimal('{0:.2f}'.format(row[i]))
-    #                         elif index == 5:
-    #                             if row[i]:
-    #                                 row[i] = Decimal('{0:.2f}'.format(row[i]))
-    #                             else:
-    #                                 row[i] = Decimal('{0:.2f}'.format(
-    #                                     float(row[2]) * float(row[3]) * float(row[4]) * 0.000001))
-    #                         elif index == 6:
-    #                             row[i] = Batch.objects.filter(name=str(row[i]))[0]
-    #                         else:
-    #                             row[i] = int(row[i])
-    #
-    #                 if PurchaseOrderItem.objects.filter(block_num=row[0]):
-    #                     if not ImportOrderItem.objects.filter(
-    #                             block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
-    #                         """
-    #                         以后还有再加一个判断该编号荒料有没有到货记录。
-    #                         """
-    #                         block_num = PurchaseOrderItem.objects.get(block_num=row[0])
-    #                         order_item.append(
-    #                             ImportOrderItem(block_num=block_num, weight=row[1]))
-    #                         block = Product.objects.get(block_num=block_num)
-    #                         block.weight = row[1]
-    #                         block_list.append(block)
-    #                 else:
-    #                     error.append(row[0])
-    #             if len(error) != 0:
-    #                 messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
-    #                 context = {
-    #                     'object': object,
-    #                     'form': form,
-    #                     'file_form': file_form,
-    #                 }
-    #                 return render(self.request, self.template_name, context)
-    #         if self.request.POST.get('save'):
-    #             object.save()
-    #             for block_id, block in zip(order_item, block_list):
-    #                 block_id.order = object
-    #                 block_id.save()
-    #                 block.save()
-    #             messages.success(self.request, '数据已经成功保存!')
-    #             success_url = object.get_absolute_url()
-    #             return HttpResponseRedirect(success_url)
-    #         messages.success(self.request, '数据已经成功保存!')
-    #         context = {
-    #             # 'object': object,
-    #             'block_list': block_list,
-    #             'form': form,
-    #             'file_form': file_form,
-    #             'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
-    #             'total_count': len(block_list),
-    #         }
-    #         return render(self.request, self.template_name, context)
+
+class ImportOrderUpdateView(LoginRequiredMixin, PurchaseOrderEditMixin,
+                            UpdateView):
+    model = ImportOrder
+    form_class = ImportOrderForm
+    item_model = ImportOrderItem
+    itemform_class = ImportOrderItemForm
+    itemform_fields = (
+        'block_name', 'category', 'quarry', 'batch', 'weight', 'long',
+        'width',
+        'high', 'm3', 'ps')
+
+
+class ImportOrderDeleteView(OrderDeleteMixin):
+    model = ImportOrder
+    success_url = 'purchase:import_order_list'
+
+    def get_delete_items(self):
+        return self.object.item.all()
 
 
 class PaymentListView(ListView):

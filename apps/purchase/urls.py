@@ -19,32 +19,50 @@ from . import views
 '''合作伙伴'''
 urlpatterns = [
     url(r'^supplier/$', views.SupplierListView.as_view(), name='supplier_list'),
-    url(r'^supplier/(?P<pk>\d+)/$', views.SupplierDetailView.as_view(), name='supplier'),
-    url(r'^supplier/create/$', views.SupplierCreateView.as_view(), name='supplier_create'),
-    url(r'^supplier/delete/(?P<pk>\d+)/$', views.SupplierDeleteView.as_view(), name='supplier_delete'),
-    url(r'^supplier/update/(?P<pk>\d+)$', views.SupplierUpdateView.as_view(), name='supplier_update'),
+    url(r'^supplier/(?P<pk>\d+)/$', views.SupplierDetailView.as_view(),
+        name='supplier'),
+    url(r'^supplier/create/$', views.SupplierCreateView.as_view(),
+        name='supplier_create'),
+    url(r'^supplier/delete/(?P<pk>\d+)/$', views.SupplierDeleteView.as_view(),
+        name='supplier_delete'),
+    url(r'^supplier/update/(?P<pk>\d+)$', views.SupplierUpdateView.as_view(),
+        name='supplier_update'),
 ]
 '''采购订单'''
 urlpatterns += [
-    url(r'^purchase-order/$', views.PurchaseOrderListView.as_view(), name='purchase_order_list'),
-    url(r'^purchase-order/update/(?P<pk>\d+)/$', views.PurchaseOrderUpdateView.as_view(), name='purchase_order_update'),
-    url(r'^purchase-order/(?P<pk>\d+)/$', views.PurchaseOrderDetailView.as_view(), name='purchase_order'),
+    url(r'^purchase-order/$', views.PurchaseOrderListView.as_view(),
+        name='purchase_order_list'),
+    url(r'^purchase-order/update/(?P<pk>\d+)/$',
+        views.PurchaseOrderUpdateView.as_view(), name='purchase_order_update'),
+    url(r'^purchase-order/(?P<pk>\d+)/$',
+        views.PurchaseOrderDetailView.as_view(), name='purchase_order'),
     url(r'^purchase-order/delete/(?P<pk>\d+)/$',
         views.PurchaseOrderDeleteView.as_view(), name='purchase_order_delete'),
-    url(r'^purchase-order/create/$', views.PurchaseOrderCreateView.as_view(), name='purchase_order_create'),
+    url(r'^purchase-order/create/$', views.PurchaseOrderCreateView.as_view(),
+        name='purchase_order_create'),
 ]
 '''运输订单'''
 urlpatterns += [
-    url(r'^import-order/$', views.ImportOrderListView.as_view(), name='import_order_list'),
-    url(r'^import-order/(?P<pk>\d+)/$', views.ImportOrderDetailView.as_view(), name='import_order'),
-    url(r'^import-order/create/$', views.ImportOrderCreateView.as_view(), name='import_order_create'),
+    url(r'^import-order/$', views.ImportOrderListView.as_view(),
+        name='import_order_list'),
+    url(r'^import-order/(?P<pk>\d+)/$', views.ImportOrderDetailView.as_view(),
+        name='import_order'),
+    url(r'^import-order/update/(?P<pk>\d+)/$',
+        views.ImportOrderUpdateView.as_view(), name='import_order_update'),
+    url(r'^import-order/delete/(?P<pk>\d+)/$',
+        views.ImportOrderDeleteView.as_view(), name='import_order_delete'),
+    url(r'^import-order/create/$', views.ImportOrderCreateView.as_view(),
+        name='import_order_create'),
 ]
 '''付款记录'''
 urlpatterns += [
     url(r'^payment/$', views.PaymentListView.as_view(), name='payment_list'),
-    url(r'^payment/(?P<pk>\d+)/$', views.PaymentDetailView.as_view(), name='payment'),
-    url(r'^payment/create/$', views.PaymentCreateView.as_view(), name='payment_create'),
-    url(r'^payment/update/(?P<pk>\d+)/$', views.PaymentUpdateView.as_view(), name='payment_update'),
+    url(r'^payment/(?P<pk>\d+)/$', views.PaymentDetailView.as_view(),
+        name='payment'),
+    url(r'^payment/create/$', views.PaymentCreateView.as_view(),
+        name='payment_create'),
+    url(r'^payment/update/(?P<pk>\d+)/$', views.PaymentUpdateView.as_view(),
+        name='payment_update'),
 ]
 
 urlpatterns += [
