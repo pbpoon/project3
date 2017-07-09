@@ -202,7 +202,7 @@ class KSOrderItem(OrderItemBaseModel):
         verbose_name_plural = verbose_name
 
     def get_amount(self):
-        cost_by = self.block_num.block_num.order.cost_by
+        cost_by = self.block_num.cost_by
         if cost_by == 'ton':
             amount = Decimal(self.quantity) / Decimal(2.8) * Decimal(self.price)
         else:
@@ -223,16 +223,9 @@ class STOrderItem(OrderItemBaseModel):
 
 
 class SlabList(models.Model):
-    order_item = models.ForeignKey('MBOrderItem', related_name='slablist',
-                                   on_delete=models.CASCADE,
-                                   verbose_name=u'荒料编号')
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     order = GenericForeignKey()
-    thickness = models.DecimalField(max_digits=4, decimal_places=2,
-                                    db_index=True, verbose_name=u'厚度')
-    ps = models.CharField(max_length=200, null=True, blank=True,
-                          verbose_name=u'备注信息')
     data_entry_staff = models.ForeignKey(User, related_name='date_entry',
                                          verbose_name='数据录入人')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
@@ -271,7 +264,7 @@ class SlabList(models.Model):
 
 
 class SlabListItem(models.Model):
-    item = models.ForeignKey('SlabList', related_name='item',
+    slablist = models.ForeignKey('SlabList', related_name='item',
                              verbose_name=u'对应码单')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
     line_num = models.SmallIntegerField(u'序号')

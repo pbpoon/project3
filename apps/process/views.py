@@ -7,11 +7,12 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, \
     DeleteView, View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, \
-    KSOrderItem, STOrderItem
+    KSOrderItem, STOrderItem, SlabList, SlabListItem
 from products.models import Product, Slab
 from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, \
     STOrderItemForm, ProcessOrderForm, SlabListForm, \
     SlabListItemForm, CustomBaseInlineFormset
+from products.forms import SlabModelFormset
 from django.forms import inlineformset_factory
 from utils import AddExcelForm
 
@@ -126,7 +127,6 @@ class OrderFormsetMixin(object):
                             form.initial = {
                                 'block_name': data['block_num'],
                                 'block_num': block_num,
-                                # 'block_num': Product.objects.filter(block_num=data['block_num'])[0],
                                 'thickness': data['thickness'],
                                 'pic': data['block_pics'],
                                 'quantity': data['block_m2'],
@@ -136,6 +136,17 @@ class OrderFormsetMixin(object):
             context['order_type'] = self.order_type
             context['data_list'] = self.get_block_num_datalist()
         return context
+
+    def save_import_data(self):
+        cart = Cart(self.request)
+        slab_lst = []
+        lst = cart.cart['import_slabs']
+        for item in lst:
+            item['block_num'] = Product.objects.get(block_num=item['block_num'])
+            slab = Slab.objects.create(**item)
+            SlabList()
+            slab_lst.append(slab)
+        return slab_lst
 
     def get_order_type(self):
         if self.object:
@@ -150,7 +161,7 @@ class OrderFormsetMixin(object):
 
     def get_import_list(self):
         cart = Cart(self.request)
-        return cart.show_import_slab_list()
+        return cart.make_import_slab_list()
 
     def get_block_num_datalist(self):
         if self.order_type == 'KS':
@@ -167,12 +178,23 @@ class OrderFormsetMixin(object):
         data = self.get_context_data()
         formset = data['itemformset']
         with transaction.atomic():
+            sid = transaction.savepoint()
             instance = form.save()
             if formset.is_valid():
                 formset.instance = instance
                 items = formset.save()
+                slablist = SlabList.objects.create(order=instance,
+                                                   data_entry_staff=self.request.user)
                 if self.order_type == 'MB':
                     cart = Cart(self.request)
+                    lst = cart.cart['import_slabs']
+                    for item in lst:
+                        item['block_num'] = Product.objects.get(
+                            block_num=item['block_num'])
+                        slab = Slab.objects.create(**item)
+                        SlabList.objects.create(slablist=slablist, slab=slab,
+                                                part_num=slab.part_num,
+                                                line_num=slab.line_num)
                     for item in items:
                         cart.remove_import_slabs(
                             block_num=item.block_num.block_num_id,
@@ -181,6 +203,7 @@ class OrderFormsetMixin(object):
                 # return redirect(success_url)
                 return super(OrderFormsetMixin, self).form_valid(form)
             else:
+                transaction.savepoint_rollback(sid)
                 context = {
                     'order_type': self.get_order_type(),
                     'form': form,
@@ -204,96 +227,3 @@ class ProcessOrderCreateView(LoginRequiredMixin, OrderFormsetMixin, CreateView):
 class ProcessOrderUpdateView(LoginRequiredMixin, OrderFormsetMixin, UpdateView):
     model = ProcessOrder
     form_class = ProcessOrderForm
-
-
-import json
-
-
-def get_block_list(request):
-    if request.is_ajax():
-        return HttpResponse(
-            json.dumps({'message': 'awesome'}, ensure_ascii=False),
-            mimetype='application/javascript')
-
-
-
-        #         data = xlrd.open_workbook(file_contents=f.read())
-        #         table = data.sheets()[0]
-        #         nrows = table.nrows  # 总行数
-        #         colnames = table.row_values(0)  # 表头列名称数据
-        #         list = []
-        #         for rownum in range(1, nrows):
-        #             rows = table.row_values(rownum)
-        #             item = {}
-        #             for key, row in zip(colnames, rows):
-        #                 if key == 'part_num':
-        #                     item[key] = str(row).split('.')[0]
-        #                 elif key == 'block_num':
-        #                     item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0]
-        #                 elif key == 'line_num':
-        #                     item[key] = int(row)
-        #                 else:
-        #                     if row:
-        #                         item[key] = Decimal('{0:.2f}'.format(row))
-        #                     # else:
-        #                     #     item[key] = ''
-        #             list.append(Slab(**item))
-        #         print(list)
-        #         id_list = []
-        #         for i in list:
-        #             i.save()
-        #             id_list.append(i.id)
-        #         block_item = Slab.objects.filter(id__in=id_list).values('block_num', 'thickness').annotate(
-        #             pics=Count('id'),
-        #             m2=Sum('m2'))
-        #         print(block_item)
-        #         for item in block_item:
-        #             item['item'] = [slab.id for slab in list if
-        #                             slab.block_num_id == item['block_num'] and slab.thickness == item['thickness']]
-        # return HttpResponse(block_item)
-        # {block_num: 8801, thickness: 1.5, pics: 48, part: 3, m2: 283.53,
-        #  slab: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
-
-
-
-        #         if PurchaseOrderItem.objects.filter(block_num=row[0]):
-        #             if not ImportOrderItem.objects.filter(
-        #                     block_num=PurchaseOrderItem.objects.filter(block_num=row[0])):
-        #                 """
-        #                 以后还有再加一个判断该编号荒料有没有到货记录。
-        #                 """
-        #                 block_num = PurchaseOrderItem.objects.get(block_num=row[0])
-        #                 order_item.append(
-        #                     ImportOrderItem(block_num=block_num, weight=row[1]))
-        #                 block = Product.objects.get(block_num=block_num)
-        #                 block.weight = row[1]
-        #                 block_list.append(block)
-        #         else:
-        #             error.append(row[0])
-        #     if len(error) != 0:
-        #         messages.error(self.request, '荒料编号:{}，已有数据，请检查清楚！'.format("，".join(error)))
-        #         context = {
-        #             'object': object,
-        #             'form': form,
-        #             'file_form': file_form,
-        #         }
-        #         return render(self.request, self.template_name, context)
-        # if self.request.POST.get('save'):
-        #     object.save()
-        #     for block_id, block in zip(order_item, block_list):
-        #         block_id.order = object
-        #         block_id.save()
-        #         block.save()
-        #     messages.success(self.request, '数据已经成功保存!')
-        #     success_url = object.get_absolute_url()
-        #     return HttpResponseRedirect(success_url)
-        # messages.success(self.request, '数据已经成功保存!')
-        # context = {
-        #     # 'object': object,
-        #     'block_list': block_list,
-        #     'form': form,
-        #     'file_form': file_form,
-        #     'total_weight': '{0:.2f}'.format(sum(float(i.weight) for i in block_list)),
-        #     'total_count': len(block_list),
-        # }
-        # return render(self.request, self.template_name, context)

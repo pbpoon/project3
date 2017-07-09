@@ -30,7 +30,4 @@ urlpatterns += [
     url(r'^order/create/$', views.ProcessOrderCreateView.as_view(), name='order_create'),
     url(r'^order/update/(?P<pk>\d+)/$', views.ProcessOrderUpdateView.as_view(), name='order_update'),
     url(r'^order/(?P<pk>\d+)/$', views.ProcessOrderDetailView.as_view(), name='order_detail'),
-    url(r'^api/block_list/$', views.get_block_list, name='get_block_list'),
-    # url(r'^order/update/(?P<pk>\d+)/$', views.ServiceProviderUpdateView.as_view(), name='order_update'),
-    # url(r'^order/delete/(?P<pk>\d+)/$', views.ServiceProviderDeleteView.as_view(), name='order_delete'),
 ]

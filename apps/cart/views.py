@@ -8,10 +8,11 @@ from utils import str_to_list, AddExcelForm
 def cart_detail(request):
     cart = Cart(request)
     object_list = cart.make_slab_list()
-    import_slabs = cart.show_import_slab_list()
+    import_slabs = cart.make_import_slab_list()
     import_slab_form = AddExcelForm()
     for item in object_list:
-        item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
+        item['slab_ids'] = [id for part in item['part_num'].values() for id in
+                            part['slabs']]
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,
@@ -75,3 +76,6 @@ def remove_import_slabs(request):
     thickness = request.POST.get('thickness')
     cart.remove_import_slabs(block_num, thickness)
     return redirect('cart:index')
+
+def show_import_slabs(request):
+    pass

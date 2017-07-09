@@ -22,7 +22,8 @@ class Cart(object):
 
     # 添加product 到 cart
     def add(self, block_num, slab_ids):
-        obj = [item['id'] for item in Product.objects.get(block_num_id=block_num).slab.values('id')]
+        obj = [item['id'] for item in
+               Product.objects.get(block_num_id=block_num).slab.values('id')]
         cart_lst = self.cart['slab_ids']
         cart_lst = [i for i in cart_lst if int(i) not in obj]
         self.cart['slab_ids'] = cart_lst
@@ -44,7 +45,8 @@ class Cart(object):
         self.save()
 
     def get_total_price(self):
-        return sum(Decimal(item['price']) * item['quantity'] for item in self.cart.values())
+        return sum(Decimal(item['price']) * item['quantity'] for item in
+                   self.cart.values())
 
     def clear(self):
         del self.session[settings.CART_SESSION_ID]
@@ -53,7 +55,8 @@ class Cart(object):
     def make_slab_list(self):
         block_list = self.get_block_num()
         slab_ids = self.cart['slab_ids']
-        return [i for block in block_list for i in block.get_slab_list(slab_ids)]
+        return [i for block in block_list for i in
+                block.get_slab_list(slab_ids)]
 
     def get_block_num(self):
         slab_ids = self.cart['slab_ids']
@@ -64,7 +67,8 @@ class Cart(object):
         slab_list = self.make_slab_list()
         price_list = self.cart['price']
         for item in slab_list:
-            price_list.setdefault(str(item['block_num']) + str(item['thickness']), 0)
+            price_list.setdefault(
+                str(item['block_num']) + str(item['thickness']), 0)
 
     def update_price(self, item, price=None):
         price_list = self.cart['price']
@@ -81,7 +85,7 @@ class Cart(object):
         total_m2 = sum(Decimal(i['block_m2']) for i in slab_list)
         return {'count': count, 'total_m2': total_m2}
 
-    def import_slab_list(self,f):
+    def import_slab_list(self, f):
         # data = xlrd.open_workbook(file_contents=f.read())
         # table = data.sheets()[0]
         # nrows = table.nrows  # 总行数
@@ -123,22 +127,28 @@ class Cart(object):
         self.cart['import_slabs'].extend(importer.data)
         self.save()
 
-    def show_import_slab_list(self):
+    def make_import_slab_list(self):
         lst = self.cart['import_slabs']
         _set = set((item['block_num'], item['thickness']) for item in lst)
-        _list = [{'block_num': num, 'thickness': thick} for num, thick in list(_set)]
+        _list = [{'block_num': num, 'thickness': thick} for num, thick in
+                 list(_set)]
         for _dict in _list:
             _dict['block_pics'] = len([item for item in lst if
-                                       item['block_num'] == _dict['block_num'] and item['thickness'] == _dict[
-                                           'thickness']])
+                                       item['block_num'] == _dict[
+                                           'block_num'] and
+                                       item['thickness'] == _dict['thickness']])
             _dict['block_m2'] = sum(Decimal(item['m2']) for item in lst if
-                                    item['block_num'] == _dict['block_num'] and item['thickness'] == _dict[
+                                    item['block_num'] == _dict['block_num'] and
+                                    item['thickness'] == _dict[
                                         'thickness'])
             _dict['part_count'] = len(set([item['part_num'] for item in lst if
-                                           item['block_num'] == _dict['block_num'] and item['thickness'] == _dict[
+                                           item['block_num'] == _dict[
+                                               'block_num'] and item[
+                                               'thickness'] == _dict[
                                                'thickness']]))
             _dict['slabs'] = [item for item in lst if
-                              item['block_num'] == _dict['block_num'] and item['thickness'] == _dict[
+                              item['block_num'] == _dict['block_num'] and item[
+                                  'thickness'] == _dict[
                                   'thickness']]
         return _list
 
@@ -149,7 +159,7 @@ class Cart(object):
             lst[:]实际是lst的拷贝，所以遍历删除的时候不会因为删除符合条件的遍历item，令原遍历个数减少而删除不完全
             可以参考http://www.cnblogs.com/bananaplan/p/remove-listitem-while-iterating.html
             '''
-            if item['block_num'] == block_num and item['thickness'] == thickness:
+            if item['block_num'] == block_num and item[
+                'thickness'] == thickness:
                 lst.remove(item)
         self.save()
-

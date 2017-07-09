@@ -20,7 +20,7 @@ class ProductDetailView(DetailView):
 
 
 class ProductSlabListView(View):
-    template_name = 'products/slablist_detail.html'
+    template_name = 'products/slab_list.html'
 
     def get(self, request, **kwargs):
         cart = Cart(request)
@@ -30,7 +30,8 @@ class ProductSlabListView(View):
         if block_num:
             object = object.filter(block_num=block_num).first()
         if slab_ids:
-            slab_list = object.get_slab_list(slab_ids=str_to_list(slab_ids), object_format=True)
+            slab_list = object.get_slab_list(slab_ids=str_to_list(slab_ids),
+                                             object_format=True)
         else:
             slab_list = object.get_slab_list(object_format=True)
         context = {

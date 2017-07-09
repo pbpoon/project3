@@ -7,7 +7,8 @@ BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板�
 
 class Product(models.Model):
     block_num = models.CharField('荒料编号', max_length=16, unique=True)
-    weight = models.DecimalField('重量', max_digits=5, decimal_places=2, null=True)
+    weight = models.DecimalField('重量', max_digits=5, decimal_places=2,
+                                 null=True)
     long = models.IntegerField('长', null=True)
     width = models.IntegerField('宽', null=True)
     high = models.IntegerField('高', null=True)
@@ -18,6 +19,7 @@ class Product(models.Model):
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
+
     # is_del = models.BooleanField('删除', default=False)
 
     class Meta:
@@ -34,26 +36,32 @@ class Product(models.Model):
         obj = self.slab.all()
         if slab_ids:
             obj = obj.filter(id__in=slab_ids)
-        slab_list = obj.values('block_num', 'thickness').annotate(block_pics=models.Count('id'),
-                                                                  block_m2=models.Sum('m2'))
+        slab_list = obj.values('block_num', 'thickness').annotate(
+            block_pics=models.Count('id'),
+            block_m2=models.Sum('m2'))
         list = []
 
         for part in slab_list:
             part_list = [part for part in
-                         obj.values('part_num').filter(thickness=part['thickness']).distinct()]
+                         obj.values('part_num').filter(
+                             thickness=part['thickness']).distinct()]
             lst = {}
-            lst = {'block_num': self.block_num_id, 'thickness': str(part['thickness']),
+            lst = {'block_num': self.block_num_id,
+                   'thickness': str(part['thickness']),
                    'block_pics': str(part['block_pics']),
-                   'block_m2': str(part['block_m2']), 'part_count': len(part_list), 'part_num': {}}
+                   'block_m2': str(part['block_m2']),
+                   'part_count': len(part_list), 'part_num': {}}
 
             for item in part_list:
                 slabs = [slab for slab in
                          obj.filter(thickness=part['thickness'],
-                                    part_num=item['part_num']).order_by('line_num')]
+                                    part_num=item['part_num']).order_by(
+                             'line_num')]
                 part_num = item['part_num']
                 lst['part_num'][part_num] = {}
                 lst['part_num'][part_num]['part_pics'] = len(slabs)
-                lst['part_num'][part_num]['part_m2'] = str(sum(s.m2 for s in slabs))
+                lst['part_num'][part_num]['part_m2'] = str(
+                    sum(s.m2 for s in slabs))
                 slab = [s.id for s in slabs]
                 if object_format:
                     slab = [s for s in slabs]
@@ -62,19 +70,29 @@ class Product(models.Model):
 
         return list
 
+    def _get_cost_by(self):
+        return self.purchase.order.cost_by
+    cost_by = property(_get_cost_by)
 
 class Slab(models.Model):
-    block_num = models.ForeignKey('Product', on_delete=models.CASCADE, related_name='slab', verbose_name='荒料编号')
-    thickness = models.DecimalField(max_digits=4, decimal_places=2, db_index=True, verbose_name=u'厚度')
+    block_num = models.ForeignKey('Product', on_delete=models.CASCADE,
+                                  related_name='slab', verbose_name='荒料编号')
+    thickness = models.DecimalField(max_digits=4, decimal_places=2,
+                                    db_index=True, verbose_name=u'厚度')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
     line_num = models.SmallIntegerField(u'序号')
     long = models.PositiveSmallIntegerField(verbose_name=u'长')
     high = models.PositiveSmallIntegerField(verbose_name=u'高')
-    kl1 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'长1')
-    kl2 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'长2')
-    kh1 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'高1')
-    kh2 = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=u'高2')
-    m2 = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=u'平方')
+    kl1 = models.PositiveSmallIntegerField(null=True, blank=True,
+                                           verbose_name=u'长1')
+    kl2 = models.PositiveSmallIntegerField(null=True, blank=True,
+                                           verbose_name=u'长2')
+    kh1 = models.PositiveSmallIntegerField(null=True, blank=True,
+                                           verbose_name=u'高1')
+    kh2 = models.PositiveSmallIntegerField(null=True, blank=True,
+                                           verbose_name=u'高2')
+    m2 = models.DecimalField(max_digits=5, decimal_places=2, default=0,
+                             verbose_name=u'平方')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
     updated = models.DateTimeField(auto_now=True, verbose_name=u'更新日期')
     is_sell = models.BooleanField(default=False, verbose_name=u'是否已售')
@@ -107,8 +125,10 @@ class Slab(models.Model):
 
 
 class Batch(models.Model):
-    name = models.CharField(max_length=20, unique=True, db_index=True, verbose_name=u'批次编号')
-    ps = models.CharField(max_length=200, null=True, blank=True, verbose_name=u'备注信息')
+    name = models.CharField(max_length=20, unique=True, db_index=True,
+                            verbose_name=u'批次编号')
+    ps = models.CharField(max_length=200, null=True, blank=True,
+                          verbose_name=u'备注信息')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'创建日期')
     updated = models.DateTimeField('更新日期', auto_now=True)
 
@@ -121,7 +141,8 @@ class Batch(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=20, null=False, unique=True, db_index=True, verbose_name=u'品种名称')
+    name = models.CharField(max_length=20, null=False, unique=True,
+                            db_index=True, verbose_name=u'品种名称')
     created = models.DateField(auto_now_add=True, verbose_name=u'添加日期')
 
     class Meta:
@@ -133,7 +154,8 @@ class Category(models.Model):
 
 
 class Quarry(models.Model):
-    name = models.CharField(max_length=20, null=False, unique=True, verbose_name=u'矿口名称')
+    name = models.CharField(max_length=20, null=False, unique=True,
+                            verbose_name=u'矿口名称')
     desc = models.CharField(max_length=200, verbose_name=u'描述信息')
     created = models.DateField(auto_now_add=True, verbose_name=u'添加日期')
     updated = models.DateField(auto_now=True, verbose_name=u'更新日期')
@@ -144,7 +166,6 @@ class Quarry(models.Model):
 
     def __str__(self):
         return self.name
-
 
     '''
     注释的代码为返回码单为字典类型

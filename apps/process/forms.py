@@ -4,8 +4,9 @@ __date__ = '2017/6/14 11:34'
 
 from django import forms
 from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, \
-    STOrderItem, SlabList
+    STOrderItem, SlabList, SlabListItem
 from products.models import Product, Slab
+from products.forms import SlabForm
 from crispy_forms.helper import FormHelper
 
 
@@ -73,6 +74,9 @@ class TSOrderItemForm(forms.ModelForm):
         super(TSOrderItemForm, self).__init__(*args, **kwargs)
         block_id = self.initial.get('block_num', None)
         self.empty_permitted = False
+        """
+        使用bootstrap的样色class
+        """
         # for i in self.fields:
         #     attr_cls = self.fields[i].widget.attrs.get('class')
         #     if attr_cls:
@@ -130,8 +134,12 @@ class SlabListForm(forms.ModelForm):
 
 
 class SlabListItemForm(forms.ModelForm):
+    block_num = forms.CharField(max_length=16, label='荒料编号')
+    thickness = forms.DecimalField(max_digits=4, decimal_places=2, label='厚度')
+    part_num = forms.CharField(label='夹号')
+
     class Meta:
-        model = Slab
+        model = SlabListItem
         exclude = ('block_num', 'thickness', 'created', 'updated', 'is_booking',
                    'is_pickup', 'is_sell', 'm2')
 
