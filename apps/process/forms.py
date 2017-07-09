@@ -34,7 +34,7 @@ def block_num_choice():
 WIDGETS_VALUES = {
     'block_num': forms.HiddenInput(),
     'quantity': forms.TextInput(
-        attrs={'style': 'width:7em', 'min': '0'}),
+        attrs={'style': 'width:5em', 'min': '0'}),
     'price': forms.TextInput(attrs={'size': '3'}),
     'amount': forms.TextInput(attrs={'size': '3'}),
     'date': forms.TextInput(attrs={'class': 'dt', 'size': '6'}),
@@ -44,7 +44,7 @@ WIDGETS_VALUES = {
     'pi': forms.NumberInput(
         attrs={'style': 'width:5em', 'min': '0', 'step': '1',
                'type': 'number'}),
-    'thickness': forms.NumberInput(attrs={'style': 'width:7em', 'min': '1.5'}),
+    'thickness': forms.NumberInput(attrs={'style': 'width:5em', 'min': '1.5'}),
 }
 
 
@@ -134,14 +134,13 @@ class SlabListForm(forms.ModelForm):
 
 
 class SlabListItemForm(forms.ModelForm):
-    block_num = forms.CharField(max_length=16, label='荒料编号')
-    thickness = forms.DecimalField(max_digits=4, decimal_places=2, label='厚度')
-    part_num = forms.CharField(label='夹号')
+    # block_num = forms.CharField(max_length=16, label='荒料编号')
+    # thickness = forms.DecimalField(max_digits=4, decimal_places=2, label='厚度')
+    # part_num = forms.CharField(label='夹号')
 
     class Meta:
         model = SlabListItem
-        exclude = ('block_num', 'thickness', 'created', 'updated', 'is_booking',
-                   'is_pickup', 'is_sell', 'm2')
+        exclude = ()
 
 
 class CustomBaseInlineFormset(forms.BaseInlineFormSet):

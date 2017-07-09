@@ -46,7 +46,7 @@ class Product(models.Model):
                          obj.values('part_num').filter(
                              thickness=part['thickness']).distinct()]
             lst = {}
-            lst = {'block_num': self.block_num_id,
+            lst = {'block_num': self.block_num,
                    'thickness': str(part['thickness']),
                    'block_pics': str(part['block_pics']),
                    'block_m2': str(part['block_m2']),

@@ -23,7 +23,7 @@ class Cart(object):
     # 添加product 到 cart
     def add(self, block_num, slab_ids):
         obj = [item['id'] for item in
-               Product.objects.get(block_num_id=block_num).slab.values('id')]
+               Product.objects.get(block_num=block_num).slab.values('id')]
         cart_lst = self.cart['slab_ids']
         cart_lst = [i for i in cart_lst if int(i) not in obj]
         self.cart['slab_ids'] = cart_lst
@@ -128,6 +128,28 @@ class Cart(object):
         self.save()
 
     def make_import_slab_list(self):
+        """
+        返回的是列表，格式如下：
+        [{'block_num': '4901',
+        'thickness': '1.50',
+        'block_pics': 41,
+        'block_m2': Decimal('185.69'),
+         'part_count': 4,
+
+         'slabs': [
+         {'block_num': '4901',
+         'thickness': '1.50',
+         'part_num': '1',
+          'line_num': 1,
+          'long': '290.00',
+           'high': '156.00',
+           'kl1': '10.00',
+            'kl2': '10.00',
+            'kh1': '10.00',
+            'kh2': '10.00',
+            'm2': '4.53'}
+            ]
+        """
         lst = self.cart['import_slabs']
         _set = set((item['block_num'], item['thickness']) for item in lst)
         _list = [{'block_num': num, 'thickness': thick} for num, thick in
@@ -151,6 +173,15 @@ class Cart(object):
                                   'thickness'] == _dict[
                                   'thickness']]
         return _list
+
+    def get_import_slab_list_by_parameter(self, block_num=None, thickness=None):
+        if not block_num and not thickness:
+            raise ValueError('没有足够参数')
+        import_slab_list = self.make_import_slab_list()
+        for item in import_slab_list:
+            if item['block_num'] == str(block_num) and item['thickness'] == str(thickness):
+                return item['slabs']
+        return None
 
     def remove_import_slabs(self, block_num=None, thickness=None):
         lst = self.cart['import_slabs']

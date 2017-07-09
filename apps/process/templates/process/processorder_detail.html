@@ -13,7 +13,7 @@
 
     {% if item_list %}
     {% for item in item_list %}
-        {{ item }}
+        {{ item }}{{ item.slab_list }}
     {% endfor %}
     {% endif %}
 {% endblock %}

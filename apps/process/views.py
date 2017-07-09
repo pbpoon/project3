@@ -12,7 +12,7 @@ from products.models import Product, Slab
 from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, \
     STOrderItemForm, ProcessOrderForm, SlabListForm, \
     SlabListItemForm, CustomBaseInlineFormset
-from products.forms import SlabModelFormset
+from products.forms import SlabModelFormset, SlabForm
 from django.forms import inlineformset_factory
 from utils import AddExcelForm
 
@@ -177,27 +177,45 @@ class OrderFormsetMixin(object):
     def form_valid(self, form):
         data = self.get_context_data()
         formset = data['itemformset']
+
         with transaction.atomic():
             sid = transaction.savepoint()
             instance = form.save()
             if formset.is_valid():
                 formset.instance = instance
                 items = formset.save()
-                slablist = SlabList.objects.create(order=instance,
-                                                   data_entry_staff=self.request.user)
                 if self.order_type == 'MB':
                     cart = Cart(self.request)
-                    lst = cart.cart['import_slabs']
-                    for item in lst:
-                        item['block_num'] = Product.objects.get(
-                            block_num=item['block_num'])
-                        slab = Slab.objects.create(**item)
-                        SlabList.objects.create(slablist=slablist, slab=slab,
-                                                part_num=slab.part_num,
-                                                line_num=slab.line_num)
+                    for item in items:
+                        slab_lst = cart.get_import_slab_list_by_parameter(block_num=item.block_num,
+                                                                          thickness=item.thickness)
+                        slablist = SlabList.objects.create(order=item,
+                                                           data_entry_staff=self.request.user)
+                        for i in slab_lst:
+                            i['block_num'] = Product.objects.get(
+                                block_num=i['block_num']).id
+                            slabform = SlabForm(data=i)
+                            if slabform.is_valid():
+                                slab = slabform.save()
+                            # slab = Slab.objects.create(**i)
+                            slab_list_item_data = {'slab': slab.id, 'slablist': slablist.id,
+                                                   'part_num': slab.part_num, 'line_num':
+                                                       slab.line_num}
+                            slab_list_item_form = SlabListItemForm(data=slab_list_item_data)
+
+                            if slab_list_item_form.is_valid():
+                                slab_list_item_form.save()
+                                # SlabList.objects.create(slablist=slablist.id, slab=slab.id,
+                                #                         part_num=slab.part_num,
+                                #                         line_num=slab.line_num)
+                                # lst = cart.cart['import_slabs']
+                                # productfomset = SlabModelFormset(data=lst)
+                                # if productfomset.is_valid():
+                                #     productfomset.save()
+
                     for item in items:
                         cart.remove_import_slabs(
-                            block_num=item.block_num.block_num_id,
+                            block_num=item.block_num,
                             thickness=str(item.thickness))
                 # success_url = 'process:order_list'
                 # return redirect(success_url)
