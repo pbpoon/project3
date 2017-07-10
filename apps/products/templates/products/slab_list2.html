@@ -4,13 +4,6 @@
 {% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}
 {% block main %}
     <form method="post" id="slab_form" action="{% url 'cart:add' %}">
-
-
-     <div class="tab-content">
-    <div role="tabpanel" class="tab-pane active" id="home">...</div>
-
-
-
         {% for slabs in slab_list %}
             <div id="{{ slabs.thickness|slugify }}">
                 <h2 class="page-header">{{ slabs.thickness }}
