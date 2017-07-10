@@ -191,28 +191,25 @@ class OrderFormsetMixin(object):
                                                                           thickness=item.thickness)
                         slablist = SlabList.objects.create(order=item,
                                                            data_entry_staff=self.request.user)
+                        # slablist = SlabListForm(data={
+                        #     'order': item,
+                        #     'data_entry_staff': self.request.user
+                        # })
+                        # if slablist.is_valid():
+                        #     slablist.save()
                         for i in slab_lst:
                             i['block_num'] = Product.objects.get(
                                 block_num=i['block_num']).id
                             slabform = SlabForm(data=i)
                             if slabform.is_valid():
                                 slab = slabform.save()
-                            # slab = Slab.objects.create(**i)
-                            slab_list_item_data = {'slab': slab.id, 'slablist': slablist.id,
-                                                   'part_num': slab.part_num, 'line_num':
-                                                       slab.line_num}
-                            slab_list_item_form = SlabListItemForm(data=slab_list_item_data)
+                                slab_list_item_data = {'slab': slab.id, 'slablist': slablist.id,
+                                                       'part_num': slab.part_num, 'line_num':
+                                                           slab.line_num}
+                                slab_list_item_form = SlabListItemForm(data=slab_list_item_data)
 
-                            if slab_list_item_form.is_valid():
-                                slab_list_item_form.save()
-                                # SlabList.objects.create(slablist=slablist.id, slab=slab.id,
-                                #                         part_num=slab.part_num,
-                                #                         line_num=slab.line_num)
-                                # lst = cart.cart['import_slabs']
-                                # productfomset = SlabModelFormset(data=lst)
-                                # if productfomset.is_valid():
-                                #     productfomset.save()
-
+                                if slab_list_item_form.is_valid():
+                                    slab_list_item_form.save()
                     for item in items:
                         cart.remove_import_slabs(
                             block_num=item.block_num,

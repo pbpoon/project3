@@ -30,16 +30,22 @@
                     <td>{{ object.block_m2 }}</td>
                     <td>
                         <div class="dropdown">
-                            <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                            <a href="#" data-target="#" class="dropdown-toggle"
+                               data-toggle="dropdown" role="button"
                                aria-haspopup="true"
-                               aria-expanded="false"><span class="btn btn-default btn-sm">操作</span><span
+                               aria-expanded="false"><span
+                                    class="btn btn-default btn-sm">操作</span><span
                                     class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <li><a
-                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a></li>
+                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a>
+                                </li>
                                 <li role="separator" class="divider"></li>
-                                <li><a
-                                        href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                                <li>
+                                    <button onclick="go({{ object.block_num }},{{ object.slab_ids }})">
+                                        新页面打开
+                                    </button>
+                                    <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
                                 </li>
                             </ul>
                         </div>
@@ -85,13 +91,15 @@
 
                     <td>
                         <div class="dropdown">
-                            <a href="#" data-target="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
+                            <a href="#" data-target="#" class="dropdown-toggle"
+                               data-toggle="dropdown" role="button"
                                aria-haspopup="true"
                                aria-expanded="false"><span class="btn btn-default">相关操作</span><span
                                     class="caret"></span></a>
                             <ul class="dropdown-menu">
                                 <li><a
-                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a></li>
+                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a>
+                                </li>
                                 <li role="separator" class="divider"></li>
                                 <li><a
                                         href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
@@ -133,13 +141,22 @@
     {#        });#}
     {#    </script>#}
     <div class="btn-group-vertical">
-        <li><a href="{% url 'process:order_create' %}?order_type=MB" class="btn btn-default">新建补石单</a></li>
+        <li><a href="{% url 'process:order_create' %}?order_type=MB"
+               class="btn btn-default">新建补石单</a></li>
     </div>
     <form action="{% url 'cart:import_slab' %}" method="post" enctype="multipart/form-data">
         {{ form }}
         <input type="submit" value="导入码单" class="btn btn-toolbar">
         {% csrf_token %}
     </form>
+    <script>
+        function go(block_num, ids) {
+            var slab_ids = ids
+            var block_num = block_num
+            var url = "{% url 'product:slab_list' 'strrrrr' %}?slab_ids=".replace('strrrrr', block_num)+slab_ids+""
+{#            var url = url+slab_ids.toString()#}
+            window.open(url, "new", "menubar=no,width=400,height=100,resizeable=yes")}
+    </script>
 {% endblock %}
 
 {% block sidebar %}

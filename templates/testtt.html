@@ -1,0 +1,64 @@
+<html>
+<head>
+    <meta charset="utf-8"/>
+    {#        <script type="text/jscript" language="javascript">#}
+    {#            window.open("newwindow.html","new","height=280,width=800,top=10,left=20,resizable=no, location=no",false);#}
+    {#        </script>#}
+    {#        <style type="text/css">#}
+    {#            p{#}
+    {#                font-size:24px;#}
+    {#                color:#F00;#}
+    {#            }#}
+    {#        </style>#}
+    {#    <script type="text/javascript">#}
+    {#    function openWindow() {#}
+    {#        newWindow = window.open('', 'newWindow', 'height=300,width=300,scrollbars=auto');#}
+    {#        if (newWindow != null) {#}
+    {#            var windowHTML = "<html><head><title>preview</title></head>";#}
+    {#            windowHTML += "<body><h1 align='center'>";#}
+    {#            windowHTML += "这是子窗口!</h1><hr><div align='center'><form action='#' method='get'>";#}
+    {#            windowHTML += "<input type='button' value='将父窗口的背景设为红色' onclick='window.opener.document.body.style.backgroundColor="#}
+    {#            red#}
+    {#            ";' /><br>";#}
+    {#            windowHTML += "<br ><input type='button' value='关闭' onclick='self.close();' />";#}
+    {#            windowHTML += "</form></div></body></html>";#}
+    {##}
+    {#            newWindow.document.write(windowHTML);#}
+    {#            newWindow.focus();#}
+    {#        }#}
+    {#    }#}
+    {#</script>#}
+
+    <script language=javascript>
+        function outPut() {
+            var text = document.abc.text.value;
+            var win = window.open("", "mywin", "menubar=no,width=400,height=100,resizeable=yes");
+            win.document.writeln("<title>输出结果</title>");
+            win.document.writeln("你的信息是：<p>");
+            win.document.writeln(text);
+            win.document.writeln("<input type=text name=child value=子窗口信息>");
+//对子窗口本身操作，使用self对象，对父窗口操作使用opener对象，这是关键
+//把子窗口中表单的值回传给父窗口，取代父窗口表单以前的值，然后关闭子窗口
+            win.document.writeln("<input type=button value=关闭自己 onClick= window.opener.abc.text.value=self.child.value;self.close() >");
+//可以控制关闭父窗口
+            win.document.writeln("<input type=button value=关闭父窗口 onClick= window.opener.opener=null;window.opener.close() >");
+//刷新父窗口
+            win.document.writeln("<input type=button value=刷新父窗口 onClick= window.opener.location.reload() >");
+            win.document.close();
+            win.focus();
+        }
+    </script>
+
+</head>
+<body>
+<form name=abc method=post>
+    <input type=text name=text size=50 id="abc">
+    <input type=button value=提交 onClick="outPut()">
+</form>
+{#<p>网站首页</p>#}
+{##}
+{#<input value='打开子窗口' onclick="openWindow();" type="button">#}
+{#<input type="button" value="将子窗口的背景设为蓝色"#}
+{#       onclick="if (window.newWindow){newWindow.document.bgColor='blue';newWindow.focus();}"/>#}
+</body>
+</html>
