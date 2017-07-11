@@ -61,27 +61,27 @@ function get_source(id) {
     console.log(select.data('id'));
 
     if (!select.data('id')) {
-        alert('荒料编号['+value+'],不是本订单内容合法的编号，请检查！')
+        alert('荒料编号[' + value + '],不是本订单内容合法的编号，请检查！')
         setfocus(id)
-    }else{
+    } else {
         $('#' + block_num_id).val(select.data('id'))
     }
-    set_quantity(id,select)
+    set_quantity(id, select)
 }
 ;
 
 function setfocus(id) {
-    $('#'+id).focus()
+    $('#' + id).focus()
 }
 //界石订单选择编号后设置重量
-function set_quantity(id,se) {
-    var order_type= $('#order_type').val()
+function set_quantity(id, se) {
+    var order_type = $('#order_type').val()
     console.log(order_type)
-    if(order_type=='KS'){
+    if (order_type == 'KS') {
         console.log(id)
         var quantity = id.split('-').splice(0, 2).join('-') + '-quantity';
         console.log(quantity)
-        $('#'+quantity).val(se.data('quantity'))
+        $('#' + quantity).val(se.data('quantity'))
     }
 }
 
@@ -120,13 +120,16 @@ function remove_form(prefix) {
 };
 
 function open_dt(id) {
-    $('#'+id).datetimepicker({
-    minView : "day", //  选择时间时，最小可以选择到那层；默认是‘hour’也可用0表示
-    language: 'zh-CN', // 语言
-    autoclose : true, //  true:选择时间后窗口自动关闭
-    format : 'yyyy-mm-dd ', /* 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00
-    //hh:00:00*/
-    todayBtn : 'linked', /* 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today"
-    按钮用以选择当前日期。*/
+    $('#' + id).datetimepicker({
+        minView: "day", //  选择时间时，最小可以选择到那层；默认是‘hour’也可用0表示
+        language: 'zh-CN', // 语言
+        autoclose: true, //  true:选择时间后窗口自动关闭
+        format: 'yyyy-mm-dd ', /* 文本框时间格式，设置为0,最后时间格式为2017-03-23 17:00:00
+         //hh:00:00*/
+        todayBtn: 'linked', /* 如果此值为true 或 "linked"，则在日期时间选择器组件的底部显示一个 "Today"
+         按钮用以选择当前日期。*/
     })
+}
+function open_slab_list(block_num) {
+    console.log(block_num)
 }

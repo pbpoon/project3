@@ -1,11 +1,14 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.http import JsonResponse
 from django.core import serializers
-
+from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
+from django.forms import inlineformset_factory
 from django.core.urlresolvers import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, \
     DeleteView, View, TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, \
     KSOrderItem, STOrderItem, SlabList, SlabListItem
 from products.models import Product, Slab
@@ -13,12 +16,7 @@ from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, \
     STOrderItemForm, ProcessOrderForm, SlabListForm, \
     SlabListItemForm, CustomBaseInlineFormset
 from products.forms import SlabModelFormset, SlabForm
-from django.forms import inlineformset_factory
-from utils import AddExcelForm
-
 from cart.cart import Cart
-
-from django.db import transaction
 
 
 class ServiceProviderListView(ListView):
@@ -87,8 +85,7 @@ class OrderFormsetMixin(object):
             model = MBOrderItem
             form = MBOrderItemForm
             fields = (
-                'id', 'block_num', 'block_name', 'thickness', 'pic', 'quantity',
-                'unit', 'price',
+                'id', 'block_num', 'block_name', 'thickness', 'pic', 'quantity', 'unit', 'price',
                 'date', 'ps')
             extra = len(import_list)
         elif type == 'ST':
@@ -130,7 +127,7 @@ class OrderFormsetMixin(object):
                                 'thickness': data['thickness'],
                                 'pic': data['block_pics'],
                                 'quantity': data['block_m2'],
-                                'unit': 'm2'
+                                'unit': 'm2',
                             }
             context['errors'] = error
             context['order_type'] = self.order_type
@@ -177,7 +174,7 @@ class OrderFormsetMixin(object):
     def form_valid(self, form):
         data = self.get_context_data()
         formset = data['itemformset']
-
+        cart = Cart(self.request)
         with transaction.atomic():
             sid = transaction.savepoint()
             instance = form.save()
@@ -185,37 +182,72 @@ class OrderFormsetMixin(object):
                 formset.instance = instance
                 items = formset.save()
                 if self.order_type == 'MB':
-                    cart = Cart(self.request)
-                    for item in items:
-                        slab_lst = cart.get_import_slab_list_by_parameter(block_num=item.block_num,
-                                                                          thickness=item.thickness)
-                        slablist = SlabList.objects.create(order=item,
-                                                           data_entry_staff=self.request.user)
-                        # slablist = SlabListForm(data={
-                        #     'order': item,
-                        #     'data_entry_staff': self.request.user
-                        # })
-                        # if slablist.is_valid():
-                        #     slablist.save()
-                        for i in slab_lst:
-                            i['block_num'] = Product.objects.get(
-                                block_num=i['block_num']).id
-                            slabform = SlabForm(data=i)
-                            if slabform.is_valid():
-                                slab = slabform.save()
-                                slab_list_item_data = {'slab': slab.id, 'slablist': slablist.id,
-                                                       'part_num': slab.part_num, 'line_num':
-                                                           slab.line_num}
-                                slab_list_item_form = SlabListItemForm(data=slab_list_item_data)
+                    try:
+                        slab_model = ContentType.objects.get_for_model(instance)
+                        slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
+                                                         object_id=instance.id)
+                    except Exception as e:
+                        slab_list = SlabList.objects.create(order=instance,
+                                              data_entry_staff_id=self.request.user.id)
+                    finally:
+                        if self.object is None:
+                            slabs = cart.cart['import_slabs']
+                        else:
+                            slabs = cart.cart['slab_ids']
+                        extra = len(slabs)
+                        SlabListItemFormset = inlineformset_factory(SlabList, SlabListItem,
+                                                                    form=SlabListItemForm,
+                                                                      extra=extra)
+                        slab_list_item_formset = SlabListItemFormset(self.request.POST,
+                                                                      instance=slab_list)
+                        for form, data in zip(slab_list_item_formset, slabs):
+                            data['block_num'] = Product.objects.get(block_num=data['block_num'])
+                            # form.initial = data
+                            form.initial = data
+                        if slab_list_item_formset.is_valid():
+                           transaction.on_commit(slab_list_item_formset.save)
+                           for item in items:
+                               cart.remove_import_slabs(
+                                   block_num=item.block_num,
+                                   thickness=str(item.thickness))
+                        # if self.order_type == 'MB':
+                        #
+                        #     for item in items:
+                        #         slab_lst = cart.get_import_slab_list_by_parameter(block_num=item.block_num,
+                        #                                                           thickness=item.thickness)
+                        #         slablist = SlabList.objects.create(order=item,
+                        #                                            data_entry_staff=self.request.user)
+                        #         # slablist = SlabListForm(data={
+                        #         #     'order': item,
+                        #         #     'data_entry_staff': self.request.user
+                        #         # })
+                        #         # if slablist.is_valid():
+                        #         #     slablist.save()
+                        #         for i in slab_lst:
+                        #             i['block_num'] = Product.objects.get(
+                        #                 block_num=i['block_num']).id
+                        #             slabform = SlabForm(data=i)
+                        #             if slabform.is_valid():
+                        #                 slab = slabform.save()
+                        #                 slab_list_item_data = {'slab': slab.id, 'slablist': slablist.id,
+                        #                                        'part_num': slab.part_num, 'line_num':
+                        #                                            slab.line_num}
+                        #                 slab_list_item_form = SlabListItemForm(data=slab_list_item_data)
+                        #
+                        #                 if slab_list_item_form.is_valid():
+                        #                     slab_list_item_form.save()
+                        else:
+                            transaction.savepoint_rollback(sid)
+                            context = {
+                                'order_type': self.get_order_type(),
+                                'form': form,
+                                'itemformset': formset,
+                                'data_list': self.get_block_num_datalist()
+                            }
 
-                                if slab_list_item_form.is_valid():
-                                    slab_list_item_form.save()
-                    for item in items:
-                        cart.remove_import_slabs(
-                            block_num=item.block_num,
-                            thickness=str(item.thickness))
-                # success_url = 'process:order_list'
-                # return redirect(success_url)
+
+                    # success_url = 'process:order_list'
+                    # return redirect(success_url)
                 return super(OrderFormsetMixin, self).form_valid(form)
             else:
                 transaction.savepoint_rollback(sid)

@@ -74,7 +74,6 @@
                             {{ field.errors.as_ul }}
                             {{ field }}
                         </td>
-
                     {% endfor %}
                 </tr>
             {% endfor %}
@@ -93,15 +92,26 @@
                id="order_type">
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
-{% endblock %}
-{% block domready %}
-    $('#add_f').click(function(){
-    add_form('{{ itemformset.prefix }}')})//formset添加一行
-    $('#remove_f').click(function(){
-    remove_form('{{ itemformset.prefix }}')})//删去formset最后一行
-
-    $('.dt').click(function(event){
-    open_dt(this.id)
-    });
 
 {% endblock %}
+    {% block domready %}
+{#    <script>#}
+
+                if("{{ order_type }}" =="MB"){
+            console.log("{{ order_type }}");
+        $('.form-inline td:last').after("<td><button onclick=\"open_slab_list(this.id)\">码单</button></td>");
+
+                }
+
+            $('#add_f').click(function () {
+                add_form('{{ itemformset.prefix }}')
+            })//formset添加一行
+            $('#remove_f').click(function () {
+                remove_form('{{ itemformset.prefix }}')
+            })//删去formset最后一行
+
+            $('.dt').click(function (event) {
+                open_dt(this.id)
+            });
+{#    </script>#}
+    {% endblock %}

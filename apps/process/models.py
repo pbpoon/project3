@@ -267,7 +267,7 @@ class SlabListItem(models.Model):
     slablist = models.ForeignKey('SlabList', related_name='item',
                              verbose_name=u'对应码单')
     part_num = models.CharField(max_length=8, verbose_name=u'夹号')
-    line_num = models.SmallIntegerField(u'序号')
+    line_num = models.SmallIntegerField(u'序号', blank=True, null=True)
     slab = models.ForeignKey('products.Slab', on_delete=models.CASCADE,
                              verbose_name='板材编号')
 

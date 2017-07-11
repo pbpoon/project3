@@ -89,6 +89,7 @@ class TSOrderItemForm(forms.ModelForm):
 
 
 class KSOrderItemForm(TSOrderItemForm):
+
     class Meta:
         model = KSOrderItem
         fields = '__all__'

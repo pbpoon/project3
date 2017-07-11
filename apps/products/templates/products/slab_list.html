@@ -1,13 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load cart_tags %}
-{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}
+{#{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}#}
 {% block main %}
     <form method="post" id="slab_form" action="{% url 'cart:add' %}">
 
-
-     <div class="tab-content">
-    <div role="tabpanel" class="tab-pane active" id="home">...</div>
 
 
 
@@ -81,14 +78,15 @@
         <input type="hidden" name="thickness" value="{{ object.thickness }}">
         {% csrf_token %}
     </form>
+{##}
+{#{% endblock %}#}
+{##}
+{#{% block sidebar %}#}
 
-{% endblock %}
-
-{% block sidebar %}
-
-        <div style="width: 260px;" data-spy="affix"
-             data-offset-top="200">
-            {% show_cart_info %}
+        <div class="navbar navbar-fixed-bottom">
+        <div class="row">
+        <div class="pull-right">{% show_cart_info %}</div>
+            <div class="pull-left">
             <ul class="list-group">
 
                 {% for item in slab_list %}
@@ -114,7 +112,9 @@
                 </li>
                 <li><input  style="width: 260px" class="btn btn-primary" type="submit" value="添加到选择列表" form="slab_form"></li>
             </ul>
+            </div>
         </div>
+    </div>
     <script src="{% static "js/myJS.js" %}"></script>
 {% endblock %}
 {% block domready %}
