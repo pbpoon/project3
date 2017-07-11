@@ -195,15 +195,17 @@ class OrderFormsetMixin(object):
                         else:
                             slabs = cart.cart['slab_ids']
                         extra = len(slabs)
+                        for data in slabs:
+                            data['block_num'] = Product.objects.get(block_num=data['block_num'])
                         SlabListItemFormset = inlineformset_factory(SlabList, SlabListItem,
                                                                     form=SlabListItemForm,
                                                                       extra=extra)
-                        slab_list_item_formset = SlabListItemFormset(self.request.POST,
-                                                                      instance=slab_list)
-                        for form, data in zip(slab_list_item_formset, slabs):
-                            data['block_num'] = Product.objects.get(block_num=data['block_num'])
-                            # form.initial = data
-                            form.initial = data
+                        slab_list_item_formset = SlabListItemFormset(instance=slab_list,
+                                                                     initial=slabs)
+                        # for form, data in zip(slab_list_item_formset, slabs):
+                        #     data['block_num'] = Product.objects.get(block_num=data['block_num'])
+                        #     # form.initial = data
+                        #     form.initial = data
                         if slab_list_item_formset.is_valid():
                            transaction.on_commit(slab_list_item_formset.save)
                            for item in items:
