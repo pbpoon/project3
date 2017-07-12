@@ -78,12 +78,13 @@ class ProcessOrder(models.Model):
     service_provider_order = models.CharField('对方单号', null=True, blank=True,
                                               max_length=20)
     handler = models.ForeignKey(User, related_name='%(class)s_handler',
-                                verbose_name='经办人')
+                                verbose_name=`'经办人')
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
                                          verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
+    slab_list = GenericRelation('SlabList')
 
     class Meta:
         verbose_name = '加工订单'
@@ -182,7 +183,7 @@ class TSOrderItem(OrderItemBaseModel):
 class MBOrderItem(OrderItemBaseModel):
     thickness = models.DecimalField('厚度', max_digits=4, decimal_places=2)
     pic = models.SmallIntegerField('件数', null=True, blank=True)
-    slab_list = GenericRelation('SlabList')
+
 
     class Meta:
         verbose_name = '补板加工单'
@@ -237,7 +238,7 @@ class SlabList(models.Model):
         ordering = ['-updated']
 
     def __str__(self):
-        return str(self.block_num)
+        return str(self.order)
 
     @property
     def total(self):
