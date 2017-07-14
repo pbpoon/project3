@@ -130,6 +130,18 @@ function open_dt(id) {
          按钮用以选择当前日期。*/
     })
 }
-function open_slab_list(block_num) {
-    console.log(block_num)
+function open_slab_list(id) {
+    console.log(id)
+    var select_id = id.split('-').slice(0,2).join('-');
+    var block_num = $('#'+ select_id + '-block_name').val();
+    var thickness = $('#'+ select_id + '-thickness').val();
+    console.log(block_num, thickness)
 }
+
+function go_slab_list(block_num, ids) {
+            var slab_ids = ids
+            var block_num = block_num
+            var url = "{% url 'product:slab_list' 'str_block_num' %}?slab_ids=".replace('str_block_num', block_num)+slab_ids //以后要在JavaScript里使用django的url连接需要用这个方式连接字符串
+            var w_width = window.innerWidth/2-250
+            var slab_window = window.open(url, "new", "menubar=yes,width=500,height=700,top=200," +
+                "left="+w_width+",resizeable=yes")}

@@ -65,7 +65,7 @@ def import_slabs(request):
         if f:
             from cart.cart import Cart
             cart = Cart(request)
-            cart.import_slab_list(f)
+            cart.save_import_slab_list(f)
     return redirect('cart:index')
 
 

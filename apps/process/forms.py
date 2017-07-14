@@ -89,7 +89,6 @@ class TSOrderItemForm(forms.ModelForm):
 
 
 class KSOrderItemForm(TSOrderItemForm):
-
     class Meta:
         model = KSOrderItem
         fields = '__all__'
@@ -103,6 +102,10 @@ class KSOrderItemForm(TSOrderItemForm):
 
 
 class MBOrderItemForm(TSOrderItemForm):
+    slab_list = forms.CharField(label='码单', max_length='2', initial='打开', widget=forms.TextInput(
+        attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True,
+               'onclick': 'open_slab_list(this.id)'}))
+
     class Meta:
         model = MBOrderItem
         exclude = ('amount',)

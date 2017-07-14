@@ -78,7 +78,7 @@ class ProcessOrder(models.Model):
     service_provider_order = models.CharField('对方单号', null=True, blank=True,
                                               max_length=20)
     handler = models.ForeignKey(User, related_name='%(class)s_handler',
-                                verbose_name=`'经办人')
+                                verbose_name='经办人')
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
                                          verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)

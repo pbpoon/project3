@@ -52,16 +52,16 @@ class Cart(object):
         del self.session[settings.CART_SESSION_ID]
         self.session.modified = True
 
-    def make_slab_list(self):
-        block_list = self.get_block_num()
+    def make_slab_list(self, keys=None):
+        """
+        :param keys: 为string类型，为需要把cart中存的那个slab_id列表生成码单，默认不存参数是返回slab_ids
+        :return: 返回列表类型
+        """
         slab_ids = self.cart['slab_ids']
-        return [i for block in block_list for i in
-                block.get_slab_list(slab_ids)]
-
-    def get_block_num(self):
-        slab_ids = self.cart['slab_ids']
+        if keys:
+            slab_ids = self.cart[keys]
         block_list = Product.objects.filter(slab__id__in=slab_ids).distinct()
-        return block_list
+        return [i for block in block_list for i in block.get_slab_list(slab_ids)]
 
     def make_price_list(self):
         slab_list = self.make_slab_list()
@@ -85,44 +85,7 @@ class Cart(object):
         total_m2 = sum(Decimal(i['block_m2']) for i in slab_list)
         return {'count': count, 'total_m2': total_m2}
 
-    def import_slab_list(self, f):
-        # data = xlrd.open_workbook(file_contents=f.read())
-        # table = data.sheets()[0]
-        # nrows = table.nrows  # 总行数
-        # colnames = table.row_values(0)  # 表头列名称数据
-        # lst = []
-        # for rownum in range(1, nrows):
-        #     rows = table.row_values(rownum)
-        #     item = {}
-        #     for key, row in zip(colnames, rows):
-        #         if not row:
-        #             if key == 'long' and key == 'high':
-        #                 raise ValueError('有长或宽没有数值!')
-        #         if key == 'part_num':
-        #             if not row:
-        #                 raise ValueError('有夹号没有数值！')
-        #             item[key] = str(row).split('.')[0]
-        #         elif key == 'block_num':
-        #             if not row:
-        #                 raise ValueError('有荒料编号没有数值！')
-        #             item[key] = Product.objects.filter(block_num=str(row).split('.')[0])[0].block_num
-        #         elif key == 'line_num':
-        #             if not row:
-        #                 raise ValueError('有序号号没有数值！')
-        #             item[key] = int(row)
-        #         else:
-        #             if row:
-        #                 item[key] = '{0:.2f}'.format(row)
-        #             else:
-        #                 item[key] = 0
-        #     k1 = 0
-        #     k2 = 0
-        #     if item.get('kl1') and item.get('kh1'):
-        #         k1 = Decimal(item['kl1']) * Decimal(item['kh1']) / 100000
-        #     if item.get('kl2') and item.get('kh2'):
-        #         k2 = Decimal(item['kl2']) * Decimal(item['kh2']) / 100000
-        #     item['m2'] = '{0:.2f}'.format(Decimal(item['long']) * Decimal(item['high']) / 10000 + k1 + k2)
-        #     lst.append(item)
+    def save_import_slab_list(self, f):
         importer = ImportData(f)
         self.cart['import_slabs'].extend(importer.data)
         self.save()
@@ -155,10 +118,9 @@ class Cart(object):
         _list = [{'block_num': num, 'thickness': thick} for num, thick in
                  list(_set)]
         for _dict in _list:
-            _dict['block_pics'] = len([item for item in lst if
-                                       item['block_num'] == _dict[
-                                           'block_num'] and
-                                       item['thickness'] == _dict['thickness']])
+            _dict['block_pics'] = len(
+                [item for item in lst if item['block_num'] == _dict['block_num'] and
+                 item['thickness'] == _dict['thickness']])
             _dict['block_m2'] = sum(Decimal(item['m2']) for item in lst if
                                     item['block_num'] == _dict['block_num'] and
                                     item['thickness'] == _dict[
@@ -190,7 +152,6 @@ class Cart(object):
             lst[:]实际是lst的拷贝，所以遍历删除的时候不会因为删除符合条件的遍历item，令原遍历个数减少而删除不完全
             可以参考http://www.cnblogs.com/bananaplan/p/remove-listitem-while-iterating.html
             '''
-            if item['block_num'] == block_num and item[
-                'thickness'] == thickness:
+            if item['block_num'] == block_num and item['thickness'] == thickness:
                 lst.remove(item)
         self.save()

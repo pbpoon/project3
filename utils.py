@@ -10,7 +10,7 @@ import json
 
 
 def str_to_list(str):
-    s,r='',''
+    s, r = '', ''
     try:
         s, *t, r = re.split(r'[\[,\s\]]\s', str)
     except Exception as e:
@@ -70,7 +70,8 @@ class ImportData:
                     k1 = Decimal(item['kl1']) * Decimal(item['kh1']) / 100000
                 if item.get('kl2') and item.get('kh2'):
                     k2 = Decimal(item['kl2']) * Decimal(item['kh2']) / 100000
-                item['m2'] = '{0:.2f}'.format(Decimal(item['long']) * Decimal(item['high']) / 10000 + k1 + k2)
+                item['m2'] = '{0:.2f}'.format(
+                    Decimal(item['long']) * Decimal(item['high']) / 10000 + k1 + k2)
                 lst.append(item)
 
         elif self.data_type == 'block_list':
@@ -89,12 +90,12 @@ class ImportData:
                             item[name] = '{0:.2f}'.format(row)
                         else:
                             item[name] = '{0:.2f}'.format(
-                                float(item['long']) * float(item['width']) * float(item['high']) * 0.000001)
+                                float(item['long']) * float(item['width']) * float(
+                                    item['high']) * 0.000001)
                     else:
                         item[name] = str(row).split('.')[0]
                 lst.append(item)
         return lst
-
 
 def default_decimal(obj):
     if isinstance(obj, Decimal):
