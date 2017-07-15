@@ -14,12 +14,25 @@
 
     {% if item_list %}
     {% for item in item_list %}
-        {{ item }}{{ item.slab_list }}
+        {{ item }}{{ item.thickness }}{{ item.quantity }}<a href="#" onclick="go_slab_list(
+           '{{ item.block_num }}', '{{ item.thickness }}')
+">码单</a>
     {% endfor %}
     {% endif %}
 {% endblock %}
 
 {% block sidebar %}
 <li><a href="{% url 'process:order_update' object.id %}">编辑订单</a></li>
-
+<script>
+function go_slab_list(block_num, thickness) {
+    // var slab_ids = ids
+    console.log(block_num, thickness)
+    // var thickness =thickness
+    // var block_num = block_num
+    var url = "{% url 'product:order_slab_list' %}?block_num="+block_num+"&thickness="+thickness;
+    //以后要在JavaScript里使用django的url连接需要用这个方式连接字符串
+    var w_width = window.innerWidth / 2 - 250
+    var slab_window = window.open(url, "new","menubar=yes,width=500,height=700,top=200","left=" + w_width + ",resizeable=yes")
+}
+</script>
 {% endblock %}

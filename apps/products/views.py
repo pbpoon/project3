@@ -40,3 +40,28 @@ class ProductSlabListView(View):
             'slab_ids': cart.cart.get('slab_ids')
         }
         return render(request, self.template_name, context)
+
+
+class OrderSlabListView(View):
+    template_name = 'products/slab_list.html'
+
+    def get(self, request, **kwargs):
+        cart = Cart(request)
+        object = Product.objects.all()
+        block_num = self.request.GET.get('block_num', None)
+        thickness = self.request.GET.get('thickness', None)
+        # slab_list =
+        slab_ids = cart.cart['current_order_slab_ids']
+        if block_num:
+            object = object.filter(block_num=block_num).first()
+        if slab_ids:
+            slab_list = object.get_slab_list(slab_ids=slab_ids,
+                                             object_format=True)
+        else:
+            slab_list = object.get_slab_list(object_format=True)
+        context = {
+            'slab_list': slab_list,
+            'object': object,
+            'slab_ids': cart.cart.get('slab_ids')
+        }
+        return render(request, self.template_name, context)

@@ -152,10 +152,21 @@
         function go(block_num, ids) {
             var slab_ids = ids
             var block_num = block_num
-            var url = "{% url 'product:slab_list' 'str_block_num' %}?slab_ids=".replace('str_block_num', block_num)+slab_ids //以后要在JavaScript里使用django的url连接需要用这个方式连接字符串
-            var w_width = window.innerWidth/2-250
-            var slab_window = window.open(url, "new", "menubar=yes,width=500,height=700,top=200," +
-                "left="+w_width+",resizeable=yes")}
+            var url = "{% url 'product:slab_list' 'str_block_num' %}?slab_ids=".replace('str_block_num', block_num) + slab_ids //以后要在JavaScript里使用django的url连接需要用这个方式连接字符串
+            var w_width = window.innerWidth / 2 - 250
+            slab_window = window.open(url, "new", "menubar=yes,width=500,height=700,top=200," +
+                "left=" + w_width + ",resizeable=yes")
+            timer = window.setInterval("IfWindowClosed()", 500);
+        }
+        var timer
+        var slab_window
+        function IfWindowClosed() {
+            //判断子窗体是否关闭
+            if (slab_window.closed == true) {
+                alert("close");
+                window.clearInterval(timer);
+            }
+        }
     </script>
 {% endblock %}
 

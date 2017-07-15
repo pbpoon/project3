@@ -18,19 +18,21 @@ from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, \
 from products.forms import SlabModelFormset, SlabForm
 from cart.cart import Cart
 
+
 class SaveCurrentOrderSlabsMixin(object):
     def save_current_order_slabs(self):
         cart = Cart(self.request)
         try:
-            # slab_model = ContentType.objects.get_for_model(self.object)
-            # slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
-            #                                  object_id=self.object.id).item.all()
-            slab_list = self.object.slab_list.get(object_id=self.object.id).item.all()
+            slab_model = ContentType.objects.get_for_model(self.object)
+            slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
+                                             object_id=self.object.id).item.all()
+            # slab_list = self.object.slab_list.get(object_id=self.object.id).item.all()
             cart.cart['current_order_slab_ids'] = [str(item.id) for item in slab_list]
         except Exception as e:
             cart.cart['current_order_slab_ids'] = []
         finally:
             cart.save()
+
 
 class ServiceProviderListView(ListView):
     model = ServiceProvider
@@ -76,7 +78,6 @@ class ProcessOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
             if self.object is not None:
                 self.save_current_order_slabs()
             kwargs['slab_list'] = self.object.slab_list.get(object_id=self.object.id)
-            print(kwargs['slab_list'])
         return super(ProcessOrderDetailView, self).get_context_data(**kwargs)
 
 
@@ -117,6 +118,14 @@ class OrderFormsetMixin(object):
                                      extra=extra, can_delete=True)
 
     def get_context_data(self, **kwargs):
+        """
+        :param kwargs:
+        errors:错误信息，住要记录新建订单录入时候的错误
+        order_type:把编辑的order类型返回到template，方便提交订单时候可以根据order类型做出业务判断
+        data_list:是itemformset的block_name的data_list的数据
+
+        :return:
+        """
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
 
         self.order_type = self.get_order_type()
@@ -209,6 +218,10 @@ class OrderFormsetMixin(object):
                 items = formset.save()
                 if self.order_type == 'MB':
                     try:
+                        """
+                        尝试获取slab_list
+                        如果没有就新建一个slab_list
+                        """
                         slab_model = ContentType.objects.get_for_model(instance)
                         slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
                                                          object_id=instance.id)
@@ -216,15 +229,24 @@ class OrderFormsetMixin(object):
                         slab_list = SlabList.objects.create(order=instance,
                                                             data_entry_staff_id=self.request.user.id)
                     finally:
-                        slabs =[]
+                        """
+                        把slab_list包含的slab id 读取出来，和选择的slab id作比较
+                        如果是新订单就把import_slab_list用get_import_slab_list_by_parameter遍历出来添加到列表，
+                        如果是编辑订单就直接读取cart的current_order_slab_ids，并用make_slab_list返回码单
+                        """
+                        slabs = []
                         if self.object is None:
                             for i in items:
-                                slabs.extend(cart.get_import_slab_list_by_parameter(i.block_num, i.thickness))
+                                slabs.extend(
+                                    cart.get_import_slab_list_by_parameter(i.block_num, i.thickness))
                         else:
                             slabs = cart.make_slab_list(keys='current_order_slab_ids')
 
                         errors = []
                         if self.object is not None:
+                            """
+                            如果是编辑订单状态就把新选择的ids和订单保存的ids做比较
+                            """
                             old_slab_list_ids = [item.id for item in slab_list.item.all()]
                             new_slab_list_ids = [data['id'] for data in slabs]
                             for data in slabs:
