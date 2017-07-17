@@ -123,7 +123,7 @@ class OrderFormsetMixin(object):
         errors:错误信息，住要记录新建订单录入时候的错误
         order_type:把编辑的order类型返回到template，方便提交订单时候可以根据order类型做出业务判断
         data_list:是itemformset的block_name的data_list的数据
-
+        allow_edit: 是否为编辑状态，如果是，打开的slab_list的checkbox可以选择。
         :return:
         """
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
@@ -148,17 +148,18 @@ class OrderFormsetMixin(object):
                         error.append('导入的码单中：荒料编号[{}]不存在，请查询'.format(
                             data['block_num']))
                     else:
-                        form.initial = {
+                        form.initial.update({
                             'block_name': data['block_num'],
                             'block_num': block_num,
                             'thickness': data['thickness'],
                             'pic': data['block_pics'],
                             'quantity': data['block_m2'],
                             'unit': 'm2',
-                        }
+                        })
             context['errors'] = error
             context['order_type'] = self.order_type
             context['data_list'] = self.get_block_num_datalist()
+            context['allow_edit'] = True
         return context
 
     def save_import_data(self):
@@ -202,8 +203,7 @@ class OrderFormsetMixin(object):
 
     def get_initial(self):
         if self.object is None:
-            initial = {'data_entry_staff': self.request.user}
-            return initial
+            return {'data_entry_staff': self.request.user}
         return super(OrderFormsetMixin, self).get_initial()
 
     def form_valid(self, form):

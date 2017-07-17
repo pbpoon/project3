@@ -84,8 +84,7 @@ class TSOrderItemForm(forms.ModelForm):
         #     else:
         #         self.fields[i].widget.attrs.update({'class': 'form-control'})
         if block_id is not None:
-            self.initial['block_name'] = Product.objects.get(
-                id=block_id).block_num
+            self.initial['block_name'] = Product.objects.get(id=block_id).block_num
 
 
 class KSOrderItemForm(TSOrderItemForm):
@@ -103,8 +102,8 @@ class KSOrderItemForm(TSOrderItemForm):
 
 class MBOrderItemForm(TSOrderItemForm):
     slab_list = forms.CharField(label='码单', max_length='2', initial='打开', widget=forms.TextInput(
-        attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True,
-               'onclick': 'open_slab_list(this.id)'}))
+        attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True,}))
+               # 'onclick': 'open_slab_list(this.id,{% url "product:order_slab_list" %})'}))
 
     class Meta:
         model = MBOrderItem

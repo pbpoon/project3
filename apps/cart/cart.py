@@ -21,14 +21,22 @@ class Cart(object):
         self.cart = cart
 
     # 添加product 到 cart
-    def add(self, block_num, slab_ids):
+    def add(self, block_num, slab_ids, key=None):
+        """
+        :param block_num: 要添加的荒料编号
+        :param slab_ids: 添加的slab id
+        :param key: 要添加或更改的session中保存的列表，默认的是slab_ids
+        :return:
+        """
         obj = [item['id'] for item in
                Product.objects.get(block_num=block_num).slab.values('id')]
-        cart_lst = self.cart['slab_ids']
+        if key is None:
+            key = 'slab_ids'
+        cart_lst = self.cart[key]
         cart_lst = [i for i in cart_lst if int(i) not in obj]
-        self.cart['slab_ids'] = cart_lst
-        self.cart['slab_ids'].extend(slab_ids)
-        self.make_price_list()
+        self.cart[key] = cart_lst
+        self.cart[key].extend(slab_ids)
+        # self.make_price_list()
         self.save()
 
     # 把数据更新到session

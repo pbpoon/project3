@@ -43,7 +43,7 @@ class ProductSlabListView(View):
 
 
 class OrderSlabListView(View):
-    template_name = 'products/slab_list.html'
+    template_name = 'products/order_slab_list.html'
 
     def get(self, request, **kwargs):
         cart = Cart(request)
@@ -62,6 +62,6 @@ class OrderSlabListView(View):
         context = {
             'slab_list': slab_list,
             'object': object,
-            'slab_ids': cart.cart.get('slab_ids')
+            'slab_ids': slab_ids,
         }
         return render(request, self.template_name, context)

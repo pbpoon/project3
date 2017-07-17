@@ -107,8 +107,8 @@
             $('.dt').click(function (event) {
                 open_dt(this.id)
             });
-{#        $('.open_slab_list').click(function (event){#}
-{#        open_slab_list(this.id)#}
-{#        })#}
+        $('.open_slab_list').click(function (event){
+        open_slab_list(this.id,'{% url "product:order_slab_list" %}')
+        })
 {#    </script>#}
     {% endblock %}

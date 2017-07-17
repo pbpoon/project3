@@ -27,8 +27,9 @@ def cart_add(request):
     cart = Cart(request)
     chk = request.POST.getlist('check_box_list')
     block_num = request.POST.get('block_num')
-    cart.add(block_num, chk)
-    path = request.POST.get('path')
+    key = request.POST.get('key', None)
+    cart.add(block_num, chk, key=key)
+    path = request.META.get('HTTP_REFERER')
     messages.success(request, '已成功更新选择列表！')
     return redirect(path)
 
@@ -76,6 +77,7 @@ def remove_import_slabs(request):
     thickness = request.POST.get('thickness')
     cart.remove_import_slabs(block_num, thickness)
     return redirect('cart:index')
+
 
 def show_import_slabs(request):
     pass
