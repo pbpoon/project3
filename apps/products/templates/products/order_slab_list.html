@@ -122,15 +122,8 @@
         </div>
     </div>
     <script src="{% static "js/myJS.js" %}"></script>
-    <script>
-        function close_widows() {
-            console.log("准备")
-            window.close()
-            self.opener.location.reload();
-            console.log('关闭')
-        }
-    </script>
 {% endblock %}
 {% block domready %}
     sum_m2(watch_select())
 {% endblock %}
+ {% block body_tag %}onunload="window.opener.location.reload(){% endblock %}

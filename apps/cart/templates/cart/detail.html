@@ -125,20 +125,6 @@
     {% else %}
         <h4>没有任何可操作的码单</h4>
     {% endif %}
-    {#    <div class="modal fade" id="slab_list">#}
-    {#        <div class="modal-dialog">#}
-    {#            <div class="modal-content">#}
-    {#                <div class="modal-body">#}
-    {##}
-    {#                </div>#}
-    {#            </div>#}
-    {#        </div>#}
-    {#    </div>#}
-    {#    <script>#}
-    {#        $("#slab_list").on("hidden.bs.modal", function () {#}
-    {#            $(this).removeData("bs.modal");#}
-    {#        });#}
-    {#    </script>#}
     <div class="btn-group-vertical">
         <li><a href="{% url 'process:order_create' %}?order_type=MB"
                class="btn btn-default">新建补石单</a></li>
@@ -156,17 +142,22 @@
             var w_width = window.innerWidth / 2 - 250
             slab_window = window.open(url, "new", "menubar=yes,width=500,height=700,top=200," +
                 "left=" + w_width + ",resizeable=yes")
-            timer = window.setInterval("IfWindowClosed()", 500);
+            slab_window.focus();
+{#            var strContent = "<body onUnload='opener.location.reload()'>"#}
+{#            slab_window.$('.body').#}
+{#            timer = window.setInterval("IfWindowClosed()", 500);#}
         }
-        var timer
-        var slab_window
-        function IfWindowClosed() {
-            //判断子窗体是否关闭
-            if (slab_window.closed == true) {
-                alert("close");
-                window.clearInterval(timer);
-            }
-        }
+{#        var timer#}
+{#        var slab_window#}
+{#        function IfWindowClosed() {#}
+{#            //判断子窗体是否关闭#}
+{#            if (slab_window.closed == true) {#}
+{#                alert("close");#}
+{#                window.clearInterval(timer);#}
+{#                location.reload()#}
+{#            }#}
+{#        }#}
+
     </script>
 {% endblock %}
 

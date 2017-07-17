@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load get_verbose_name %}
 
 {% block jumbotron %}
 {{ object }}
@@ -9,12 +10,11 @@
         <li>{{ object.get_order_type_display }}</li>
         <li>{{ object.service_provider }}</li>
         <li>{{ object.date }}</li>
-        <li>{{ object.slab_list.all }}</li>
     </ul>
 
     {% if item_list %}
     {% for item in item_list %}
-        {{ item }}{{ item.thickness }}{{ item.quantity }}<a href="#" onclick="go_slab_list(
+        {{ item.block_num|verbose_name:"block_num" }}{{ item.thickness|verbose_name:"thickness" }}{{ item.quantity|verbose_name:"quantity" }}<a href="#" onclick="go_slab_list(
            '{{ item.block_num }}', '{{ item.thickness }}')
 ">码单</a>
     {% endfor %}

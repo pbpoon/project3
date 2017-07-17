@@ -24,7 +24,8 @@
 
                 <ul class="list-unstyled">
                     {% for part_key ,part_value in slabs.part_num.items %}
-                        <div class="panel panel-default" id="{{ slabs.thickness|slugify }}{{ part_key }}">
+                        <div class="panel panel-default"
+                             id="{{ slabs.thickness|slugify }}{{ part_key }}">
                             <div class="panel-heading">
                                 <li class="panel-title">{{ part_key }}#
                                     夹/ {{ part_value.part_pics }}
@@ -79,37 +80,40 @@
 
 {% block sidebar %}
 
-        <div style="width: 260px;" data-spy="affix"
-             data-offset-top="200">
-            {% show_cart_info %}
-            <ul class="list-group">
+    <div style="width: 260px;" data-spy="affix"
+         data-offset-top="200">
+        {% show_cart_info %}
+        <ul class="list-group">
 
-                {% for item in slab_list %}
-                    <li class="list-group-item"><a href="#{{ item.thickness|slugify }}">{{ item.thickness }}
-                        厚度/{{ item.part_count }}
-                        夹/ {{ item.block_pics }}
-                        件/ {{ item.block_m2 }}
-                        m2</a>
-                        <ul>
-                            {% for part_key ,part_value in item.part_num.items %}
-                                <li><a href="#{{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#
-                                    夹/ {{ part_value.part_pics }}
-                                    件/ {{ part_value.part_m2 }} m2</a></li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-                <li class="list-group-item">目前已勾选:
-                    <ul id="selected_info">
-                        <li name="pics"><b>pics</b>件</li>
-                        <li name="m2"><b>m2</b>m2</li>
+            {% for item in slab_list %}
+                <li class="list-group-item"><a
+                        href="#{{ item.thickness|slugify }}">{{ item.thickness }}
+                    厚度/{{ item.part_count }}
+                    夹/ {{ item.block_pics }}
+                    件/ {{ item.block_m2 }}
+                    m2</a>
+                    <ul>
+                        {% for part_key ,part_value in item.part_num.items %}
+                            <li><a href="#{{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#
+                                夹/ {{ part_value.part_pics }}
+                                件/ {{ part_value.part_m2 }} m2</a></li>
+                        {% endfor %}
                     </ul>
                 </li>
-                <li><input  style="width: 260px" class="btn btn-primary" type="submit" value="添加到选择列表" form="slab_form"></li>
-            </ul>
-        </div>
+            {% endfor %}
+            <li class="list-group-item">目前已勾选:
+                <ul id="selected_info">
+                    <li name="pics"><b>pics</b>件</li>
+                    <li name="m2"><b>m2</b>m2</li>
+                </ul>
+            </li>
+            <li><input style="width: 260px" class="btn btn-primary" type="submit" value="添加到选择列表"
+                       form="slab_form"></li>
+        </ul>
+    </div>
     <script src="{% static "js/myJS.js" %}"></script>
 {% endblock %}
 {% block domready %}
     sum_m2(watch_select())
 {% endblock %}
+ {% block body_tag %}onunload="window.opener.location.reload(){% endblock %}

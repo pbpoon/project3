@@ -7,6 +7,7 @@ from django import template
 register = template.Library()
 
 
-@register.simple_tag
-def get_verbose_name(object):
-    return object._meta.verbose_name
+@register.filter('verbose_name')
+def verbose_name(value, arg):
+    return value._meta.get_field(field_name=arg).verbose_name
+    # return value._meta.verbose_name
