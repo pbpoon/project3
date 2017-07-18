@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'purchase',
     'django_forms_bootstrap',
     'cart',
+    'sales',
     'jquery',
     'djangoformsetjs',
     'import_export',#导入导出数据功能

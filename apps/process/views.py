@@ -241,7 +241,6 @@ class OrderFormsetMixin(object):
                                     cart.get_import_slab_list_by_parameter(i.block_num, i.thickness))
                         else:
                             slabs = cart.cart['current_order_slab_ids']
-
                         errors = []
                         if self.object is not None:
                             """

@@ -6,28 +6,29 @@
 {% endblock %}
 {#{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}#}
 {% block main %}
-    <div class="container">
 
-        {% for item in slab_list %}
-            <div>
-                <a href="#{{ item.thickness|slugify }}">{{ item.thickness }}
-                    厚度/{{ item.part_count }}
-                    夹/ {{ item.block_pics }}
-                    件/ {{ item.block_m2 }}
-                    m2</a>
+    {% for item in slab_list %}
+        <ul class="nav nav-tabs">
+            <li><a data-toggle="tab" href="#{{ item.thickness|slugify }}">
+                {{ item.thickness }}
+                厚度/{{ item.part_count }}
+                夹/ {{ item.block_pics }}
+                件/ {{ item.block_m2 }}
+                m2</a>
                 <ul class="nav nav-tabs">
                     {% for part_key ,part_value in item.part_num.items %}
                         <li><a data-toggle="tab"
-                               href="#
-                                       {{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#夹</a>
+                               href="#{{ item.thickness|slugify }}{{ part_key }}">
+                            {{ part_key }}#夹</a>
                         </li>
                     {% endfor %}
                 </ul>
-            </div>
-        {% endfor %}
-
+            </li>
+        </ul>
+    {% endfor %}
+    <div class="tab-content">
         {% for slabs in slab_list %}
-            <div class="tab-content">
+
             {#            <div id="{{ slabs.thickness|slugify }}">#}
             {#                <h2 class="page-header">{{ slabs.thickness }}#}
             {#                    厚度/{{ slabs.part_count }}#}
@@ -60,12 +61,7 @@
                                            id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
                                            onclick="select_all(this.id, this.checked)">
                                     <a class="btn btn-link"
-                                       id="
-
-
-
-
-                                               {{ slabs.thickness|slugify }}{{ part_key }}_reverse"
+                                       id="{{ slabs.thickness|slugify }}{{ part_key }}_reverse"
                                        onclick="select_reverse(this.id)">反选
                                     </a>
                                 </div>
@@ -76,7 +72,7 @@
                                 <tr>
                                     <th width="10%">选择</th>
                                     <th width="15%">序号</th>
-                                    <th width="45%">规格</th>
+                                    <th width="55%">规格</th>
                                     <th>m2</th>
                                 </tr>
                                 {% for slab in part_value.slabs %}
@@ -99,9 +95,8 @@
             {% endfor %}
 
             {#            </div>#}
-
         {% endfor %}
-        </div>
+
     </div>
 
     <script src="{% static "js/myJS.js" %}"></script>
