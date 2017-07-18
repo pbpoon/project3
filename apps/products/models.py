@@ -45,7 +45,6 @@ class Product(models.Model):
             part_list = [part for part in
                          obj.values('part_num').filter(
                              thickness=part['thickness']).distinct()]
-            lst = {}
             lst = {'block_num': self.block_num,
                    'thickness': str(part['thickness']),
                    'block_pics': str(part['block_pics']),
@@ -55,17 +54,14 @@ class Product(models.Model):
             for item in part_list:
                 slabs = [slab for slab in
                          obj.filter(thickness=part['thickness'],
-                                    part_num=item['part_num']).order_by(
-                             'line_num')]
+                                    part_num=item['part_num']
+                                    ).order_by('line_num')]
                 part_num = item['part_num']
                 lst['part_num'][part_num] = {}
                 lst['part_num'][part_num]['part_pics'] = len(slabs)
-                lst['part_num'][part_num]['part_m2'] = str(
-                    sum(s.m2 for s in slabs))
-                slab = [s.id for s in slabs]
-                if object_format:
-                    slab = [s for s in slabs]
-                lst['part_num'][part_num]['slabs'] = slab
+                lst['part_num'][part_num]['part_m2'] = str(sum(slab.m2 for slab in slabs))
+                lst['part_num'][part_num]['slabs'] = [s for s in slabs]if object_format \
+                                                                else [s.id for s in slabs]
             list.append(lst)
 
         return list

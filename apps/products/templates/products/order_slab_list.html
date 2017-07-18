@@ -1,129 +1,156 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load cart_tags %}
+{% block menu %}
+
+{% endblock %}
 {#{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}#}
 {% block main %}
-    <form method="post" id="slab_form" action="{% url 'cart:add' %}">
+    <div class="container">
 
-
-        {% for slabs in slab_list %}
-            <div id="{{ slabs.thickness|slugify }}">
-                <h2 class="page-header">{{ slabs.thickness }}
-                    厚度/{{ slabs.part_count }}
-                    夹/ {{ slabs.block_pics }}
-                    件/ {{ slabs.block_m2 }}
-                    m2
-                    <small class="pull-right">
-                        <div class="checkbox btn btn-default btn-sm">
-                            <label>
-                                <input type="checkbox"
-                                       id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
-                                       onclick="select_all(this.id, this.checked)">全选/不选
-                            </label>
-                        </div>
-                    </small>
-                </h2>
-
-                <ul class="list-unstyled">
-                    {% for part_key ,part_value in slabs.part_num.items %}
-                        <div class="panel panel-default"
-                             id="{{ slabs.thickness|slugify }}{{ part_key }}">
-                            <div class="panel-heading">
-                                <li class="panel-title">{{ part_key }}#
-                                    夹/ {{ part_value.part_pics }}
-                                    件/ {{ part_value.part_m2 }} m2
-
-                                    <div class="pull-right">
-                                        <input type="checkbox" class=" btn btn-default btn-sm"
-                                               id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
-                                               onclick="select_all(this.id, this.checked)">
-                                        <a class="btn btn-link"
-                                           id="{{ slabs.thickness|slugify }}{{ part_key }}_reverse"
-                                           onclick="select_reverse(this.id)">反选
-                                        </a>
-                                    </div>
-                            </div>
-                            <div class="panel-body">
-                                <table class="table">
-                                    <tr>
-                                        <th width="10%">选择</th>
-                                        <th width="15%">序号</th>
-                                        <th width="45%">规格</th>
-                                        <th>m2</th>
-                                    </tr>
-                                    {% for slab in part_value.slabs %}
-                                        <tr class="clickable-row">
-                                            <td>
-                                                <input type="checkbox" name="check_box_list"
-                                                       {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
-                                                       value="{{ slab.id }}">
-                                            </td>
-                                            <td>{{ slab.line_num }}</td>
-                                            <td>{{ slab }}</td>
-                                            <td id="{{ slab.id }}m2">{{ slab.m2 }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </table>
-                            </div>
-                        </div>
+        {% for item in slab_list %}
+            <div>
+                <a href="#{{ item.thickness|slugify }}">{{ item.thickness }}
+                    厚度/{{ item.part_count }}
+                    夹/ {{ item.block_pics }}
+                    件/ {{ item.block_m2 }}
+                    m2</a>
+                <ul class="nav nav-tabs">
+                    {% for part_key ,part_value in item.part_num.items %}
+                        <li><a data-toggle="tab"
+                               href="#
+                                       {{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#夹</a>
                         </li>
                     {% endfor %}
                 </ul>
             </div>
+        {% endfor %}
+
+        {% for slabs in slab_list %}
+            <div class="tab-content">
+            {#            <div id="{{ slabs.thickness|slugify }}">#}
+            {#                <h2 class="page-header">{{ slabs.thickness }}#}
+            {#                    厚度/{{ slabs.part_count }}#}
+            {#                    夹/ {{ slabs.block_pics }}#}
+            {#                    件/ {{ slabs.block_m2 }}#}
+            {#                    m2#}
+            {#                    <small class="pull-right">#}
+            {#                        <div class="checkbox btn btn-default btn-sm">#}
+            {#                            <label>#}
+            {#                                <input type="checkbox"#}
+            {#                                       id="{{ slabs.thickness|slugify }}{{ part_key }}_all"#}
+            {#                                       onclick="select_all(this.id, this.checked)">全选/不选#}
+            {#                            </label>#}
+            {#                        </div>#}
+            {#                    </small>#}
+            {#                </h2>#}
+
+            {% for part_key ,part_value in slabs.part_num.items %}
+
+                <div role="tabpanel" class="tab-pane"
+                     id="{{ slabs.thickness|slugify }}{{ part_key }}">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <div class="panel-title">{{ part_key }}#
+                                夹/ {{ part_value.part_pics }}
+                                件/ {{ part_value.part_m2 }} m2
+                                <div class="pull-right">
+                                    <input type="checkbox"
+                                           class=" btn btn-default btn-sm"
+                                           id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
+                                           onclick="select_all(this.id, this.checked)">
+                                    <a class="btn btn-link"
+                                       id="
+
+
+
+
+                                               {{ slabs.thickness|slugify }}{{ part_key }}_reverse"
+                                       onclick="select_reverse(this.id)">反选
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <table class="table">
+                                <tr>
+                                    <th width="10%">选择</th>
+                                    <th width="15%">序号</th>
+                                    <th width="45%">规格</th>
+                                    <th>m2</th>
+                                </tr>
+                                {% for slab in part_value.slabs %}
+                                    <tr class="clickable-row">
+                                        <td>
+                                            <input type="checkbox" name="check_box_list"
+                                                   {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
+                                                   value="{{ slab.id }}">
+                                        </td>
+                                        <td>{{ slab.line_num }}</td>
+                                        <td>{{ slab }}</td>
+                                        <td id="{{ slab.id }}m2">{{ slab.m2 }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            {% endfor %}
+
+            {#            </div>#}
 
         {% endfor %}
+        </div>
+    </div>
+
+    <script src="{% static "js/myJS.js" %}"></script>
+{% endblock %}
+{% block domready %}
+    sum_m2(watch_select())
+{% endblock %}
+{% block body_tag %}onunload="window.opener.location.reload(){% endblock %}
+
+
+<div role="tabpanel">
+    <div>
+        {#            <div class="pull-right">{% show_cart_info %}</div>#}
+
+        {% for item in slab_list %}
+            <div class="pull-left">
+                <a href="#{{ item.thickness|slugify }}">{{ item.thickness }}
+                    厚度/{{ item.part_count }}
+                    夹/ {{ item.block_pics }}
+                    件/ {{ item.block_m2 }}
+                    m2</a>
+                <div class="nav nav-tabs">
+                    {% for part_key ,part_value in item.part_num.items %}
+                        <li><a data-toggle="tab"
+                               href="#{{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#
+                            夹/ {{ part_value.part_pics }}
+                            件/ {{ part_value.part_m2 }} m2</a>
+                        </li>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+        <div class="pull-right">目前已勾选:
+            <ul id="selected_info">
+                <li name="pics"><b>pics</b>件</li>
+                <li name="m2"><b>m2</b>m2</li>
+            </ul>
+        </div>
+        <li><input style="width: 260px" class="btn btn-primary" type="submit"
+                   value="添加到选择列表" form="slab_form"></li>
+    </div>
+
+    <form method="post" id="slab_form" action="{% url 'cart:add' %}">
+
+        {#            厚度总信息#}
+
         <input type="hidden" name="path" value="{{ request.path }}">
         <input type="hidden" name="block_num" value="{{ object.block_num }}">
         <input type="hidden" name="thickness" value="{{ object.thickness }}">
         <input type="hidden" name="key" value="current_order_slab_ids">
         {% csrf_token %}
     </form>
-    {##}
-    {#{% endblock %}#}
-    {##}
-    {#{% block sidebar %}#}
-
-    <div class="navbar navbar-fixed-bottom">
-        <div class="row">
-            <div class="pull-right">{% show_cart_info %}</div>
-            <div class="pull-left">
-                <ul class="list-group">
-
-                    {% for item in slab_list %}
-                        <li class="list-group-item"><a
-                                href="#{{ item.thickness|slugify }}">{{ item.thickness }}
-                            厚度/{{ item.part_count }}
-                            夹/ {{ item.block_pics }}
-                            件/ {{ item.block_m2 }}
-                            m2</a>
-                            <ul>
-                                {% for part_key ,part_value in item.part_num.items %}
-                                    <li><a href="#
-                                            {{ item.thickness|slugify }}{{ part_key }}">{{ part_key }}#
-                                        夹/ {{ part_value.part_pics }}
-                                        件/ {{ part_value.part_m2 }} m2</a></li>
-                                {% endfor %}
-                            </ul>
-                        </li>
-                    {% endfor %}
-                    <li class="list-group-item">目前已勾选:
-                        <ul id="selected_info">
-                            <li name="pics"><b>pics</b>件</li>
-                            <li name="m2"><b>m2</b>m2</li>
-                        </ul>
-                    </li>
-                    <li><input style="width: 260px" class="btn btn-primary" type="submit"
-                               value="添加到选择列表" form="slab_form"></li>
-                    <li>
-                        <button onclick="close_widows()">关闭</button>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <script src="{% static "js/myJS.js" %}"></script>
-{% endblock %}
-{% block domready %}
-    sum_m2(watch_select())
-{% endblock %}
- {% block body_tag %}onunload="window.opener.location.reload(){% endblock %}

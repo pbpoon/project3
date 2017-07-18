@@ -14,7 +14,7 @@
 
     {% if item_list %}
     {% for item in item_list %}
-        {{ item.block_num|verbose_name:"block_num" }}{{ item.thickness|verbose_name:"thickness" }}{{ item.quantity|verbose_name:"quantity" }}<a href="#" onclick="go_slab_list(
+        {{ item.block_num }}{{ item.thickness }}{{ item.quantity }}<a href="#" onclick="go_slab_list(
            '{{ item.block_num }}', '{{ item.thickness }}')
 ">码单</a>
     {% endfor %}
