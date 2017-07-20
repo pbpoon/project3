@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
+from django.shortcuts import reverse
 
 CUSTOMER_TYPE_CHOICES = (('personal', '个人'), ('company', '公司'))
 CALL_CHOICES = (('mr', 'Mr'), ('ms', 'Ms'), ('cp', '公司'))
@@ -25,35 +26,48 @@ class CustomerInfo(models.Model):
                             max_length=12)
     call = models.CharField('称呼', choices=CALL_CHOICES,
                             max_length=12)
-    telephone = models.CharField('联系电话', max_length=11, null=True, blank=True)
+    telephone = models.CharField('联系电话', max_length=11, null=True, blank=True, unique=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
                                          verbose_name='数据录入人')
     province = models.ForeignKey('Province', verbose_name='省份')
     city = models.ForeignKey('City', verbose_name='城市')
-    last_date = models.DateTimeField('最后交易日期', default=datetime.now)
+    last_date = models.DateTimeField('最后交易日期', null=True, blank=True)
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
 
     class Meta:
         verbose_name = '客户信息'
         verbose_name_plural = verbose_name
 
+    def get_absolute_url(self):
+        return reverse('sales:customer_detail', args=[self.id])
+
 
 class Province(models.Model):
+    id = models.SmallIntegerField('id', primary_key=True)
     name = models.CharField('名称', max_length=20)
+    province_id = models.SmallIntegerField('省份id', help_text='用于与市级联动')
 
     class Meta:
         verbose_name = '省份列表'
         verbose_name_plural = verbose_name
 
+    def __str__(self):
+        return self.name
+
 
 class City(models.Model):
+    id = models.SmallIntegerField('id', primary_key=True)
     name = models.CharField('名称', max_length=20)
+    father_id = models.SmallIntegerField('对应省份id')
 
     class Meta:
         verbose_name = '城市列表'
         verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name
 
 
 class SalesOrder(models.Model):
@@ -72,7 +86,7 @@ class SalesOrder(models.Model):
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
-    verifier = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='审核人')
+    verifier = models.ForeignKey(User, related_name='%(class)s_verifier', verbose_name='审核人')
     verify_date = models.DateField('审核日期', db_index=True)
 
     class Meta:
@@ -98,9 +112,13 @@ class SalesOrder(models.Model):
                 self.order = value
         super(SalesOrder, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return self.order
+
 
 class SalesOrderItem(models.Model):
-    block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号')
+    block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号',
+                                  null=True)
     order = models.ForeignKey('SalesOrder', related_name='items', verbose_name='对应单号')
     part = models.SmallIntegerField('夹数', null=True, blank=True)
     pic = models.SmallIntegerField('件数', null=True, blank=True)

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load bootstrap_tags %}
+
+{% block main %}
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|as_bootstrap }}
+        <input type="submit" class="btn btn-primary" value="提交">
+    </form>
+    {% if province_lst %}
+        <datalist id="province">
+            {% for province in province_lst %}
+
+                <option value="{{ province.name }}" data-province_id="{{ province.province_id }}"
+                        data-id="{{ province.id }}"></option>
+
+            {% endfor %}
+        </datalist>
+        <datalist id="city_data">
+            {% for city in city_lst %}
+
+                <option value="{{ city.id }}" data-province_id="{{ city.father_id }}">
+                    {{ city.name }}
+                </option>
+
+            {% endfor %}
+        </datalist>
+    {% endif %}
+    <script>
+        function choices_city() {
+            var province_id = $('.province').val();
+            console.log(province_id)
+            $.getJSON('{% url 'sales:get_city_lst' %}', {'province_id': province_id}, function (ret) {
+                console.log(ret[0])
+                $('.city').empty();
+                for (var i = 0; i >=ret.length - 1; i++) {
+                    $(".city").append("<option value=\"city_id">city_name</option>");  //添加一项option
+                }
+
+            })
+        }
+    </script>
+{% endblock %}
