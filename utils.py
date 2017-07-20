@@ -95,6 +95,26 @@ class ImportData:
                     else:
                         item[name] = str(row).split('.')[0]
                 lst.append(item)
+
+        elif self.data_type == 'sheng':
+            for rownum in range(1, nrows):  # 遍历全部数据行
+                rows = table.row_values(rownum)  # 取出一行数据
+                item = {}
+                # 遍历这行数据
+                for name, row in zip(colnames, rows):
+                    # 遍历每个单元格数据
+                    item[name] = str(row).split('.')[0]
+                lst.append(item)
+
+        elif self.data_type == 'city':
+            for rownum in range(1, nrows):  # 遍历全部数据行
+                rows = table.row_values(rownum)  # 取出一行数据
+                item = {}
+                # 遍历这行数据
+                for name, row in zip(colnames, rows):
+                    # 遍历每个单元格数据
+                    item[name] = str(row).split('.')[0]
+                lst.append(item)
         return lst
 
 def default_decimal(obj):
