@@ -60,15 +60,15 @@ class SalesOrderEditMixin:
     formset_fields = '__all__'
     formset_prefix = 'fs'
 
-    def get_fromset_class(self):
-        extra = len(self.cart.make_slab_list()) if self.object else \
-            len(self.cart.make_slab_list(keys='current_order_slab_ids'))
+    def get_formset_class(self):
+        extra = len(self.cart.make_slab_list(keys='current_order_slab_ids')) if self.object else \
+            len(self.cart.make_slab_list())
         return inlineformset_factory(self.model, self.formset_model, form=SalesOrderItemForm,
                                      extra=extra, fields=self.formset_fields)
 
     def get_formset_kwargs(self):
-        return self.cart.make_slab_list() if self.object else \
-            self.cart.make_slab_list(keys='current_order_slab_ids')
+        return self.cart.make_slab_list(keys='current_order_slab_ids') if self.object else \
+            self.cart.make_slab_list()
 
     def get_formset(self):
         if self.request.method in ('POST', 'PUT'):
@@ -79,23 +79,32 @@ class SalesOrderEditMixin:
         for form, data in zip(formset, self.get_formset_kwargs()):
             data['block_name'] = data['block_num']
             data['block_num'] = Product.objects.get(block_num=data['block_num'])
-            form.initial.update(**data)
+            form.initial.update({
+                'block_name':data['block_name'],
+                'block_num': data['block_num'],
+                'part': data['part_count'],
+                'pic': data['block_pics'],
+                'quantity': data.get('quantity', data['m2']),
+                'unit':'ton' if data.get('quantiy') else 'm2'
+            })
         return formset
 
     def get_context_data(self, *args, **kwargs):
         self.cart = Cart(self.request)
-        kwargs['formset'] = self.get_formset()
+        kwargs['itemformset'] = self.get_formset()
         return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
 
 
-class SalesOrderCreateView(LoginRequiredMixin, CreateView):
+class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin,CreateView):
     model = SalesOrder
     form_class = SalesOrderForm
+    formset_model = SalesOrderItem
 
 
-class SalesOrderUpdateView(LoginRequiredMixin, UpdateView):
+class SalesOrderUpdateView(LoginRequiredMixin, SalesOrderEditMixin,UpdateView):
     model = SalesOrder
     form_class = SalesOrderForm
+    formset_model = SalesOrderItem
 
 
 class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):

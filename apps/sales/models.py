@@ -26,8 +26,8 @@ class CustomerInfo(models.Model):
     name = models.CharField('名称', max_length=20)
     call = models.CharField('称呼', choices=CALL_CHOICES, max_length=12, default='mr')
     telephone = models.CharField('联系电话', max_length=11, null=True, blank=True, unique=True)
-    province = models.ForeignKey('Province', verbose_name='省份')
-    city = models.ForeignKey('City', verbose_name='城市')
+    province = models.ForeignKey('Province', verbose_name='省份', null=True)
+    city = models.ForeignKey('City', verbose_name='城市', null=True)
     # last_date = models.DateTimeField('最后交易日期', null=True, blank=True)
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
@@ -124,6 +124,7 @@ class SalesOrderItem(models.Model):
     thickness = models.CharField('厚度', max_length=6, null=True, blank=True)
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
+    price = models.DecimalField('单价', max_digits=9, decimal_places=2)
 
     class Meta:
         verbose_name = '销售订单明细'

@@ -42,10 +42,15 @@ class SalesOrderItemForm(forms.ModelForm):
             'block_num': forms.HiddenInput()
         }
 
+    def __init__(self, *args, **kwargs):
+        super(SalesOrderItemForm, self).__init__(*args, **kwargs)
+        block_id = self.initial.get('block_num', None)
+        if block_id:
+            self.initial['block_name'] = Product.objects.get(id=block_id).block_num
+
+
     def clean(self):
         cd = self.cleaned_data
-        try:
-            cd['block_num'] = Product.objects.get(block_num=cd['block_name'])
-        except Exception as e:
+        if Product.objects.filter(block_num=cd['block_name']).exists():
             raise ValueError('荒料编号不在可销售范围！')
         return cd
