@@ -65,9 +65,7 @@ class Cart(object):
         :param keys: 为string类型，为需要把cart中存的那个slab_id列表生成码单，默认不存参数是返回slab_ids
         :return: 返回列表类型
         """
-        slab_ids = self.cart['slab_ids']
-        if keys:
-            slab_ids = self.cart[keys]
+        slab_ids = self.cart[keys] if keys else self.cart['slab_ids']
         block_list = Product.objects.filter(slab__id__in=slab_ids).distinct()
         return [i for block in block_list for i in block.get_slab_list(slab_ids)]
 
