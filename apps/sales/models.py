@@ -4,7 +4,7 @@ from datetime import datetime
 from django.shortcuts import reverse
 
 CUSTOMER_TYPE_CHOICES = (('personal', '个人'), ('company', '公司'))
-CALL_CHOICES = (('mr', 'Mr'), ('ms', 'Ms'), ('cp', '公司'))
+CALL_CHOICES = (('mr', '先生'), ('ms', '女士'), ('cp', '公司'))
 STATUS_CHOICES = (
     ('N', '新订单'),
     ('V', '核实'),
@@ -21,20 +21,19 @@ UNIT_CHOICES = (
 
 
 class CustomerInfo(models.Model):
-    name = models.CharField('名称', max_length=20)
     type = models.CharField('客户类型', choices=CUSTOMER_TYPE_CHOICES,
-                            max_length=12)
-    call = models.CharField('称呼', choices=CALL_CHOICES,
-                            max_length=12)
+                            max_length=12, default='personal')
+    name = models.CharField('名称', max_length=20)
+    call = models.CharField('称呼', choices=CALL_CHOICES, max_length=12, default='mr')
     telephone = models.CharField('联系电话', max_length=11, null=True, blank=True, unique=True)
-    created = models.DateField('创建日期', auto_now_add=True)
-    updated = models.DateTimeField('更新时间', auto_now=True)
-    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
-                                         verbose_name='数据录入人')
     province = models.ForeignKey('Province', verbose_name='省份')
     city = models.ForeignKey('City', verbose_name='城市')
-    last_date = models.DateTimeField('最后交易日期', null=True, blank=True)
+    # last_date = models.DateTimeField('最后交易日期', null=True, blank=True)
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
+                                         verbose_name='数据录入人')
+    created = models.DateField('创建日期', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
 
     class Meta:
         verbose_name = '客户信息'
@@ -42,6 +41,9 @@ class CustomerInfo(models.Model):
 
     def get_absolute_url(self):
         return reverse('sales:customer_detail', args=[self.id])
+
+    def __str__(self):
+        return '{} {}'.format(self.name, self.get_call_display())
 
 
 class Province(models.Model):
@@ -71,16 +73,13 @@ class City(models.Model):
 
 
 class SalesOrder(models.Model):
-    status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES,
-                              default='N')
-    order = models.CharField('订单号', max_length=16, unique=True, db_index=True,
-                             default='new')
+    status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES, default='N')
+    order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
     customer = models.ForeignKey('CustomerInfo', related_name='order', verbose_name='客户名称')
     province = models.ForeignKey('Province', verbose_name='省份')
     city = models.ForeignKey('City', verbose_name='城市')
     date = models.DateField('订单日期', db_index=True)
-    handler = models.ForeignKey(User, related_name='%(class)s_handler',
-                                verbose_name='经办人')
+    handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
                                          verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)

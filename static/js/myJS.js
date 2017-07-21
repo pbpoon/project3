@@ -161,3 +161,4 @@ function gogo_slab_list(block_num, thickness, url) {
 //         slab_window.location.reload()
 //     }
 // }
+

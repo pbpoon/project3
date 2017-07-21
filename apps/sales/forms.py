@@ -2,8 +2,20 @@
 __author__ = 'pb'
 __date__ = '2017/7/19 10:17'
 from django import forms
-from .models import SalesOrder, SalesOrderItem
+from .models import SalesOrder, SalesOrderItem, CustomerInfo
 from products.models import Product
+
+
+class CustomerInfoForm(forms.ModelForm):
+    class Meta:
+        model = CustomerInfo
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super(CustomerInfoForm, self).__init__(*args, **kwargs)
+        self.fields['city'].widget.attrs.update({'class': 'city'})
+        self.fields['province'].widget.attrs.update(
+            {'class': 'province', 'onchange': 'choices_city()'})
 
 
 class SalesOrderForm(forms.ModelForm):
@@ -14,7 +26,8 @@ class SalesOrderForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(SalesOrderForm, self).__init__(*args, **kwargs)
         self.fields['city'].widget.attrs.update({'class': 'city'})
-        self.fields['province'].widget.attrs.update({'class': 'province', 'onchange': 'choices_city()'})
+        self.fields['province'].widget.attrs.update(
+            {'class': 'province', 'onchange': 'choices_city()'})
 
 
 class SalesOrderItemForm(forms.ModelForm):

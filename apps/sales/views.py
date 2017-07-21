@@ -3,8 +3,11 @@ from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .models import CustomerInfo, Province, City
-from .forms import SalesOrderForm
+from cart.cart import Cart
+from products.models import Product
+from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem
+from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm
+from django.forms import inlineformset_factory
 
 from utils import AddExcelForm, ImportData
 
@@ -24,13 +27,13 @@ class CustomerInfoDetailView(LoginRequiredMixin, DetailView):
     model = CustomerInfo
 
 
-class CustomerInfoCreateView(LoginRequiredMixin, ProvinceCityInfoMixin, CreateView):
+class CustomerInfoCreateView(LoginRequiredMixin, CreateView):
     model = CustomerInfo
-    form_class = SalesOrderForm
+    form_class = CustomerInfoForm
     # fields = '__all__'
 
 
-class CustomerInfoUpdateView(LoginRequiredMixin, ProvinceCityInfoMixin, UpdateView):
+class CustomerInfoUpdateView(LoginRequiredMixin, UpdateView):
     model = CustomerInfo
     fields = '__all__'
 
@@ -39,22 +42,91 @@ class CustomerInfoDeleteView(LoginRequiredMixin, DeleteView):
     model = CustomerInfo
 
 
+class SalesOrderListView(ListView):
+    model = SalesOrder
+
+
+class SalesOrderDetailView(DetailView):
+    model = SalesOrder
+
+
+class SalesOrderEditMixin:
+    """
+    formset_model = 生成formset的model
+    formset_fields = formset的字段，默认生成所有字段
+    formset_prefix = formset使用的prefix，默认'fs'
+    """
+    formset_model = None
+    formset_fields = '__all__'
+    formset_prefix = 'fs'
+
+    def get_fromset_class(self):
+        extra = len(self.cart.make_slab_list()) if self.object else \
+            len(self.cart.make_slab_list(keys='current_order_slab_ids'))
+        return inlineformset_factory(self.model, self.formset_model, form=SalesOrderItemForm,
+                                     extra=extra, fields=self.formset_fields)
+
+    def get_formset_kwargs(self):
+        return self.cart.make_slab_list() if self.object else \
+            self.cart.make_slab_list(keys='current_order_slab_ids')
+
+    def get_formset(self):
+        if self.request.method in ('POST', 'PUT'):
+            formset = self.get_formset_class()(self.request.POST, prefix=self.formset_prefix,
+                                               instance=self.object)
+        else:
+            formset = self.get_formset_class()(instance=self.object, prefix=self.formset_prefix)
+        for form, data in zip(formset, self.get_formset_kwargs()):
+            data['block_name'] = data['block_num']
+            data['block_num'] = Product.objects.get(block_num=data['block_num'])
+            form.initial.update(**data)
+        return formset
+
+    def get_context_data(self, *args, **kwargs):
+        self.cart = Cart(self.request)
+        kwargs['formset'] = self.get_formset()
+        return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
+
+
+class SalesOrderCreateView(LoginRequiredMixin, CreateView):
+    model = SalesOrder
+    form_class = SalesOrderForm
+
+
+class SalesOrderUpdateView(LoginRequiredMixin, UpdateView):
+    model = SalesOrder
+    form_class = SalesOrderForm
+
+
+class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):
+    model = SalesOrder
+
+
 class ImportView(FormView):
+    """
+    导入省份，城市数据
+    """
+    data_type = 'city'
     template_name = 'sales/customerinfo_form.html'
     form_class = AddExcelForm
 
     def form_valid(self, form):
         f = form.files.get('file')
-        import_data = ImportData(f, data_type='city').data
+        model = Province if self.data_type == 'sheng' else City
+        import_data = ImportData(f, data_type='sheng').data
         for i in import_data:
-            City.objects.create(**i)
+            model.objects.create(**i)
         return HttpResponse('0k')
 
 
 def get_city_info(request):
+    """
+    ajax取省份下城市option
+    :param request:
+    :return: 字典
+    """
     province_id = request.GET.get('province_id')
     father_id = Province.objects.get(pk=province_id).province_id
-    citys = City.objects.filter(father_id=father_id).all()
-    city_lst = [{'city_id': city.id, 'city_name': city.name} for city in citys]
-    print(city_lst)
+    city_lst = [{'id': city.id, 'name': city.name} for city in \
+                City.objects.filter(father_id=father_id).all()]
     return JsonResponse(city_lst, safe=False)

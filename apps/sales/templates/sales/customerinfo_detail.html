@@ -1,0 +1,16 @@
+
+
+{% extends 'base.html' %}
+{% block title %}{{ object }}{% endblock %}
+{% block jumbotron %}{{ object }}{% endblock %}
+{% block main %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">客户资料</h3>
+            <div class="panel-body">
+                省份：{{ object.province.name }},城市:{{ object.city.name }}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

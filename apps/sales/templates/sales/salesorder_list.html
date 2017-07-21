@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}销售订单列表{% endblock %}
+{% block list_group %}
+    {% for object in object_list %}
+        <div class="list-group-item">
+            <a href="{{ object.get_absolute_url }}">{{ object }}</a></div>
+    {% endfor %}
+    
+{% endblock %}
+{% block sidebar %}
+    <a href="{% url 'sales:order_create' %}">新建订单信息</a>
+{% endblock %}

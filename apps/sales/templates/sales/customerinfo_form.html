@@ -26,16 +26,18 @@
             {% endfor %}
         </datalist>
     {% endif %}
+
+{% endblock %}
+{% block script %}
     <script>
         function choices_city() {
             var province_id = $('.province').val();
             console.log(province_id)
             $.getJSON('{% url 'sales:get_city_lst' %}', {'province_id': province_id}, function (ret) {
-                console.log(ret[0])
                 $('.city').empty();
-                for (var i = 0; i >=ret.length - 1; i++) {
-                    $(".city").append("<option value=\"city_id">city_name</option>");  //添加一项option
-                }
+                ret.forEach(function (i) {
+                    $(".city").append("\<option value=" + i.id + "\>" + i.name + "\</option>");
+                })
 
             })
         }

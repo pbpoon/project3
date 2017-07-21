@@ -17,13 +17,11 @@ urlpatterns = [
         name='import'),
     url(r'^get-city-lst/$', views.get_city_info,
         name='get_city_lst'),
-
 ]
-# '''生产订单'''
-# urlpatterns += [
-#     url(r'^order/$', views.ProcessOrderListView.as_view(), name='order_list'),
-#     url(r'^order/create/$', views.ProcessOrderCreateView.as_view(), name='order_create'),
-#     url(r'^order/update/(?P<pk>\d+)/$', views.ProcessOrderUpdateView.as_view(),
-#         name='order_update'),
-#     url(r'^order/(?P<pk>\d+)/$', views.ProcessOrderDetailView.as_view(), name='order_detail'),
-# ]
+'''销售订单'''
+urlpatterns += [
+    url(r'^order/$', views.SalesOrderListView.as_view(), name='order_list'),
+    url(r'^order/create/$', views.SalesOrderCreateView.as_view(), name='order_create'),
+    url(r'^order/update/(?P<pk>\d+)/$', views.SalesOrderUpdateView.as_view(), name='order_update'),
+    url(r'^order/(?P<pk>\d+)/$', views.SalesOrderDetailView.as_view(), name='order_detail'),
+]
