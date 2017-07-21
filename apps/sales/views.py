@@ -80,12 +80,13 @@ class SalesOrderEditMixin:
             data['block_name'] = data['block_num']
             data['block_num'] = Product.objects.get(block_num=data['block_num'])
             form.initial.update({
-                'block_name':data['block_name'],
+                'block_name': data['block_name'],
                 'block_num': data['block_num'],
                 'part': data['part_count'],
                 'pic': data['block_pics'],
-                'quantity': data.get('quantity', data['m2']),
-                'unit':'ton' if data.get('quantiy') else 'm2'
+                'quantity': data.get('quantity', data['block_m2']),
+                'unit': 'ton' if data.get('quantiy') else 'm2',
+                'thickness': data['thickness']
             })
         return formset
 
@@ -95,13 +96,13 @@ class SalesOrderEditMixin:
         return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
 
 
-class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin,CreateView):
+class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, CreateView):
     model = SalesOrder
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
 
 
-class SalesOrderUpdateView(LoginRequiredMixin, SalesOrderEditMixin,UpdateView):
+class SalesOrderUpdateView(LoginRequiredMixin, SalesOrderEditMixin, UpdateView):
     model = SalesOrder
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
