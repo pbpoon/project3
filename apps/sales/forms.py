@@ -31,6 +31,8 @@ class SalesOrderForm(forms.ModelForm):
 
 
 class SalesOrderItemForm(forms.ModelForm):
+    slab_list = forms.CharField(label='码单', max_length='2', initial='打开', widget=forms.TextInput(
+        attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True, }))
     block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
         attrs={'size': '5', 'list': "block_info",
                'onchange': 'get_source(this.id)'}))
@@ -50,13 +52,6 @@ class SalesOrderItemForm(forms.ModelForm):
 
     def clean(self):
         cd = self.cleaned_data
-        if Product.objects.filter(block_num=cd['block_name']).exists():
+        if not Product.objects.filter(block_num=cd['block_name']).exists():
             raise ValueError('荒料编号不在可销售范围！')
         return cd
-
-
-    def save(self, commit=True):
-        cd =self.cleaned_data
-        instance=super(SalesOrderItemForm, self).save(commit=False)
-        instance.save()
-        return instance

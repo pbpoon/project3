@@ -72,9 +72,9 @@ class SalesOrderEditMixin:
         return self.formset_prefix
 
     def get_formset_class(self):
-        extra = len(self.cart.make_slab_list(keys='current_order_slab_ids')) if self.object else \
-            len(self.cart.make_slab_list())
-        return inlineformset_factory(SalesOrder, SalesOrderItem, form=SalesOrderItemForm,
+        extra = 0 if self.object else \
+            len(self.cart.make_slab_list())#len(self.cart.make_slab_list(keys='current_order_slab_ids'))
+        return inlineformset_factory(self.model, self.formset_model, form=SalesOrderItemForm,
                                      extra=extra, fields=self.get_formset_fields())
 
     def get_formset_kwargs(self):
@@ -192,7 +192,7 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
     formset_fields = ('block_name', 'thickness', 'part', 'pic', 'quantity', 'unit', 'price',
-                      'block_num')
+                      'block_num', 'slab_list')
 
 
 class SalesOrderUpdateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSaveMixin, UpdateView):
@@ -200,7 +200,7 @@ class SalesOrderUpdateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
     formset_fields = ('block_name', 'thickness', 'part', 'pic', 'quantity', 'unit', 'price',
-                      'block_num')
+                      'block_num', 'slab_list')
 
 
 class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):
