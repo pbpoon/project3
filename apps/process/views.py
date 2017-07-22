@@ -20,18 +20,20 @@ from cart.cart import Cart
 
 
 class SaveCurrentOrderSlabsMixin(object):
-    def save_current_order_slabs(self):
-        cart = Cart(self.request)
-        try:
-            slab_model = ContentType.objects.get_for_model(self.object)
-            slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
-                                             object_id=self.object.id).item.all()
-            # slab_list = self.object.slab_list.get(object_id=self.object.id).item.all()
-            cart.cart['current_order_slab_ids'] = [str(item.id) for item in slab_list]
-        except Exception as e:
-            cart.cart['current_order_slab_ids'] = []
-        finally:
-            cart.save()
+    def get_context_data(self, **kwargs):
+        if self.object:
+            cart = Cart(self.request)
+            try:
+                slab_model = ContentType.objects.get_for_model(self.object)
+                slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
+                                                 object_id=self.object.id).item.all()
+                # slab_list = self.object.slab_list.get(object_id=self.object.id).item.all()
+                cart.cart['current_order_slab_ids'] = [str(item.slab.id) for item in slab_list]
+            except Exception as e:
+                cart.cart['current_order_slab_ids'] = []
+            finally:
+                cart.save()
+        return super(SaveCurrentOrderSlabsMixin, self).get_context_data(**kwargs)
 
 
 class ServiceProviderListView(ListView):
@@ -75,8 +77,6 @@ class ProcessOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
             item_model = STOrderItem
         kwargs['item_list'] = item_model.objects.filter(order=self.object)
         if self.object.order_type == 'MB':
-            if self.object is not None:
-                self.save_current_order_slabs()
             kwargs['slab_list'] = self.object.slab_list.get(object_id=self.object.id)
         return super(ProcessOrderDetailView, self).get_context_data(**kwargs)
 
@@ -120,7 +120,7 @@ class OrderFormsetMixin(object):
     def get_context_data(self, **kwargs):
         """
         :param kwargs:
-        errors:错误信息，住要记录新建订单录入时候的错误
+        errors:错误信息，主要记录新建订单录入时候的错误
         order_type:把编辑的order类型返回到template，方便提交订单时候可以根据order类型做出业务判断
         data_list:是itemformset的block_name的data_list的数据
         allow_edit: 是否为编辑状态，如果是，打开的slab_list的checkbox可以选择。

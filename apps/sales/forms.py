@@ -44,13 +44,19 @@ class SalesOrderItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SalesOrderItemForm, self).__init__(*args, **kwargs)
-        block_id = self.initial.get('block_num', None)
+        block_id = self.initial.get('block_num')
         if block_id:
             self.initial['block_name'] = Product.objects.get(id=block_id).block_num
-
 
     def clean(self):
         cd = self.cleaned_data
         if Product.objects.filter(block_num=cd['block_name']).exists():
             raise ValueError('荒料编号不在可销售范围！')
         return cd
+
+
+    def save(self, commit=True):
+        cd =self.cleaned_data
+        instance=super(SalesOrderItemForm, self).save(commit=False)
+        instance.save()
+        return instance

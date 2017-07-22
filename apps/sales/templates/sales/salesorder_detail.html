@@ -19,7 +19,7 @@
 
 {% endblock %}
 {% block sidebar %}
-<a class="btn btn-default" href="{{ object.get_absolute_url }}">
+<a class="btn btn-default" href="{% url 'sales:order_update' object.id %}">
 编辑订单
 </a>
 {% endblock %}

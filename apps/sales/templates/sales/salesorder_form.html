@@ -112,3 +112,18 @@
         })
 {#    </script>#}
     {% endblock %}
+{% block script %}
+    <script>
+        function choices_city() {
+            var province_id = $('.province').val();
+            console.log(province_id)
+            $.getJSON('{% url 'sales:get_city_lst' %}', {'province_id': province_id}, function (ret) {
+                $('.city').empty();
+                ret.forEach(function (i) {
+                    $(".city").append("\<option value=" + i.id + "\>" + i.name + "\</option>");
+                })
+
+            })
+        }
+    </script>
+{% endblock %}

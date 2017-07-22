@@ -98,8 +98,7 @@ class SalesOrder(models.Model):
         if self.order == 'new':
             try:
                 last_order = max([item.order for item in
-                                  SalesOrder.objects.filter(
-                                      order_type=ORDER_TAG)])
+                                  SalesOrder.objects.all()])
                 if date_str in last_order[2:6]:
                     value = ORDER_TAG + str(int(last_order[2:9]) + 1)
                 else:
@@ -114,13 +113,15 @@ class SalesOrder(models.Model):
     def __str__(self):
         return self.order
 
+    def get_absolute_url(self):
+        return reverse('sales:order_detail', args=[self.id])
+
 
 class SalesOrderItem(models.Model):
-    block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号',
-                                  null=True)
+    block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号')
     order = models.ForeignKey('SalesOrder', related_name='items', verbose_name='对应单号')
     part = models.SmallIntegerField('夹数', null=True, blank=True)
-    pic = models.SmallIntegerField('件数', null=True, blank=True)
+    pic = models.SmallIntegerField('件数')
     thickness = models.CharField('厚度', max_length=6, null=True, blank=True)
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
