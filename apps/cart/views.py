@@ -3,6 +3,8 @@ from django.views.decorators.http import require_POST
 from .cart import Cart
 from django.contrib import messages
 from utils import str_to_list, AddExcelForm
+from sales.forms import SalesOrderItemForm
+
 
 
 def cart_detail(request):
@@ -11,8 +13,8 @@ def cart_detail(request):
     import_slabs = cart.make_import_slab_list()
     import_slab_form = AddExcelForm()
     for item in object_list:
-        item['slab_ids'] = [id for part in item['part_num'].values() for id in
-                            part['slabs']]
+        item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
+        item['price_form'] = ""
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,

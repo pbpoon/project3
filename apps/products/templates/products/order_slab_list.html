@@ -6,7 +6,7 @@
 {% endblock %}
 {#{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}#}
 {% block main %}
-    <form method="post" id="slab_form" action="{% url 'cart:add' %}">
+    <form method="post" id="slab_form" action="{% url 'cart:add' %}?key='current_order_slab_ids">
         {% for item in slab_list %}
             <ul class="nav nav-tabs">
                 <li><a data-toggle="tab" href="#{{ item.thickness|slugify }}">

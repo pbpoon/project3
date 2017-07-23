@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load bootstrap_tags %}
+{#{% load crispy_forms_tags %}#}
+
+{% block jumbotron %}
+    <h2 class="page-header">{{ object.order }}
+        <small>{{ object.status }}</small>
+    </h2>
+{% endblock %}
+{% block main %}
+
+    <form action="" method="post" id="myformset">
+        {% csrf_token %}
+        {{ form|as_bootstrap }}
+
+        <table class="table" id="formset">
+            {{ itemformset.management_form }}
+            {% if errors %}
+                <div class="alert alert-danger">
+                    <ul>
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            {% if  itemformset.errors %}
+                <div class="alert alert-danger">
+                    <p class="bg-warning">
+                    <ul>
+                        {% for errors in  itemformset.errors %}
+                            {% for key, error in errors.items %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}</ul>
+                    </p>
+                </div>
+            {% endif %}
+
+            {% if  itemformset.non_form_errors %}
+                <div class="alert alert-danger">
+                    <p class="bg-warning">
+                    <ul>
+                        {% for errors in  itemformset.non_form_errors %}
+                            {% for key, error in errors.items %}
+                                <li>{{ itemformset.non_form_errors }}</li>
+                            {% endfor %}
+                        {% endfor %}</ul>
+                    </p>
+                </div>
+            {% endif %}
+
+            {% for form in itemformset.forms %}
+                {% if forloop.first %}
+                    <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                {% endif %}
+                <tr class="form-inline">
+                    {% for field in form.visible_fields %}
+                        <td>
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                                {#                                {% if form.instance.pk %}{{ form.DELETE }}{% endif %}#}
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+        <datalist id="block_info">
+            {% for block_num in data_list %}
+                <option value="{{ block_num }}"
+                        data-id="{{ block_num.id }}"
+                        data-quantity="{{ block_num.weight }}">{{ block_num }}</option>
+            {% endfor %}
+        </datalist>
+        <input class="btn btn-default" type="button" id="add_f" value="添加一行">
+        <input class="btn btn-default" type="button" id="remove_f"
+               value="删除最后一行">
+        <input type="hidden" name="order_type" value="{{ order_type }}"
+               id="order_type">
+        <input type="submit" class="btn btn-primary" value="提交">
+    </form>
+
+{% endblock %}
+    {% block domready %}
+{#    <script>#}
+
+            $('#add_f').click(function () {
+                add_form('{{ itemformset.prefix }}')
+            })//formset添加一行
+            $('#remove_f').click(function () {
+                remove_form('{{ itemformset.prefix }}')
+            })//删去formset最后一行
+
+            $('.dt').click(function (event) {
+                open_dt(this.id)
+            });
+        $('.open_slab_list').click(function (event){
+        open_slab_list(this.id,'{% url "product:order_slab_list" %}')
+        })
+{#    </script>#}
+    {% endblock %}
+{% block script %}
+    <script>
+        function choices_city() {
+            var province_id = $('.province').val();
+            console.log(province_id)
+            $.getJSON('{% url 'sales:get_city_lst' %}', {'province_id': province_id}, function (ret) {
+                $('.city').empty();
+                ret.forEach(function (i) {
+                    $(".city").append("\<option value=" + i.id + "\>" + i.name + "\</option>");
+                })
+
+            })
+        }
+    </script>
+{% endblock %}

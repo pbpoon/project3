@@ -7,28 +7,10 @@
         {{ form|as_bootstrap }}
         <input type="submit" class="btn btn-primary" value="提交">
     </form>
-    {% if province_lst %}
-        <datalist id="province">
-            {% for province in province_lst %}
-
-                <option value="{{ province.name }}" data-province_id="{{ province.province_id }}"
-                        data-id="{{ province.id }}"></option>
-
-            {% endfor %}
-        </datalist>
-        <datalist id="city_data">
-            {% for city in city_lst %}
-
-                <option value="{{ city.id }}" data-province_id="{{ city.father_id }}">
-                    {{ city.name }}
-                </option>
-
-            {% endfor %}
-        </datalist>
-    {% endif %}
 {% endblock %}
 {% block script %}
     <script>
+    //省份变更ajax 获取城市信息
         function choices_city() {
             var province_id = $('.province').val();
             console.log(province_id)

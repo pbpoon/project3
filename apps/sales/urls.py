@@ -21,7 +21,9 @@ urlpatterns = [
 '''销售订单'''
 urlpatterns += [
     url(r'^order/$', views.SalesOrderListView.as_view(), name='order_list'),
+    url(r'^order/add/$', views.SalesOrderAddView.as_view(), name='order_add'),
     url(r'^order/create/$', views.SalesOrderCreateView.as_view(), name='order_create'),
     url(r'^order/update/(?P<pk>\d+)/$', views.SalesOrderUpdateView.as_view(), name='order_update'),
     url(r'^order/(?P<pk>\d+)/$', views.SalesOrderDetailView.as_view(), name='order_detail'),
+
 ]

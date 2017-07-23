@@ -30,7 +30,7 @@ class Cart(object):
         """
         obj = [item['id'] for item in
                Product.objects.get(block_num=block_num).slab.values('id')]
-        if key is None:
+        if not key:
             key = 'slab_ids'
         cart_lst = self.cart[key]
         cart_lst = [i for i in cart_lst if int(i) not in obj]

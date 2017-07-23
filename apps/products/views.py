@@ -53,7 +53,7 @@ class OrderSlabListView(View):
         # slab_list =
         slab_ids = cart.cart['current_order_slab_ids']
         if block_num:
-            object = object.filter(block_num=block_num).first()
+            object = object.filter(block_num=block_num).all()[0]
         if slab_ids:
             slab_list = object.get_slab_list(slab_ids=slab_ids,
                                              object_format=True)

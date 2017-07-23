@@ -1,7 +1,8 @@
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, \
+    TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 
@@ -54,6 +55,10 @@ class SalesOrderListView(ListView):
 class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
     model = SalesOrder
 
+    def get_context_data(self, **kwargs):
+        kwargs['item_list'] = self.object.items.all()
+        return kwargs
+
 
 class SalesOrderEditMixin:
     """
@@ -73,7 +78,8 @@ class SalesOrderEditMixin:
 
     def get_formset_class(self):
         extra = 0 if self.object else \
-            len(self.cart.make_slab_list())#len(self.cart.make_slab_list(keys='current_order_slab_ids'))
+            len(
+                self.cart.make_slab_list())  # len(self.cart.make_slab_list(keys='current_order_slab_ids'))
         return inlineformset_factory(self.model, self.formset_model, form=SalesOrderItemForm,
                                      extra=extra, fields=self.get_formset_fields())
 
@@ -90,10 +96,10 @@ class SalesOrderEditMixin:
             formset = self.get_formset_class()(instance=self.object,
                                                prefix=self.get_formset_prefix())
             for form, data in zip(formset, self.get_formset_kwargs()):
-                data['block_name'] = data['block_num']
+                # data['block_name'] = data['block_num']
                 data['block_num'] = Product.objects.get(block_num=data['block_num'])
                 form.initial.update({
-                    'block_name': data['block_name'],
+                    # 'block_name': data['block_name'],
                     'block_num': data['block_num'],
                     'part': data['part_count'],
                     'pic': data['block_pics'],
@@ -106,6 +112,7 @@ class SalesOrderEditMixin:
     def get_context_data(self, *args, **kwargs):
         self.cart = Cart(self.request)
         kwargs['itemformset'] = self.get_formset()
+        kwargs['item_list'] = self.get_formset_kwargs()
         return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
 
 
@@ -128,18 +135,25 @@ class SalesOrdeSaveMixin:
                     slab_model = ContentType.objects.get_for_model(instance)
                     slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
                                                      object_id=instance.id)
+                    order_ids = [str(slab.slab.id) for slab in
+                                 SlabListItem.objects.filter(slablist=slab_list).all()]
+                    ids = self.cart.cart['current_order_slab_ids']
+                    new_ids = set(ids) - set(order_ids)
+                    del_ids = set(order_ids) - set(ids)
                     slabs = [
                         {'slab': Slab.objects.get(id=slab),
                          'part_num': Slab.objects.get(id=slab).part_num,
                          'line_num': Slab.objects.get(id=slab).line_num}
-                        for slab in self.cart.cart['current_order_slab_ids']
+                        for slab in new_ids
                         ]
-                    slabformset = self.get_slablist_item_formset()(data=slabs, instance=slab_list)
-                    if slabformset.is_valid():
-                        slabformset.save()
-                    else:
-                        errors.append(slabformset.errors)
-                        transaction.rollback(sid)
+                    for i in slabs:
+                        slablistform = SlabListItemForm(data=i)
+                        if slablistform.is_valid():
+                            slablistform.save()
+                        else:
+                            errors.append(slablistform.errors)
+                    SlabListItem.objects.filter(slablist=slab_list, slab__in=del_ids).delete()
+
                 else:
                     """
                     新建状态
@@ -187,20 +201,33 @@ class SalesOrdeSaveMixin:
         return modelformset_factory(SlabListItem, extra=extra, fields='__all__')
 
 
+class SalesOrderAddView(LoginRequiredMixin, SalesOrderEditMixin, TemplateView):
+    template_name = 'sales/salesorder_create_step1.html'
+    formset_model = SalesOrderItem
+
+    def get_context_data(self, **kwargs):
+        self.cart = Cart(self.request)
+        formset= self.get_formset()
+        for item, form in zip(self.get_formset_kwargs(),formset):
+            item['form']=form
+        kwargs['item_list'] = self.cart.make_slab_list()
+        return kwargs
+
+
 class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSaveMixin, CreateView):
     model = SalesOrder
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
-    formset_fields = ('block_name', 'thickness', 'part', 'pic', 'quantity', 'unit', 'price',
-                      'block_num', 'slab_list')
+    # formset_fields = ('block_name', 'thickness', 'part', 'pic', 'quantity', 'unit', 'price',
+    #                   'block_num', 'slab_list')
 
 
 class SalesOrderUpdateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSaveMixin, UpdateView):
     model = SalesOrder
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
-    formset_fields = ('block_name', 'thickness', 'part', 'pic', 'quantity', 'unit', 'price',
-                      'block_num', 'slab_list')
+    # formset_fields = ('block_name', 'thickness', 'part', 'pic', 'quantity', 'unit', 'price',
+    #                   'block_num', 'slab_list')
 
 
 class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):

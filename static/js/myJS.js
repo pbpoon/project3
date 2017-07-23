@@ -139,6 +139,7 @@ function open_slab_list(id, url) {
 
 function gogo_slab_list(block_num, thickness, url) {
     // var slab_ids = ids
+    console.log(url)
     console.log(block_num, thickness)
     // var thickness =thickness
     // var block_num = block_num

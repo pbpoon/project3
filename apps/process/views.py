@@ -100,7 +100,7 @@ class OrderFormsetMixin(object):
                 'quantity', 'unit', 'price',
                 'date', 'ps')
         elif type == 'MB':
-            import_list = self.get_slab_list()
+            import_list = self.get_slab_ids()
             model = MBOrderItem
             form = MBOrderItemForm
             fields = (
@@ -140,7 +140,7 @@ class OrderFormsetMixin(object):
             if self.order_type == 'MB':
                 # if self.object is None:
                 for form, data in zip(context['itemformset'],
-                                      self.get_slab_list()):
+                                      self.get_slab_ids()):
                     try:
                         block_num = Product.objects.get(
                             block_num=data['block_num'])
@@ -184,7 +184,7 @@ class OrderFormsetMixin(object):
             raise ValueError('传入数据出错!')
         return type
 
-    def get_slab_list(self):
+    def get_slab_ids(self):
         cart = Cart(self.request)
         if self.object is None:
             return cart.make_import_slab_list()
