@@ -31,8 +31,8 @@ class SalesOrderForm(forms.ModelForm):
 
 
 class SalesOrderItemForm(forms.ModelForm):
-    slab_list = forms.CharField(label='码单', max_length='2', initial='打开', widget=forms.TextInput(
-        attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True, }))
+    # slab_list = forms.CharField(label='码单', max_length='2', initial='打开', widget=forms.TextInput(
+    #     attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True, }))
 
     # block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
     #     attrs={'size': '5', 'list': "block_info",
@@ -59,6 +59,13 @@ class SalesOrderItemForm(forms.ModelForm):
 
     def clean(self):
         cd = self.cleaned_data
-        if not Product.objects.filter(block_num=cd['block_name']).exists():
+        if not Product.objects.filter(block_num=cd['block_num']).exists():
             raise ValueError('荒料编号不在可销售范围！')
         return cd
+
+
+class OrderPriceForm(forms.Form):
+    price = forms.DecimalField(label='单价', max_digits=5, decimal_places=0,
+                               widget=forms.TextInput(attrs={ 'size':'2'}))
+    block_num = forms.CharField(widget=forms.HiddenInput())
+    thickness = forms.CharField(widget=forms.HiddenInput())

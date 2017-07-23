@@ -12,8 +12,8 @@ from process.models import SlabList, SlabListItem
 from process.views import SaveCurrentOrderSlabsMixin
 from products.models import Product, Slab
 from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem
-from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm
-from django.forms import inlineformset_factory, modelformset_factory
+from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPriceForm
+from django.forms import inlineformset_factory, formset_factory, modelformset_factory
 
 from utils import AddExcelForm, ImportData
 
@@ -57,7 +57,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         kwargs['item_list'] = self.object.items.all()
-        return kwargs
+        return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
 
 class SalesOrderEditMixin:
@@ -88,8 +88,12 @@ class SalesOrderEditMixin:
             self.cart.make_slab_list()
 
     def get_formset(self):
-        if self.request.method in ('POST', 'PUT'):
-            formset = self.get_formset_class()(data=self.request.POST,
+        # if self.request.method in ('POST', 'PUT'):
+        #     formset = self.get_formset_class()(data=self.request.POST,
+        #                                        prefix=self.get_formset_prefix(),
+        #                                        instance=self.object)
+        if self.request.GET.get('next'):
+            formset = self.get_formset_class()(data=self.request.GET,
                                                prefix=self.get_formset_prefix(),
                                                instance=self.object)
         else:
@@ -109,17 +113,40 @@ class SalesOrderEditMixin:
                 })
         return formset
 
+    def get_price_formset(self):
+        extra = 0 if self.object else \
+            len(self.cart.make_slab_list())
+        return formset_factory(OrderPriceForm, extra=0)
+
     def get_context_data(self, *args, **kwargs):
         self.cart = Cart(self.request)
-        kwargs['itemformset'] = self.get_formset()
-        kwargs['item_list'] = self.get_formset_kwargs()
+        kwargs['item_list'] = ""
+        step = self.request.GET.get('step')
+        if not step:
+            # kwargs['itemformset'] = self.get_formset()
+            item_list = self.get_formset_kwargs()
+            price_formset = self.get_formset()
+            kwargs['item_list'] = zip(item_list, price_formset)
+            kwargs['price_formset'] = price_formset
+            kwargs['step'] = '1'
+            return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
+        kwargs['step'] = '2'
+
+        # price_formset = self.get_formset()
+        # prices = price_formset.cleaned_data
+        # self.cart.cart['order_item_formset_data'] = price_formset.cleaned_data
         return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
+
+        # def post(self, request, *args, **kwargs):
+        #     if not self.request.POST.get('next'):
+        #
+        #         return super(SalesOrderEditMixin, self).post(request, *args, **kwargs)
 
 
 class SalesOrdeSaveMixin:
     def form_valid(self, form):
-        context_data = self.get_context_data()
-        formset = context_data['itemformset']
+        # context = self.get_context_data()
+        formset = self.get_formset()
         with transaction.atomic():
             sid = transaction.savepoint()
             form.data_entry_staff = self.request.user
@@ -207,9 +234,9 @@ class SalesOrderAddView(LoginRequiredMixin, SalesOrderEditMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         self.cart = Cart(self.request)
-        formset= self.get_formset()
-        for item, form in zip(self.get_formset_kwargs(),formset):
-            item['form']=form
+        formset = self.get_formset()
+        for item, form in zip(self.get_formset_kwargs(), formset):
+            item['form'] = form
         kwargs['item_list'] = self.cart.make_slab_list()
         return kwargs
 
