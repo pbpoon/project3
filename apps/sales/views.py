@@ -16,6 +16,7 @@ from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPr
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
 
 from utils import AddExcelForm, ImportData
+from decimal import Decimal
 
 
 class ProvinceCityInfoMixin(object):
@@ -57,6 +58,13 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         kwargs['item_list'] = self.object.items.all()
+        kwargs['total_amount'] = '{:.0f}'.format(
+            sum(Decimal(item.sum) for item in self.object.items.all()))
+        kwargs['total_count'] = self.object.items.all().count()
+        kwargs['total_pic'] = sum(int(item.pic) for item in self.object.items.all())
+        kwargs['total_part'] = sum(int(item.part) for item in self.object.items.all())
+        kwargs['total_quantity'] = '{:.2f}'.format(
+            sum(Decimal(item.quantity) for item in self.object.items.all()))
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
 
@@ -121,7 +129,7 @@ class SalesOrderEditMixin:
     def get_context_data(self, *args, **kwargs):
         self.cart = Cart(self.request)
         kwargs['item_list'] = ""
-        step = self.request.GET.get('step')
+        step = self.request.GET.get('step') or self.request.POST.get('step')
         if not step:
             # kwargs['itemformset'] = self.get_formset()
             item_list = self.get_formset_kwargs()
@@ -130,11 +138,9 @@ class SalesOrderEditMixin:
             kwargs['price_formset'] = price_formset
             kwargs['step'] = '1'
             return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
-        kwargs['step'] = '2'
+        elif step == '2':
 
-        # price_formset = self.get_formset()
-        # prices = price_formset.cleaned_data
-        # self.cart.cart['order_item_formset_data'] = price_formset.cleaned_data
+        kwargs['step'] = '2'
         return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
 
         # def post(self, request, *args, **kwargs):
@@ -152,64 +158,13 @@ class SalesOrdeSaveMixin:
             form.data_entry_staff = self.request.user
             instance = form.save()
             if formset.is_valid():
-                formset.instance = instance
-                formset.save()
-                errors = []
-                if self.object:
-                    """
-                    编辑状态
-                    """
-                    slab_model = ContentType.objects.get_for_model(instance)
-                    slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
-                                                     object_id=instance.id)
-                    order_ids = [str(slab.slab.id) for slab in
-                                 SlabListItem.objects.filter(slablist=slab_list).all()]
-                    ids = self.cart.cart['current_order_slab_ids']
-                    new_ids = set(ids) - set(order_ids)
-                    del_ids = set(order_ids) - set(ids)
-                    slabs = [
-                        {'slab': Slab.objects.get(id=slab),
-                         'part_num': Slab.objects.get(id=slab).part_num,
-                         'line_num': Slab.objects.get(id=slab).line_num}
-                        for slab in new_ids
-                        ]
-                    for i in slabs:
-                        slablistform = SlabListItemForm(data=i)
-                        if slablistform.is_valid():
-                            slablistform.save()
-                        else:
-                            errors.append(slablistform.errors)
-                    SlabListItem.objects.filter(slablist=slab_list, slab__in=del_ids).delete()
-
-                else:
-                    """
-                    新建状态
-                    """
-                    slab_list = SlabList.objects.create(order=instance,
-                                                        data_entry_staff_id=self.request.user.id)
-                    slabs = [
-                        {'slablist': slab_list.id,
-                         'slab': Slab.objects.get(id=id).id,
-                         'part_num': Slab.objects.get(id=id).part_num,
-                         'line_num': Slab.objects.get(id=id).line_num}
-                        for id in self.cart.cart['slab_ids']]
-                    for i in slabs:
-                        slablistform = SlabListItemForm(data=i)
-                        if slablistform.is_valid():
-                            slablistform.save()
-                        else:
-                            errors.append(slablistform.errors)
-                    """
-                    把slab_list包含的slab id 读取出来，和选择的slab id作比较
-                    如果是新订单就把import_slab_list用get_import_slab_list_by_parameter遍历出来添加到列表，
-                    如果是编辑订单就直接读取cart的current_order_slab_ids，并用make_slab_list返回码单
-                    """
-                if errors:
+                formset_save = self.formset_valid(instance, formset)
+                if not formset_save:
                     transaction.savepoint_rollback(sid)
                     context = {
                         'form': form,
                         'itemformset': formset,
-                        'errors': errors
+                        'errors': formset_save['errors']
                     }
                     return self.render_to_response(context)
             else:
@@ -220,7 +175,69 @@ class SalesOrdeSaveMixin:
                     'errors': ""
                 }
                 return self.render_to_response(context)
+
         return super(SalesOrdeSaveMixin, self).form_valid(form)
+
+    def formset_valid(self, instance=None, formset=None):
+        formset.instance = instance
+        formset.save()
+        errors = []
+        if self.object:
+            """
+            编辑状态
+            """
+            slab_model = ContentType.objects.get_for_model(self.object)
+            slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
+                                             object_id=self.object.id)
+            order_ids = [str(slab.slab.id) for slab in
+                         SlabListItem.objects.filter(slablist=slab_list).all()]
+            ids = self.cart.cart['current_order_slab_ids']
+            new_ids = set(ids) - set(order_ids)
+            del_ids = set(order_ids) - set(ids)
+            slabs = [
+                {'slab': Slab.objects.get(id=slab),
+                 'part_num': Slab.objects.get(id=slab).part_num,
+                 'line_num': Slab.objects.get(id=slab).line_num}
+                for slab in new_ids
+                ]
+            for i in slabs:
+                slablistform = SlabListItemForm(data=i)
+                if slablistform.is_valid():
+                    slablistform.save()
+                else:
+                    errors.append(slablistform.errors)
+            SlabListItem.objects.filter(slablist=slab_list, slab__in=del_ids).delete()
+        else:
+            """
+            新建状态
+            """
+            slab_list = SlabList.objects.create(order=instance,
+                                                data_entry_staff_id=self.request.user.id)
+            slabs = [
+                {'slablist': slab_list.id,
+                 'slab': Slab.objects.get(id=id).id,
+                 'part_num': Slab.objects.get(id=id).part_num,
+                 'line_num': Slab.objects.get(id=id).line_num}
+                for id in self.cart.cart['slab_ids']]
+            for i in slabs:
+                slablistform = SlabListItemForm(data=i)
+                if slablistform.is_valid():
+                    slablistform.save()
+                else:
+                    errors.append(slablistform.errors)
+            """
+            把slab_list包含的slab id 读取出来，和选择的slab id作比较
+            如果是新订单就把import_slab_list用get_import_slab_list_by_parameter遍历出来添加到列表，
+            如果是编辑订单就直接读取cart的current_order_slab_ids，并用make_slab_list返回码单
+            """
+        if errors:
+            context = {
+                'itemformset': formset,
+                'errors': errors
+            }
+            return context
+        else:
+            return False
 
     def get_slablist_item_formset(self):
         extra = len(self.cart.cart['current_order_slab_ids']) if self.object \

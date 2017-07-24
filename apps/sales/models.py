@@ -130,3 +130,8 @@ class SalesOrderItem(models.Model):
     class Meta:
         verbose_name = '销售订单明细'
         verbose_name_plural = verbose_name
+
+    def _get_sum(self):
+        return '{:.0f}'.format(self.quantity * self.price)
+
+    sum = property(_get_sum)
