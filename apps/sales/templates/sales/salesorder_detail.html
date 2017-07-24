@@ -1,11 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}{{ object }}{% endblock %}
-{% block jumbotron %}{{ object }}({{ object.status }}){% endblock %}
+{% block jumbotron %}
+    <h2 class="page-header">{{ object.order }}
+        <small>{{ object.status }}</small>
+    </h2>{% endblock %}
 {% block main %}
 
     <div class="panel panel-default">
         <div class="panel-heading">
-            <h3 class="panel-title">订单信息</h3>
+            <h3 class="panel-title">订单信息<a class="btn btn-link" href=
+                    "{% url 'sales:order_update' object.id %}?step=1">
+        修改
+            </a></h3>
             <div class="panel-body">
                 <ul>
                     <li>订单号:{{ object.order }}</li>
@@ -19,30 +25,37 @@
     </div>
     <div class="panel panel-default">
         <div class="panel-heading">
-            <h3 class="panel-title">订单货品信息</h3>
+            <h3 class="panel-title">订单货品信息 <a class="btn btn-link" href=
+                    "{% url 'sales:order_update' object.id %}?update_item=True">
+        修改
+            </a></h3>
             <div class="panel-body">
                 {% if item_list %}
-                    <h4 class="page-header">选择了的正式码单</h4>
                     <table class="table">
                         <tr>
-                            <th>选择</th>
+
                             <th>序号</th>
                             <th>荒料编号</th>
                             <th>厚度</th>
+                            <th>夹数</th>
                             <th>件数</th>
-                            <th>平方</th>
+                            <th>数量</th>
+                            <th>单价</th>
+                            <th>小计</th>
                             <th>码单</th>
-                            <th>删除</th>
+
                         </tr>
 
                         {% for object in item_list %}
                             <tr>
-                                <td><input type="checkbox" value="{{ object.part_num }}"></td>
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ object.block_num }}</td>
                                 <td>{{ object.thickness }}</td>
+                                <td>{{ object.part }}</td>
                                 <td>{{ object.pic }}</td>
-                                <td>{{ object.quantity }}</td>
+                                <td>{{ object.quantity }}{{ object.unit }}</td>
+                                <td>{{ object.price }}</td>
+                                <td>{{ object.sum }}</td>
                                 <td>
                                     <div class="dropdown">
                                         <a href="#" data-target="#" class="dropdown-toggle"
@@ -67,20 +80,19 @@
                                         </ul>
                                     </div>
                                 </td>
-                                <td>
-
-
-                                    <form action="{% url 'cart:remove' %}" method="post">
-                                        <input type="hidden" name="item"
-                                               value="{{ object.slab_ids }}">
-                                        {% csrf_token %}
-                                        <input class="btn btn-danger btn-sm" type="submit"
-                                               value="删除">
-                                    </form>
-                                </td>
                             </tr>
                         {% endfor %}
-
+                        <tr>
+                            <th>总计：</th>
+                            <th>{{ total_count }}</th>
+                            <th></th>
+                            <th>{{ total_part }}</th>
+                            <th>{{ total_pic }}</th>
+                            <th>{{ total_quantity }}</th>
+                            <th></th>
+                            <th>{{ total_amount }}</th>
+                            <th></th>
+                        </tr>
                     </table>
                 {% endif %}
             </div>

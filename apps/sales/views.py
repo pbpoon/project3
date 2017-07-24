@@ -147,7 +147,7 @@ class SalesOrderEditMixin:
         return Cart(self.request)
 
     def post(self, request, *args, **kwargs):
-        if not self.request.POST.get('next') and self.request.POST.get('update'):
+        if not self.request.POST.get('next') and self.request.GET.get('update_item'):
             self.object = self.get_object()
             formset = self.get_formset()
             if formset.is_valid():
@@ -159,6 +159,13 @@ class SalesOrderEditMixin:
                     }
                     return self.render_to_response(context)
                 return HttpResponseRedirect(self.get_success_url())
+        elif self.request.GET.get('step') == '1':
+            form = self.get_form()
+            if form.is_valid():
+                self.object = form.save()
+                return HttpResponseRedirect(self.get_success_url())
+            else:
+                return self.form_invalid(form)
         else:
             return super(SalesOrderEditMixin, self).post(request, *args, **kwargs)
 
