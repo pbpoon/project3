@@ -122,6 +122,8 @@
                         <td>{{ object.block_pics }}</td>
                         <td>{{ object.block_m2 }}</td>
                         <td>
+                            {{ form.order }}
+                            {{ form.id }}
                             {{ form.block_num }}
                             {{ form.pic }}
                             {{ form.quantity }}
@@ -182,6 +184,7 @@
         <input type="hidden" name="order_type" value="{{ order_type }}"
                id="order_type">
         <input type="hidden" name="step" value="{{ step }}">
+        <input type="hidden" name="update" value="{{ update }}">
         <input type="submit" class="btn btn-primary" value="提交">
         <input type="submit" class="btn-primary" name="next" value="下一步" formmethod="get">
     </form>

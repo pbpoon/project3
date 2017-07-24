@@ -1,4 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponseRedirect
 from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, \
@@ -62,7 +63,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
             sum(Decimal(item.sum) for item in self.object.items.all()))
         kwargs['total_count'] = self.object.items.all().count()
         kwargs['total_pic'] = sum(int(item.pic) for item in self.object.items.all())
-        kwargs['total_part'] = sum(int(item.part) for item in self.object.items.all())
+        kwargs['total_part'] = sum(int(item.part) for item in self.object.items.all() if item.part)
         kwargs['total_quantity'] = '{:.2f}'.format(
             sum(Decimal(item.quantity) for item in self.object.items.all()))
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
@@ -96,11 +97,11 @@ class SalesOrderEditMixin:
             self.cart.make_slab_list()
 
     def get_formset(self):
-        # if self.request.method in ('POST', 'PUT'):
-        #     formset = self.get_formset_class()(data=self.request.POST,
-        #                                        prefix=self.get_formset_prefix(),
-        #                                        instance=self.object)
-        if self.request.GET.get('next'):
+        if self.request.method in ('POST', 'PUT'):
+            formset = self.get_formset_class()(data=self.request.POST,
+                                               prefix=self.get_formset_prefix(),
+                                               instance=self.object)
+        elif self.request.GET.get('next'):
             formset = self.get_formset_class()(data=self.request.GET,
                                                prefix=self.get_formset_prefix(),
                                                instance=self.object)
@@ -122,12 +123,12 @@ class SalesOrderEditMixin:
         return formset
 
     def get_price_formset(self):
-        extra = 0 if self.object else \
-            len(self.cart.make_slab_list())
+        # extra = 0 if self.object else \
+        #     len(self.cart.make_slab_list())
         return formset_factory(OrderPriceForm, extra=0)
 
     def get_context_data(self, *args, **kwargs):
-        self.cart = Cart(self.request)
+        self.cart = self.get_cart()
         kwargs['item_list'] = ""
         step = self.request.GET.get('step') or self.request.POST.get('step')
         if not step:
@@ -137,16 +138,29 @@ class SalesOrderEditMixin:
             kwargs['item_list'] = zip(item_list, price_formset)
             kwargs['price_formset'] = price_formset
             kwargs['step'] = '1'
-            return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
-        elif step == '2':
-
-        kwargs['step'] = '2'
+            kwargs['update'] = '1'
+        elif step == '1':
+            kwargs['step'] = '2'
         return super(SalesOrderEditMixin, self).get_context_data(*args, **kwargs)
 
-        # def post(self, request, *args, **kwargs):
-        #     if not self.request.POST.get('next'):
-        #
-        #         return super(SalesOrderEditMixin, self).post(request, *args, **kwargs)
+    def get_cart(self):
+        return Cart(self.request)
+
+    def post(self, request, *args, **kwargs):
+        if not self.request.POST.get('next') and self.request.POST.get('update'):
+            self.object = self.get_object()
+            formset = self.get_formset()
+            if formset.is_valid():
+                formset_error = self.formset_valid(self.object, formset)
+                if formset_error:
+                    context = {
+                        'itemformset': formset,
+                        'errors': formset_error['errors']
+                    }
+                    return self.render_to_response(context)
+                return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super(SalesOrderEditMixin, self).post(request, *args, **kwargs)
 
 
 class SalesOrdeSaveMixin:
@@ -158,13 +172,13 @@ class SalesOrdeSaveMixin:
             form.data_entry_staff = self.request.user
             instance = form.save()
             if formset.is_valid():
-                formset_save = self.formset_valid(instance, formset)
-                if not formset_save:
+                formset_error = self.formset_valid(instance, formset)
+                if formset_error:
                     transaction.savepoint_rollback(sid)
                     context = {
                         'form': form,
                         'itemformset': formset,
-                        'errors': formset_save['errors']
+                        'errors': formset_error['errors']
                     }
                     return self.render_to_response(context)
             else:
@@ -191,7 +205,7 @@ class SalesOrdeSaveMixin:
                                              object_id=self.object.id)
             order_ids = [str(slab.slab.id) for slab in
                          SlabListItem.objects.filter(slablist=slab_list).all()]
-            ids = self.cart.cart['current_order_slab_ids']
+            ids = self.get_cart().cart['current_order_slab_ids']
             new_ids = set(ids) - set(order_ids)
             del_ids = set(order_ids) - set(ids)
             slabs = [
