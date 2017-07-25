@@ -53,6 +53,7 @@
                                         <tr class="clickable-row">
                                             <td>
                                                 <input type="checkbox" name="check_box_list"
+                                                       onchange="sum_m2()"
                                                        {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
                                                        value="{{ slab.id }}">
                                             </td>
@@ -114,6 +115,6 @@
     <script src="{% static "js/myJS.js" %}"></script>
 {% endblock %}
 {% block domready %}
-    sum_m2(watch_select())
+    sum_m2()
 {% endblock %}
  {% block body_tag %}onunload="window.opener.location.reload(){% endblock %}

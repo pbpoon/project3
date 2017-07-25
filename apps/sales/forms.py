@@ -47,14 +47,15 @@ class SalesOrderItemForm(forms.ModelForm):
             'part': forms.HiddenInput(),
             'pic': forms.HiddenInput(),
             'thickness': forms.HiddenInput(),
-            'quantity':forms.HiddenInput(),
-            'unit':forms.HiddenInput(),
+            'quantity': forms.HiddenInput(),
+            'unit': forms.HiddenInput(),
+            'price': forms.TextInput(attrs={'size': '3'})
         }
-    #
-    # def __init__(self, *args, **kwargs):
-    #     super(SalesOrderItemForm, self).__init__(*args, **kwargs)
-    #     # block_id = self.initial.get('block_num')
-    #     # if block_id:
+        #
+        # def __init__(self, *args, **kwargs):
+        #     super(SalesOrderItemForm, self).__init__(*args, **kwargs)
+        #     # block_id = self.initial.get('block_num')
+        #     # if block_id:
         #     self.initial['block_name'] = Product.objects.get(id=block_id).block_num
 
     def clean(self):
@@ -66,6 +67,6 @@ class SalesOrderItemForm(forms.ModelForm):
 
 class OrderPriceForm(forms.Form):
     price = forms.DecimalField(label='单价', max_digits=5, decimal_places=0,
-                               widget=forms.TextInput(attrs={ 'size':'2'}))
+                               widget=forms.TextInput(attrs={'size': '2'}))
     block_num = forms.CharField(widget=forms.HiddenInput())
     thickness = forms.CharField(widget=forms.HiddenInput())

@@ -22,7 +22,7 @@ function select_reverse(id) {
     $("#" + sid + " table :checkbox").each(function () {
         $(this).prop("checked", !this.checked);
     });
-    sum_m2(watch_select());
+    sum_m2();
 }
 
 function watch_select() {
@@ -35,7 +35,8 @@ function watch_select() {
     return all_sid
 };
 
-function sum_m2(sid_list) {
+function sum_m2() {
+    var sid_list = watch_select();
     var sum = 0;
     for (var i in sid_list) {
         var m2 = new Number($('#' + sid_list[i] + 'm2').text());
@@ -149,7 +150,7 @@ function gogo_slab_list(block_num, thickness, url) {
     var slab_window = window.open(_url, "new", "menubar=yes,width=500,height=700 ", "resizeable=yes");
     var slab_top = screen.width / 2 - 250
     var slab_left = screen.height / 2 - 700
-    slab_window.moveTo(slab_top, slab_left)
+    // slab_window.moveTo(slab_top, slab_left)
     // timer = window.setInterval("IfWindowClosed()", 500);
 }
 // var timer

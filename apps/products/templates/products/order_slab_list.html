@@ -2,8 +2,8 @@
 {% load static %}
 {% load cart_tags %}
 {% block menu %}
-
 {% endblock %}
+{% block body_tag %}onunload="window.opener.location.reload(){% endblock %}
 {#{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}#}
 {% block main %}
     <form method="post" id="slab_form" action="{% url 'cart:add' %}?key='current_order_slab_ids">
@@ -81,6 +81,7 @@
                                         <tr class="clickable-row">
                                             <td>
                                                 <input type="checkbox" name="check_box_list"
+                                                       onchange="sum_m2()"
                                                        {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
                                                        value="{{ slab.id }}">
                                             </td>
@@ -106,14 +107,39 @@
         <input type="hidden" name="key" value="current_order_slab_ids">
         {% csrf_token %}
     </form>
-    <input style="width: 260px" class="btn btn-primary" type="submit"
-                   value="添加到选择列表" form="slab_form">
+    <div class="navbar navbar-fixed-bottom">
+        <ul class="list-unstyled">
+            <li><input class="btn btn-primary btn-block" type="submit"
+                       value="添加到选择列表" form="slab_form"></li>
+            <li>
+                <ul class="list-inline" style="background-color: #f5f5f5">
+                    <li class="col-md-4"><h3>{{ object.block_num }}</h3>
+                    </li>
+                    <li><ul>
+                        {% for item in slab_list %}
+
+                            <li>{{ item.thickness }}
+                            厚度</li><li>{{ item.part_count }}
+                            夹</li><li>{{ item.block_pics }}
+                            件</li><li>{{ item.block_m2 }}
+                            m2</li>
+                        {% endfor %}
+                    </ul></li>
+                    <li class="col-md-6 pull-right">目前已勾选:
+                        <ul id="selected_info">
+                            <li name="pics"><b>pics</b>件</li>
+                            <li name="m2"><b>m2</b>m2</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
     <script src="{% static "js/myJS.js" %}"></script>
 {% endblock %}
 {% block domready %}
-    sum_m2(watch_select())
+    sum_m2()
 {% endblock %}
-{% block body_tag %}onunload="window.opener.location.reload(){% endblock %}
 
 
 <div role="tabpanel">
@@ -146,7 +172,4 @@
         </div>
 
     </div>
-
-
-    {#            厚度总信息#}
-
+</div>
