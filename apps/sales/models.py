@@ -208,7 +208,7 @@ class SalesOrderPickUp(models.Model):
 
 
 class SalesOrderPickUpItem(models.Model):
-    block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号')
+    block_num = models.ForeignKey('products.Product', related_name='pickup_item', verbose_name='荒料编号')
     order = models.ForeignKey('SalesOrderPickUp', related_name='items', verbose_name='对应单号')
     part = models.SmallIntegerField('夹数', null=True, blank=True)
     pic = models.SmallIntegerField('件数')

@@ -276,21 +276,28 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
 
-    def get_context_data(self, *args, **kwargs):
-        kwargs['item_list'] = ""
+    def get_context_data(self,  **kwargs):
+        price_formset = self.get_formset()
         step = self.request.GET.get('step') or self.request.POST.get('step')
+        kwargs['item_list'] = ""
         if not step:
             item_list = self.get_formset_kwargs()
             for item in item_list:
-                item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
-            price_formset = self.get_formset()
+                item['slab_ids'] = [id for part in item['part_num'].values() for id in
+                                    part['slabs']]
+
             kwargs['item_list'] = zip(item_list, price_formset)
             kwargs['price_formset'] = price_formset
             kwargs['step'] = '1'
             kwargs['update'] = '1'
         elif step == '1':
             kwargs['step'] = '2'
-        return super(SalesOrderCreateView, self).get_context_data(*args, **kwargs)
+            cd = price_formset.cleaned_data
+            kwargs['total_quantity'] = '{:.2f}'.format(sum(item['quantity'] for item in cd))
+            kwargs['total_amount'] = '{:.0f}'.format(
+                sum(item['quantity'] * item['price'] for item in cd))
+            kwargs['total_count'] = len(cd)
+        return super(SalesOrderCreateView, self).get_context_data(**kwargs)
 
 
 class SalesOrderUpdateInfoView(LoginRequiredMixin, UpdateView):
