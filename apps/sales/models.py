@@ -6,17 +6,32 @@ from django.shortcuts import reverse
 CUSTOMER_TYPE_CHOICES = (('personal', '个人'), ('company', '公司'))
 CALL_CHOICES = (('mr', '先生'), ('ms', '女士'), ('cp', '公司'))
 STATUS_CHOICES = (
-    ('N', '新订单'),
-    ('V', '核实'),
-    ('F', '完成'),
-    ('C', '关闭'),
-    ('M', '修改过')
+    ('N', '新订单'),  # new
+    ('V', '核实'),  # verify
+    ('F', '完成'),  # finish
+    ('C', '关闭'),  # closed
+    ('M', '修改过')  # modification
 )
 ORDER_TAG = 'SL'
 UNIT_CHOICES = (
     ('m2', 'm2'),
     ('m3', 'm3'),
     ('ton', 'ton'),
+)
+SALES_PROCEEDS_TYPE = (
+    ('E', '订金'),  # earnest money
+    ('G', '货款')  # payment of goods
+)
+SALES_PROCEEDS_METHOD = (
+    ('T', '转账'),  # transfer account
+    ('C', '现金'),  # cash
+    ('B', '冲账'),  # strike a balance
+)
+SALES_ORDER_PICK_UP_COST = (
+    ('P', '打木夹'),
+    ('L', '裝车'),
+    ('M', '木方'),
+    ('O', '其它')
 )
 
 
@@ -135,3 +150,89 @@ class SalesOrderItem(models.Model):
         return '{:.0f}'.format(self.quantity * self.price)
 
     sum = property(_get_sum)
+
+
+class SalesProceeds(models.Model):
+    order = models.ForeignKey('SalesOrder', related_name='proceeds', on_delete=models.CASCADE,
+                              verbose_name='对应销售单')
+    amount = models.DecimalField('金额', max_digits=9, decimal_places=0)
+    type = models.CharField('款项类型', max_length=1, choices=SALES_PROCEEDS_TYPE, default='g')
+    method = models.CharField('支付方式', choices=SALES_PROCEEDS_METHOD, max_length=1)
+    account = models.ForeignKey('ProceedsAccount', on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateField('支付日期', db_index=True)
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
+    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    created = models.DateField('创建日期', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '销售订单收款记录'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return '[{order}]:{amount}'.format(self.sales_order, self.amount)
+
+
+class ProceedsAccount(models.Model):
+    name = models.CharField('账户名称', max_length=20)
+    bank_name = models.CharField('银行名称', max_length=10)
+    created = models.DateField('创建日期', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '账户信息'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return '{bank}-{name}'.format(self.bank_name, self.name)
+
+
+class SalesOrderPickUp(models.Model):
+    order = models.ForeignKey('SalesOrder', related_name='pickup', on_delete=models.CASCADE,
+                              verbose_name='对应销售单')
+    cart_num = models.CharField('提货车牌', max_length=10)
+    consignee = models.CharField('提货人', max_length=10)
+    date = models.DateField('提货日期', db_index=True)
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
+                                         verbose_name='数据录入人')
+    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    created = models.DateField('创建日期', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '销售提货单'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return '[{order}]'.format(self.order)
+
+
+class SalesOrderPickUpItem(models.Model):
+    block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号')
+    order = models.ForeignKey('SalesOrderPickUp', related_name='items', verbose_name='对应单号')
+    part = models.SmallIntegerField('夹数', null=True, blank=True)
+    pic = models.SmallIntegerField('件数')
+    thickness = models.CharField('厚度', max_length=6, null=True, blank=True)
+    quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
+    unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
+
+    class Meta:
+        verbose_name = '提货明细'
+        verbose_name_plural = verbose_name
+
+
+class SalesOrderPickUpCost(models.Model):
+    item = models.CharField('项目', max_length=1, choices=SALES_ORDER_PICK_UP_COST)
+    amount = models.DecimalField('金额', max_digits=5, decimal_places=0)
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
+                                         verbose_name='数据录入人')
+    ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
+    created = models.DateField('创建日期', auto_now_add=True)
+    updated = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '提货费用'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return '{}-{}'.format(self.item, self.amount)
