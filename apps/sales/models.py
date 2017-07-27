@@ -140,7 +140,7 @@ class SalesOrderItem(models.Model):
     thickness = models.CharField('厚度', max_length=6, null=True, blank=True)
     quantity = models.DecimalField('数量', max_digits=6, decimal_places=2)
     unit = models.CharField('单位', max_length=4, choices=UNIT_CHOICES)
-    price = models.DecimalField('单价', max_digits=9, decimal_places=2)
+    price = models.DecimalField('单价', max_digits=6, decimal_places=0)
 
     class Meta:
         verbose_name = '销售订单明细'

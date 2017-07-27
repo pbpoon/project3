@@ -50,12 +50,19 @@ class OrderSlabListView(View):
         object = Product.objects.all()
         block_num = self.request.GET.get('block_num', None)
         thickness = self.request.GET.get('thickness', None)
-        # slab_list =
+        try:
+            block_num_id = Product.objects.get(block_num=block_num).id
+        except:
+            pass
+        if block_num_id:
+            ids = [item.id for item in Slab.objects.filter(block_num_id=block_num_id,
+                                                        thickness=thickness).all()]
         slab_ids = cart.cart['current_order_slab_ids']
+
         if block_num:
             object = object.filter(block_num=block_num).all()[0]
-        if slab_ids:
-            slab_list = object.get_slab_list(slab_ids=slab_ids,
+        if ids:
+            slab_list = object.get_slab_list(slab_ids=ids,
                                              object_format=True)
         else:
             slab_list = object.get_slab_list(object_format=True)

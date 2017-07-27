@@ -68,8 +68,8 @@ class Product(models.Model):
 
     def _get_cost_by(self):
         return self.purchase.order.cost_by
-
     cost_by = property(_get_cost_by)
+
 
 
 class Slab(models.Model):

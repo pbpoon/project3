@@ -9,7 +9,7 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">订单信息<a class="btn btn-link" href=
-                    "{% url 'sales:order_update_info' object.id %}?step=1">
+                    "{% url 'sales:order_update_info' object.id %}">
         修改
             </a></h3>
             <div class="panel-body">
@@ -26,7 +26,7 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">订单货品信息 <a class="btn btn-link" href=
-                    "{% url 'sales:order_update_item' object.id %}?update_item=True">
+                    "{% url 'sales:order_update_item' object.id %}">
         修改
             </a></h3>
             <div class="panel-body">

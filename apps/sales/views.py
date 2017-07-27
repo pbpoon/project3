@@ -115,6 +115,11 @@ class SalesOrderEditMixin:
         return self.make_formset_initial(formset)
 
     def make_formset_initial(self, formset):
+        """
+        是这个mixin可以适应更多order的formset，不同的order只需要更改这里来适配
+        :param formset:
+        :return:
+        """
         for form, data in zip(formset, self.get_formset_kwargs()):
             data['block_num'] = Product.objects.get(block_num=data['block_num'])
             form.initial.update({
@@ -197,44 +202,6 @@ class SalesOrderEditMixin:
         return Cart(self.request)
 
 
-
-    # def post(self, request, *args, **kwargs):
-    #     self.cart = Cart(self.request)
-    #     try:
-    #         self.object = self.model.objects.get(id=kwargs.get('pk'))
-    #     except:
-    #         self.object= None
-    #     if not self.request.POST.get('next') and self.request.GET.get('update_item'):
-    #         self.object = self.get_object()
-    #         formset = self.get_formset()
-    #         if formset.is_valid():
-    #             formset_error = self.formset_valid(self.object, formset)
-    #             if formset_error:
-    #                 context = {
-    #                     'itemformset': formset,
-    #                     'errors': formset_error['errors']
-    #                 }
-    #                 return self.render_to_response(context)
-    #             return HttpResponseRedirect(self.get_success_url())
-    #     elif self.request.GET.get('update_info'):
-    #         form = self.get_form()
-    #         if form.is_valid():
-    #             self.object = form.save()
-    #             return HttpResponseRedirect(self.get_success_url())
-    #         else:
-    #             return self.form_invalid(form)
-    #     else:
-    #         return super(SalesOrderEditMixin, self).post(request, *args, **kwargs)
-    #
-    # def get(self, request, *args, **kwargs):
-    #     self.cart = Cart(self.request)
-    #     try:
-    #         self.object = self.model.objects.get(id=kwargs.get('pk'))
-    #     except:
-    #         self.object= None
-    #     return super(SalesOrderEditMixin, self).get(request, *args, **kwargs)
-
-
 class SalesOrdeSaveMixin:
     def form_valid(self, form):
         formset = self.get_formset()
@@ -314,6 +281,8 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
         step = self.request.GET.get('step') or self.request.POST.get('step')
         if not step:
             item_list = self.get_formset_kwargs()
+            for item in item_list:
+                item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
             price_formset = self.get_formset()
             kwargs['item_list'] = zip(item_list, price_formset)
             kwargs['price_formset'] = price_formset
