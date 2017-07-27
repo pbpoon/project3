@@ -163,4 +163,23 @@ function gogo_slab_list(block_num, thickness, url) {
 //         slab_window.location.reload()
 //     }
 // }
-
+//检查价格form是否为空
+function check_price_form(prefix) {
+    console.log(prefix);
+    var form_count = $('#' + 'id_' + prefix + '-TOTAL_FORMS').val();
+    console.log(form_count);
+    var error = false;
+    for (var i = 0; i < form_count.length + 1; i++) {
+        console.log('#' + 'id_' + prefix + '-' + i + '-price');
+        if ($('#' + 'id_' + prefix + '-' + i + '-price').val() == '') {
+            alert('请输入单价！')
+            $('#' + 'id_' + prefix + '-' + i + '-price').focus()
+            error = true
+            break
+        }
+    }
+    if (error) {
+        var event = event || window.event;
+        event.preventDefault(); // 兼容标准浏览器
+    }
+}

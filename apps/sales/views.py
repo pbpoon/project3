@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, HttpResponse
@@ -276,10 +278,22 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
 
-    def get_context_data(self,  **kwargs):
+    def get_context_data(self, **kwargs):
         price_formset = self.get_formset()
         step = self.request.GET.get('step') or self.request.POST.get('step')
         kwargs['item_list'] = ""
+        items = self.get_formset_kwargs()
+        dt = defaultdict(float)
+        for item in items:
+            dt[item['unit']] +=item['quantity']
+        total = {
+            'total_count': len(items),
+            'total_quantity':dt,
+            # 'total_quantity': '{:.2f}'.format(sum(item['quantity'] for item in items)),
+
+
+        }
+        print(total)
         if not step:
             item_list = self.get_formset_kwargs()
             for item in item_list:
@@ -289,10 +303,10 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
             kwargs['item_list'] = zip(item_list, price_formset)
             kwargs['price_formset'] = price_formset
             kwargs['step'] = '1'
-            kwargs['update'] = '1'
         elif step == '1':
             kwargs['step'] = '2'
             cd = price_formset.cleaned_data
+
             kwargs['total_quantity'] = '{:.2f}'.format(sum(item['quantity'] for item in cd))
             kwargs['total_amount'] = '{:.0f}'.format(
                 sum(item['quantity'] * item['price'] for item in cd))

@@ -183,23 +183,6 @@
 
             })
         }
-        function check_price_form(prefix) {
-            console.log(prefix)
-            var form_count = $('#' + 'id_' + prefix + '-TOTAL_FORMS').val()
-            console.log(form_count)
-            var event = event || window.event;
-            var error = false
-            for (var i = 0; i < form_count.length; i++) {
-                console.log('#' + 'id_' + prefix + '-' + i + '-price')
-                if ($('#' + 'id_' + prefix + '-' + i + '-price').val() == '') {
-                    alert('请输入单价！')
-                    $('#' + 'id_' + prefix + '-' + i + '-price').focus()
-                    error=true
-                }
-            }
-            if (error) {
-                event.preventDefault(); // 兼容标准浏览器
-            }
-        }
+
     </script>
 {% endblock %}

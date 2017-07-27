@@ -14,7 +14,6 @@ def cart_detail(request):
     import_slab_form = AddExcelForm()
     for item in object_list:
         item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
-        item['price_form'] = ""
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,

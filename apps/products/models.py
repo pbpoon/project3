@@ -3,6 +3,10 @@ from decimal import Decimal
 from django.shortcuts import reverse
 
 BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板材'))
+UNIT_CHOICES = (
+    ('m3', 'm3'),
+    ('ton', 'ton'),
+)
 
 
 class Product(models.Model):
@@ -20,11 +24,14 @@ class Product(models.Model):
     created = models.DateTimeField('创建日期', auto_now_add=True)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
 
-    # is_del = models.BooleanField('删除', default=False)
-
     class Meta:
         verbose_name = '荒料信息'
         verbose_name_plural = verbose_name
+
+    def _get_cost_by(self):
+        return self.purchase.order.cost_by
+
+    cost_by = property(_get_cost_by)
 
     def __str__(self):
         return str(self.block_num)
@@ -60,16 +67,11 @@ class Product(models.Model):
                 lst['part_num'][part_num] = {}
                 lst['part_num'][part_num]['part_pics'] = len(slabs)
                 lst['part_num'][part_num]['part_m2'] = str(sum(slab.m2 for slab in slabs))
-                lst['part_num'][part_num]['slabs'] = [s for s in slabs]if object_format \
-                                                                else [s.id for s in slabs]
+                lst['part_num'][part_num]['slabs'] = [s for s in slabs] if object_format \
+                    else [s.id for s in slabs]
             list.append(lst)
 
         return list
-
-    def _get_cost_by(self):
-        return self.purchase.order.cost_by
-    cost_by = property(_get_cost_by)
-
 
 
 class Slab(models.Model):
@@ -93,6 +95,8 @@ class Slab(models.Model):
                              verbose_name=u'平方')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')
     updated = models.DateTimeField(auto_now=True, verbose_name=u'更新日期')
+    address = models.ForeignKey('process.ServiceProvider', on_delete=models.SET_DEFAULT, default=1,
+                                verbose_name='库存地址')
     is_sell = models.BooleanField(default=False, verbose_name=u'是否已售')
     is_booking = models.BooleanField(default=False, verbose_name=u'是否已定')
     is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
@@ -197,3 +201,38 @@ class Quarry(models.Model):
     #                 slab = [s for s in slabs]
     #             lst[self.block_num_id][part['thickness']]['part_num'][part_num]['slabs'] = slab
     #     return lst
+
+
+class Block(models.Model):
+    block_num = models.OneToOneField('Product', on_delete=models.CASCADE,
+                                     related_name='block', verbose_name='荒料编号')
+    quantity = models.DecimalField('数量', max_digits=5, decimal_places=2)
+    address = models.ForeignKey('process.ServiceProvider', on_delete=models.SET_DEFAULT, default=1,
+                                verbose_name='库存地址')
+    updated = models.DateTimeField('更新日期', auto_now=True)
+    created = models.DateTimeField('创建日期', auto_now_add=True)
+    is_del = models.BooleanField('删除', default=False)
+
+    class Meta:
+        verbose_name = '荒料库存数量'
+        verbose_name_plural = verbose_name
+
+    def _get_unit(self):
+        return self.block_num.cost_by
+    unit = property(_get_unit)
+
+
+class Coarse(models.Model):
+    block_num = models.ForeignKey('Product', on_delete=models.CASCADE,
+                                     related_name='coarse', verbose_name='荒料编号')
+    address = models.ForeignKey('process.ServiceProvider', on_delete=models.SET_DEFAULT,default=1,
+                                verbose_name='库存地址')
+    quantity = models.DecimalField('数量', max_digits=5, decimal_places=2)
+    unit = models.CharField('单位', default='m2')
+    updated = models.DateTimeField('更新日期', auto_now=True)
+    created = models.DateTimeField('创建日期', auto_now_add=True)
+    is_del = models.BooleanField('删除', default=False)
+
+    class Meta:
+        verbose_name= '毛板库存'
+        verbose_name_plural = verbose_name
