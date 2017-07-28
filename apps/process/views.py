@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .models import ProcessOrder, ServiceProvider, TSOrderItem, MBOrderItem, \
     KSOrderItem, STOrderItem, SlabList, SlabListItem
-from products.models import Product, Slab
+from products.models import Product, Slab, InventoryAddress
 from .forms import TSOrderItemForm, MBOrderItemForm, KSOrderItemForm, \
     STOrderItemForm, ProcessOrderForm, SlabListForm, \
     SlabListItemForm, CustomBaseInlineFormset
@@ -216,6 +216,9 @@ class OrderFormsetMixin(object):
             if formset.is_valid():
                 formset.instance = instance
                 items = formset.save()
+                for item in items:
+                    InventoryAddress._save(order=instance, block_num=item.block_num,
+                                           address=instance.service_provider)
                 if self.order_type == 'MB':
                     try:
                         """
@@ -238,7 +241,8 @@ class OrderFormsetMixin(object):
                         if self.object is None:
                             for i in items:
                                 slabs.extend(
-                                    cart.get_import_slab_list_by_parameter(i.block_num, i.thickness))
+                                    cart.get_import_slab_list_by_parameter(i.block_num,
+                                                                           i.thickness))
                         else:
                             slabs = cart.cart['current_order_slab_ids']
                         errors = []

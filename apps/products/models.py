@@ -1,6 +1,9 @@
 from django.db import models
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericForeignKey
 from decimal import Decimal
 from django.shortcuts import reverse
+from process.models import ServiceProvider
 
 BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板材'))
 UNIT_CHOICES = (
@@ -11,8 +14,7 @@ UNIT_CHOICES = (
 
 class Product(models.Model):
     block_num = models.CharField('荒料编号', max_length=16, unique=True)
-    weight = models.DecimalField('重量', max_digits=5, decimal_places=2,
-                                 null=True)
+    weight = models.DecimalField('重量', max_digits=5, decimal_places=2, null=True)
     long = models.IntegerField('长', null=True)
     width = models.IntegerField('宽', null=True)
     high = models.IntegerField('高', null=True)
@@ -23,6 +25,7 @@ class Product(models.Model):
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
+    is_sell = models.BooleanField('是否已售', default=False)
 
     class Meta:
         verbose_name = '荒料信息'
@@ -72,6 +75,57 @@ class Product(models.Model):
             list.append(lst)
 
         return list
+
+    def get_inventory(self):
+        block_type = self._get_block_type()
+        cost_by = self.cost_by
+        if block_type == 'block':
+            if self.is_sell:
+                return False
+            if cost_by == 'ton':
+                return {'type': '荒料', 'quantity': self.weight, 'unit': self.cost_by}
+            else:
+                return {'type': '荒料', 'quantity': self.m3, 'unit': self.cost_by}
+
+        elif block_type == 'coarse':
+            if cost_by == 'ton':
+                quantity = '{:.0f}'.format(
+                    100 / (float(self.ksorderitem_cost.thickness) + 0.35) / 2.8 * float(
+                        self.weight))
+            else:
+                quantity = '{:.0f}'.format(
+                    100 / (float(self.ksorderitem_cost.thickness) + 0.35) * float(self.m3))
+            return {'type': '毛板', 'quantity': quantity, 'unit': 'm2'}
+
+        elif block_type == 'slab':
+            total_slab_pic = len(self.slab.all())
+            total_coarse_pic = self.ksorderitem_cost.pic + self.ksorderitem_cost.pi
+            balance_pic = total_slab_pic - total_coarse_pic
+            quantity = '{:.2f}'.format(
+                sum(item.m2 for item in self.slab.filter(is_sell=False).all()))
+            if not 0 < balance_pic > 8:
+                return {'type': '光板', 'quantity': quantity, 'unit': 'm2'}
+            if cost_by == 'ton':
+                per_pic_m2 = '{:.0f}'.format(
+                    100 / (float(self.ksorderitem_cost.thickness) + 0.35) / 2.8 * float(
+                        self.weight) / self.ksorderitem_cost.pic)
+            else:
+                per_pic_m2 = '{:.0f}'.format(
+                    100 / (float(self.ksorderitem_cost.thickness) + 0.35) * float(
+                        self.m3) / self.ksorderitem_cost.pic)
+            coarse_quantity = balance_pic * per_pic_m2
+            return [{'type': '毛板', 'quantity': coarse_quantity, 'unit': 'm2'},
+                    {'type': '光板', 'quantity': quantity, 'unit': 'm2'}]
+
+        return False
+
+    def _get_block_type(self):
+        try:
+            address = self.address.last().type
+        except Exception as e:
+            return False
+        else:
+            return address
 
 
 class Slab(models.Model):
@@ -203,36 +257,67 @@ class Quarry(models.Model):
     #     return lst
 
 
-class Block(models.Model):
-    block_num = models.OneToOneField('Product', on_delete=models.CASCADE,
-                                     related_name='block', verbose_name='荒料编号')
-    quantity = models.DecimalField('数量', max_digits=5, decimal_places=2)
-    address = models.ForeignKey('process.ServiceProvider', on_delete=models.SET_DEFAULT, default=1,
-                                verbose_name='库存地址')
-    updated = models.DateTimeField('更新日期', auto_now=True)
-    created = models.DateTimeField('创建日期', auto_now_add=True)
-    is_del = models.BooleanField('删除', default=False)
-
-    class Meta:
-        verbose_name = '荒料库存数量'
-        verbose_name_plural = verbose_name
-
-    def _get_unit(self):
-        return self.block_num.cost_by
-    unit = property(_get_unit)
+def get_address_default():
+    defaule = {
+        'service_type': 'OT',
+        'name': 'DeleteDefault',
+        'unit': 'x',
+    }
+    return ServiceProvider.objects.get_or_create(name='DeleteDefault', defaults=defaule)
 
 
-class Coarse(models.Model):
+class InventoryAddress(models.Model):
     block_num = models.ForeignKey('Product', on_delete=models.CASCADE,
-                                     related_name='coarse', verbose_name='荒料编号')
-    address = models.ForeignKey('process.ServiceProvider', on_delete=models.SET_DEFAULT,default=1,
+                                  related_name='address', verbose_name='荒料编号')
+    type = models.CharField('形态', max_length=6, choices=BLOCK_TYPE_CHOICES)
+    address = models.ForeignKey('process.ServiceProvider',
+                                on_delete=models.SET(get_address_default),
                                 verbose_name='库存地址')
-    quantity = models.DecimalField('数量', max_digits=5, decimal_places=2)
-    unit = models.CharField('单位', default='m2')
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    order = GenericForeignKey()
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
-    is_del = models.BooleanField('删除', default=False)
 
     class Meta:
-        verbose_name= '毛板库存'
+        verbose_name = '库存地址'
         verbose_name_plural = verbose_name
+        ordering = ('-updated',)
+
+    def __str__(self):
+        return '{}[{}]-{}'.format(self.block_num, self.type, self.address)
+
+    @staticmethod
+    def _save(order=None, block_num=None, address=None):
+        _type = getattr(order,'order_type')
+        if _type =='KS':
+            type = 'coarse'
+        elif _type == 'MB':
+            type = 'slab'
+        elif _type == 'ST':
+            type ='block'
+        else:
+            type = InventoryAddress.objects.last().type
+        if order and block_num and address and type:
+            _address = InventoryAddress(order=order, block_num=block_num)
+            _address.address = address
+            _address.type = type
+            _address.save()
+            return True
+        return False
+#
+# class Coarse(models.Model):
+#     block_num = models.ForeignKey('Product', on_delete=models.CASCADE,
+#                                      related_name='coarse', verbose_name='荒料编号')
+#     address = models.ForeignKey('process.ServiceProvider', on_delete=models.SET_DEFAULT,default=1,
+#                                 verbose_name='库存地址')
+#     ks_order = models.OneToOneField()
+#     quantity = models.DecimalField('数量', max_digits=5, decimal_places=2)
+#     unit = models.CharField('单位', default='m2')
+#     updated = models.DateTimeField('更新日期', auto_now=True)
+#     created = models.DateTimeField('创建日期', auto_now_add=True)
+#     is_del = models.BooleanField('删除', default=False)
+#
+#     class Meta:
+#         verbose_name = '毛板库存数量'
+#         verbose_name_plural = verbose_name

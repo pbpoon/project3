@@ -285,12 +285,11 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
         items = self.get_formset_kwargs()
         dt = defaultdict(float)
         for item in items:
-            dt[item['unit']] +=item['quantity']
+            dt[item['unit']] += item['quantity']
         total = {
             'total_count': len(items),
-            'total_quantity':dt,
+            'total_quantity': dt,
             # 'total_quantity': '{:.2f}'.format(sum(item['quantity'] for item in items)),
-
 
         }
         print(total)

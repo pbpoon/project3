@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import reverse
 from datetime import datetime
 from decimal import Decimal
-from django.utils import timezone
+
 from django.core.exceptions import ObjectDoesNotExist
 
 BLOCK_TYPE_CHOICES = (
@@ -89,7 +89,7 @@ class ProcessOrder(models.Model):
     class Meta:
         verbose_name = '加工订单'
         verbose_name_plural = verbose_name
-        ordering = ['-date']
+        ordering = ['-updated']
 
     def get_absolute_url(self):
         return reverse('process:order_detail', args=[self.id])
