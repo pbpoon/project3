@@ -217,8 +217,12 @@ class OrderFormsetMixin(object):
                 formset.instance = instance
                 items = formset.save()
                 for item in items:
+                    if self.order_type == 'TS':
+                        address = item.destination
+                    else:
+                        address = instance.service_provider
                     InventoryAddress._save(order=instance, block_num=item.block_num,
-                                           address=instance.service_provider)
+                                           address=address)
                 if self.order_type == 'MB':
                     try:
                         """

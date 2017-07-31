@@ -25,7 +25,7 @@ class Product(models.Model):
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
-    is_sell = models.BooleanField('是否已售', default=False)
+    # is_sell = models.BooleanField('是否已售', default=False)
 
     class Meta:
         verbose_name = '荒料信息'
@@ -79,13 +79,16 @@ class Product(models.Model):
     def get_inventory(self):
         block_type = self._get_block_type()
         cost_by = self.cost_by
+        if cost_by == 'ton':
+            inventory = {'quantity': self.weight, 'unit': cost_by}
+        else:
+            inventory = {'quantity': self.m3, 'unit': cost_by}
+
         if block_type == 'block':
-            if self.is_sell:
-                return False
-            if cost_by == 'ton':
-                return {'type': '荒料', 'quantity': self.weight, 'unit': self.cost_by}
+            if self.sale.order.filter(status__in=('V','F')).exists():
+                return {'type': '已售', 'quantity': 0, 'unit': cost_by}
             else:
-                return {'type': '荒料', 'quantity': self.m3, 'unit': self.cost_by}
+                return {'type': '荒料'}.update(inventory)
 
         elif block_type == 'coarse':
             if cost_by == 'ton':
@@ -117,15 +120,15 @@ class Product(models.Model):
             return [{'type': '毛板', 'quantity': coarse_quantity, 'unit': 'm2'},
                     {'type': '光板', 'quantity': quantity, 'unit': 'm2'}]
 
-        return False
+        return {'type': '运输中'}.update(inventory)
 
     def _get_block_type(self):
         try:
-            address = self.address.last().type
+            type = self.address.last().type
         except Exception as e:
             return False
         else:
-            return address
+            return type
 
 
 class Slab(models.Model):
@@ -289,13 +292,13 @@ class InventoryAddress(models.Model):
 
     @staticmethod
     def _save(order=None, block_num=None, address=None):
-        _type = getattr(order,'order_type')
-        if _type =='KS':
+        _type = getattr(order, 'order_type')
+        if _type == 'KS':
             type = 'coarse'
         elif _type == 'MB':
             type = 'slab'
         elif _type == 'ST':
-            type ='block'
+            type = 'block'
         else:
             type = InventoryAddress.objects.last().type
         if order and block_num and address and type:
@@ -305,6 +308,7 @@ class InventoryAddress(models.Model):
             _address.save()
             return True
         return False
+
 #
 # class Coarse(models.Model):
 #     block_num = models.ForeignKey('Product', on_delete=models.CASCADE,

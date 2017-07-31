@@ -184,7 +184,6 @@ class MBOrderItem(OrderItemBaseModel):
     thickness = models.DecimalField('厚度', max_digits=4, decimal_places=2)
     pic = models.SmallIntegerField('件数', null=True, blank=True)
 
-
     class Meta:
         verbose_name = '补板加工单'
         verbose_name_plural = verbose_name
