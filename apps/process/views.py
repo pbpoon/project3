@@ -110,6 +110,7 @@ class OrderFormsetMixin(object):
         elif type == 'ST':
             model = STOrderItem
             form = STOrderItemForm
+            fields = '__all__'
         if self.object is not None:
             extra = 0
         return inlineformset_factory(parent_model=self.model, model=model,

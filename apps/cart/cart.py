@@ -88,8 +88,8 @@ class Cart(object):
     def get_info(self):
         slab_list = self.make_slab_list()
         count = len(slab_list)
-        total_m2 = sum(Decimal(i['block_m2']) for i in slab_list)
-        return {'count': count, 'total_m2': total_m2}
+        total_quantity = sum(Decimal(i['block_quantity']) for i in slab_list)
+        return {'count': count, 'total_m2': total_quantity}
 
     def save_import_slab_list(self, f):
         importer = ImportData(f)

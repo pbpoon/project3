@@ -8,10 +8,12 @@
         <tr>
             <th>荒料编号</th>
             <th>重量</th>
-            <th>长</th>
-            <th>宽</th>
-            <th>高</th>
+            {#            <th>长</th>#}
+            {#            <th>宽</th>#}
+            {#            <th>高</th>#}
             <th>立方</th>
+            <th>形态</th>
+            <th>库存情况</th>
             <th>品种</th>
             <th>矿口</th>
             <th>批次</th>
@@ -23,15 +25,24 @@
             <tr>
                 <td><a href="{{ object.get_absolute_url }}">{{ object.block_num }}</a></td>
                 <td>{{ object.weight }}</td>
-                <td>{{ object.long }}</td>
-                <td>{{ object.width }}</td>
-                <td>{{ object.high }}</td>
+                {#                <td>{{ object.long }}</td>#}
+                {#                <td>{{ object.width }}</td>#}
+                {#                <td>{{ object.high }}</td>#}
                 <td>{{ object.m3 }}</td>
+                <td>{{ object.block_type }}</td>
+                <td>
+                    <ul>
+                        {% for inventory in object.get_inventory_list %}
+                            <li>{{ inventory.type }}/{{ inventory.quantity }}{{ inventory.unit }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
                 <td>{{ object.category }}</td>
                 <td>{{ object.quarry }}</td>
                 <td>{{ object.batch }}</td>
                 <td>{{ object.ps }}</td>
-                <td><a class="button" href="{% url 'product:slab_list' object.block_num %}">打开</a></td>
+                <td><a class="button" href="{% url 'product:slab_list' object.block_num %}">打开</a>
+                </td>
                 <td>{{ object.updated }}</td>
             </tr>
         {% endfor %}

@@ -39,9 +39,10 @@ class Product(models.Model):
 
     def _get_ccl(self):
         if self.slab.exists():
-            cost_quantity = self.weight if self.cost_by =='ton' else self.m3
+            cost_quantity = self.weight if self.cost_by == 'ton' else self.m3
             return '{:.2f}'.format(sum(slab.m2 for slab in self.slab.all()) / cost_quantity)
         return False
+
     ccl = property(_get_ccl)
 
     def __str__(self):
@@ -57,7 +58,7 @@ class Product(models.Model):
             obj = obj.filter(id__in=slab_ids)
         slab_list = obj.values('block_num', 'thickness').annotate(
             block_pics=models.Count('id'),
-            block_m2=models.Sum('m2'))
+            block_quantity=models.Sum('m2'))
         list = []
 
         for part in slab_list:
@@ -67,8 +68,10 @@ class Product(models.Model):
             lst = {'block_num': self.block_num,
                    'thickness': str(part['thickness']),
                    'block_pics': str(part['block_pics']),
-                   'block_m2': str(part['block_m2']),
-                   'part_count': len(part_list), 'part_num': {}}
+                   'block_quantity': str(part['block_quantity']),
+                   'part_count': len(part_list),
+                   'part_num': {},
+                   'unit': 'm2'}
 
             for item in part_list:
                 slabs = [slab for slab in
@@ -85,7 +88,16 @@ class Product(models.Model):
 
         return list
 
-    def get_inventory(self):
+    def get_block_list(self):
+        cost_by = self.cost_by
+        if cost_by == 'ton':
+            quantity = {'quantity': self.weight, 'unit': cost_by}
+        else:
+            quantity = {'quantity': self.m3, 'unit': cost_by}
+        lst = {'block_num': self.block_num, 'thickness': '荒料', 'block_pics': 1}
+        return [lst.update(quantity)]
+
+    def get_inventory_list(self):
         block_type = self._get_block_type()
         cost_by = self.cost_by
         if cost_by == 'ton':
@@ -129,8 +141,8 @@ class Product(models.Model):
                     100 / (float(thickness) + 0.35) * float(
                         self.m3) / sum(i.pic for i in self.ksorderitem_cost.all()))
             coarse_quantity = float(balance_pic) * float(per_pic_m2)
-            return [{'type': '毛板', 'quantity': coarse_quantity, 'unit': 'm2'},
-                    {'type': '光板', 'quantity': quantity, 'unit': 'm2'}]
+            return [{'type': '光板', 'quantity': quantity, 'unit': 'm2'},
+                    {'type': '毛板', 'quantity': coarse_quantity, 'unit': 'm2'}]
         else:
 
             type = {'type': '运输中'}
@@ -146,6 +158,8 @@ class Product(models.Model):
             return 'block'
         else:
             return 'otw'  # on the way
+
+    block_type = property(_get_block_type)
 
     def get_business(self):
         st_lst = [{'business': '荒料到货',

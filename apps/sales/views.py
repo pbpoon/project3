@@ -204,7 +204,7 @@ class SalesOrderEditMixin:
         return Cart(self.request)
 
 
-class SalesOrdeSaveMixin:
+class SalesOrderSaveMixin:
     def form_valid(self, form):
         formset = self.get_formset()
         with transaction.atomic():
@@ -230,7 +230,7 @@ class SalesOrdeSaveMixin:
                 }
                 return self.render_to_response(context)
 
-        return super(SalesOrdeSaveMixin, self).form_valid(form)
+        return super(SalesOrderSaveMixin, self).form_valid(form)
 
 
 class SalesOrderAddView(LoginRequiredMixin, SalesOrderEditMixin, TemplateView):
@@ -273,7 +273,7 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
             return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSaveMixin, CreateView):
+class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSaveMixin, CreateView):
     model = SalesOrder
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
@@ -284,8 +284,8 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrdeSav
         kwargs['item_list'] = ""
         items = self.get_formset_kwargs()
         dt = defaultdict(float)
-        for item in items:
-            dt[item['unit']] += item['quantity']
+        # for item in items:
+        #     dt[item['unit']] += item['quantity']
         total = {
             'total_count': len(items),
             'total_quantity': dt,
