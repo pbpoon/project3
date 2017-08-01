@@ -25,6 +25,7 @@ class Product(models.Model):
     updated = models.DateTimeField('更新日期', auto_now=True)
     created = models.DateTimeField('创建日期', auto_now_add=True)
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
+
     # is_sell = models.BooleanField('是否已售', default=False)
 
     class Meta:
@@ -36,6 +37,13 @@ class Product(models.Model):
 
     cost_by = property(_get_cost_by)
 
+    def _get_ccl(self):
+        if self.slab.exists():
+            cost_quantity = self.weight if self.cost_by =='ton' else self.m3
+            return '{:.2f}'.format(sum(slab.m2 for slab in self.slab.all()) / cost_quantity)
+        return False
+    ccl = property(_get_ccl)
+
     def __str__(self):
         return str(self.block_num)
 
@@ -44,6 +52,7 @@ class Product(models.Model):
 
     def get_slab_list(self, slab_ids=None, object_format=False):
         obj = self.slab.all()
+
         if slab_ids:
             obj = obj.filter(id__in=slab_ids)
         slab_list = obj.values('block_num', 'thickness').annotate(
@@ -85,10 +94,12 @@ class Product(models.Model):
             inventory = {'quantity': self.m3, 'unit': cost_by}
 
         if block_type == 'block':
-            if self.sale.order.filter(status__in=('V','F')).exists():
-                return {'type': '已售', 'quantity': 0, 'unit': cost_by}
+            if self.sale.order.filter(status__in=('V', 'F')).exists():
+                return [{'type': '已售', 'quantity': 0, 'unit': cost_by}]
             else:
-                return {'type': '荒料'}.update(inventory)
+                type = {'type': '荒料'}
+                type.update(inventory)
+                return [type]
 
         elif block_type == 'coarse':
             if cost_by == 'ton':
@@ -98,37 +109,73 @@ class Product(models.Model):
             else:
                 quantity = '{:.0f}'.format(
                     100 / (float(self.ksorderitem_cost.thickness) + 0.35) * float(self.m3))
-            return {'type': '毛板', 'quantity': quantity, 'unit': 'm2'}
+            return [{'type': '毛板', 'quantity': quantity, 'unit': 'm2'}]
 
         elif block_type == 'slab':
             total_slab_pic = len(self.slab.all())
-            total_coarse_pic = self.ksorderitem_cost.pic + self.ksorderitem_cost.pi
+            total_coarse_pic = sum(i.pic + i.pi for i in self.ksorderitem_cost.all())
+            thickness = min(i.thickness for i in self.ksorderitem_cost.all())
             balance_pic = total_slab_pic - total_coarse_pic
             quantity = '{:.2f}'.format(
                 sum(item.m2 for item in self.slab.filter(is_sell=False).all()))
             if not 0 < balance_pic > 8:
-                return {'type': '光板', 'quantity': quantity, 'unit': 'm2'}
+                return [{'type': '光板', 'quantity': quantity, 'unit': 'm2'}]
             if cost_by == 'ton':
                 per_pic_m2 = '{:.0f}'.format(
-                    100 / (float(self.ksorderitem_cost.thickness) + 0.35) / 2.8 * float(
-                        self.weight) / self.ksorderitem_cost.pic)
+                    100 / (float(thickness) + 0.35) / 2.8 * float(
+                        self.weight) / sum(i.pic for i in self.ksorderitem_cost.all()))
             else:
                 per_pic_m2 = '{:.0f}'.format(
-                    100 / (float(self.ksorderitem_cost.thickness) + 0.35) * float(
-                        self.m3) / self.ksorderitem_cost.pic)
-            coarse_quantity = balance_pic * per_pic_m2
+                    100 / (float(thickness) + 0.35) * float(
+                        self.m3) / sum(i.pic for i in self.ksorderitem_cost.all()))
+            coarse_quantity = float(balance_pic) * float(per_pic_m2)
             return [{'type': '毛板', 'quantity': coarse_quantity, 'unit': 'm2'},
                     {'type': '光板', 'quantity': quantity, 'unit': 'm2'}]
+        else:
 
-        return {'type': '运输中'}.update(inventory)
+            type = {'type': '运输中'}
+            type.update(inventory)
+            return [type]
 
     def _get_block_type(self):
-        try:
-            type = self.address.last().type
-        except Exception as e:
-            return False
+        if self.mborderitem_cost.exists():
+            return 'slab'
+        elif self.ksorderitem_cost.exists():
+            return 'coarse'
+        elif self.storderitem_cost.exists():
+            return 'block'
         else:
-            return type
+            return 'otw'  # on the way
+
+    def get_business(self):
+        st_lst = [{'business': '荒料到货',
+                   'quantity': item.quantity,
+                   'unit': item.get_unit_display(),
+                   'date': item.date,
+                   'order': item.order,
+                   'service_provider': item.order.service_provider,
+                   'pic': ''}
+                  for item in self.storderitem_cost.all()]
+
+        ks_lst = [{'business': '界石',
+                   'quantity': item.quantity,
+                   'unit': item.get_unit_display(),
+                   'date': item.date,
+                   'order': item.order,
+                   'service_provider': item.order.service_provider,
+                   'pic': item.pic}
+                  for item in self.ksorderitem_cost.all()]
+
+        mb_lst = [{'business': '板材入库',
+                   'quantity': item.quantity,
+                   'unit': item.get_unit_display(),
+                   'date': item.date,
+                   'order': item.order,
+                   'service_provider': item.order.service_provider,
+                   'pic': item.pic}
+                  for item in self.mborderitem_cost.all()]
+
+        return sorted(st_lst + ks_lst + mb_lst, key=lambda k: k['date'])
 
 
 class Slab(models.Model):
