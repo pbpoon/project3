@@ -25,10 +25,9 @@ class ProductSlabListView(View):
 
     def get(self, request, **kwargs):
         cart = Cart(request)
-        object = Product.objects.all()
         block_num = self.kwargs.get('block_num', None)
         slab_ids = self.request.GET.get('slab_ids')
-        object = object.get(block_num=block_num).first()
+        object = Product.objects.get(block_num=block_num)
         if object.block_type == 'block':
             block_list = object.get_block_list()
         elif object.block_type == 'slab':

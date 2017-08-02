@@ -6,15 +6,15 @@ from utils import str_to_list, AddExcelForm
 from sales.forms import SalesOrderItemForm
 
 
-
 def cart_detail(request):
     cart = Cart(request)
-    object_list = cart.make_slab_list()
+    object_list = cart.make_items_list()
     import_slabs = cart.make_import_slab_list()
     import_slab_form = AddExcelForm()
     for item in object_list:
-        if not item['thickness'] =='荒料':
-            item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
+        item['slab_ids'] = [id for part in item['part_num'].values() if item['thickness']
+                            != '荒料'
+                            for id in part['slabs']]
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,
@@ -29,7 +29,8 @@ def cart_add(request):
     cart = Cart(request)
     ids = request.POST.getlist('check_box_list')
     key = request.POST.get('key', None)
-    cart.add(ids, key=key)
+    block = True if request.POST.get('block') else False
+    cart.add(ids, key=key, block=block)
     path = request.META.get('HTTP_REFERER')
     messages.success(request, '已成功更新选择列表！')
     return redirect(path)

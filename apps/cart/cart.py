@@ -22,10 +22,14 @@ class Cart(object):
         self.cart = cart
 
     # 添加product 到 cart
-    def add(self, ids=None, key=None):
-        cart_lst = self.cart[key] if key else self.cart['slab_ids']
-        cart_lst.extend(ids)
-        cart_lst = list(set(cart_lst))
+    def add(self, ids=None, key=None, block=False):
+        suffix = 'slab_ids'
+        if block:
+            suffix = 'block_ids'
+        if key:
+            suffix = key + '_' + suffix
+        self.cart[suffix].extend(ids)
+        self.cart[suffix] = list(set(self.cart[suffix]))
         self.save()
 
     # 把数据更新到session
@@ -35,9 +39,13 @@ class Cart(object):
         self.session.modified = True
 
     # 把product在cart删除
-    def remove(self, ids, key=None):
-        cart_list = self.cart[key] if key else self.cart['slab_ids']
-        cart_list = list(set(cart_list) - set(ids))
+    def remove(self, ids, key=None, block=False):
+        suffix = 'slab_ids'
+        if block:
+            suffix = 'block_ids'
+        if key:
+            suffix = key + '_' + suffix
+        self.cart[suffix] = list(set(self.cart[suffix]) - set(ids))
         self.save()
 
     def get_total_price(self):
@@ -48,27 +56,27 @@ class Cart(object):
         del self.session[settings.CART_SESSION_ID]
         self.session.modified = True
 
-    def make_slab_list(self, key=None):
+    def make_items_list(self, key=None):
         """
-        :param key: 为string类型，为需要把cart中存的那个slab_id列表生成码单，默认不存参数是返回slab_ids
+        :param key: 为string类型，为需要把cart中存的那个cart的list的前序
         :return: 返回列表类型
         """
-        return self.make_slab_listt(key).extend(self.make_block_list(key))
+        return self.make_slab_list(key) + self.make_block_list(key)
 
-    def make_slab_listt(self, key=None):
-        key = key + '_slab_ids'
-        slab_ids = self.cart[key] if key else self.cart['slab_ids']
-        block_list = Product.objects.filter(slab__id__in=slab_ids).distinct()
-        return [i for block in block_list for i in block.get_slab_list(slab_ids)]
+    def make_slab_list(self, key=None):
+        suffix = 'slab_ids'
+        slab_ids = self.cart.get(key + '_' + suffix) if key else self.cart.get(suffix)
+        slab_list = Product.objects.filter(slab__id__in=slab_ids).distinct() if slab_ids else []
+        return [i for block in slab_list for i in block.get_slab_list(slab_ids)]
 
     def make_block_list(self, key=None):
-        key = key + '_block_ids'
-        block_ids = self.cart[key] if key else self.cart['block_ids']
-        block_list = Product.objects.filter(id__in=block_ids).all()
+        suffix = 'block_ids'
+        block_ids = self.cart.get(key + '_' + suffix) if key else self.cart.get(suffix)
+        block_list = Product.objects.filter(id__in=block_ids).all() if block_ids else []
         return [i for block in block_list for i in block.get_block_list()]
 
     def make_price_list(self):
-        slab_list = self.make_slab_list()
+        slab_list = self.make_items_list()
         price_list = self.cart['price']
         for item in slab_list:
             price_list.setdefault(
@@ -84,9 +92,9 @@ class Cart(object):
             self.save()
 
     def get_info(self):
-        slab_list = self.make_slab_list()
+        slab_list = self.make_items_list()
         count = len(slab_list)
-        total_quantity = sum(Decimal(i['block_quantity']) for i in slab_list)
+        total_quantity = sum(Decimal(i['quantity']) for i in slab_list)
         return {'count': count, 'total_m2': total_quantity}
 
     def save_import_slab_list(self, f):
@@ -100,7 +108,7 @@ class Cart(object):
         [{'block_num': '4901',
         'thickness': '1.50',
         'block_pics': 41,
-        'block_m2': Decimal('185.69'),
+        'quantity': Decimal('185.69'),
          'part_count': 4,
 
          'slabs': [
@@ -125,10 +133,11 @@ class Cart(object):
             _dict['block_pics'] = len(
                 [item for item in lst if item['block_num'] == _dict['block_num'] and
                  item['thickness'] == _dict['thickness']])
-            _dict['block_m2'] = sum(Decimal(item['m2']) for item in lst if
+            _dict['quantity'] = sum(Decimal(item['m2']) for item in lst if
                                     item['block_num'] == _dict['block_num'] and
                                     item['thickness'] == _dict[
                                         'thickness'])
+            _dict['unit'] = 'm2'
             _dict['part_count'] = len(set([item['part_num'] for item in lst if
                                            item['block_num'] == _dict[
                                                'block_num'] and item[

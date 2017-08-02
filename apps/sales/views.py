@@ -93,13 +93,13 @@ class SalesOrderEditMixin:
     def get_formset_class(self):
         extra = 0 if self.object else \
             len(
-                self.get_cart().make_slab_list())  # len(self.get_cart().make_slab_list(keys='current_order_slab_ids'))
+                self.get_cart().make_items_list())  # len(self.get_cart().make_items_list(keys='current_order_slab_ids'))
         return inlineformset_factory(self.model, self.formset_model, form=self.formset_class,
                                      extra=extra, fields=self.get_formset_fields())
 
     def get_formset_kwargs(self):
-        return self.get_cart().make_slab_list(key='current_order_slab_ids') if self.object else \
-            self.get_cart().make_slab_list()
+        return self.get_cart().make_items_list(key='current_order') if self.object else \
+            self.get_cart().make_items_list()
 
     def get_formset(self):
         if self.request.GET.get('next'):
@@ -128,8 +128,8 @@ class SalesOrderEditMixin:
                 'block_num': data['block_num'],
                 'part': data['part_count'],
                 'pic': data['block_pics'],
-                'quantity': data.get('block_quantity', data['block_quantity']),
-                'unit': 'ton' if data.get('quantiy') else 'm2',
+                'quantity':data['quantity'],
+                'unit': data['unit'],
                 'thickness': data['thickness']
             })
         return formset
@@ -242,7 +242,7 @@ class SalesOrderAddView(LoginRequiredMixin, SalesOrderEditMixin, TemplateView):
         formset = self.get_formset()
         for item, form in zip(self.get_formset_kwargs(), formset):
             item['form'] = form
-        kwargs['item_list'] = self.cart.make_slab_list()
+        kwargs['item_list'] = self.cart.make_items_list()
         return kwargs
 
 
