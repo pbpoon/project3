@@ -189,7 +189,7 @@ class OrderFormsetMixin(object):
         cart = Cart(self.request)
         if self.object is None:
             return cart.make_import_slab_list()
-        return cart.make_slab_list(keys='current_order_slab_ids')
+        return cart.make_slab_list(key='current_order_slab_ids')
 
     def get_block_num_datalist(self):
         if self.order_type == 'KS':

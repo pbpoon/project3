@@ -13,7 +13,8 @@ def cart_detail(request):
     import_slabs = cart.make_import_slab_list()
     import_slab_form = AddExcelForm()
     for item in object_list:
-        item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
+        if not item['thickness'] =='荒料':
+            item['slab_ids'] = [id for part in item['part_num'].values() for id in part['slabs']]
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,
@@ -26,10 +27,9 @@ def cart_detail(request):
 @require_POST
 def cart_add(request):
     cart = Cart(request)
-    chk = request.POST.getlist('check_box_list')
-    block_num = request.POST.get('block_num')
+    ids = request.POST.getlist('check_box_list')
     key = request.POST.get('key', None)
-    cart.add(block_num, chk, key=key)
+    cart.add(ids, key=key)
     path = request.META.get('HTTP_REFERER')
     messages.success(request, '已成功更新选择列表！')
     return redirect(path)

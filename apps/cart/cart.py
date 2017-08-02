@@ -18,25 +18,14 @@ class Cart(object):
             cart['price'] = {}
             cart['import_slabs'] = []
             cart['import_block'] = []
+            cart['block_ids'] = []
         self.cart = cart
 
     # 添加product 到 cart
-    def add(self, block_num, slab_ids, key=None):
-        """
-        :param block_num: 要添加的荒料编号
-        :param slab_ids: 添加的slab id
-        :param key: 要添加或更改的session中保存的列表，默认的是slab_ids
-        :return:
-        """
-        obj = [item['id'] for item in
-               Product.objects.get(block_num=block_num).slab.values('id')]
-        if not key:
-            key = 'slab_ids'
-        cart_lst = self.cart[key]
-        cart_lst = [i for i in cart_lst if int(i) not in obj]
-        self.cart[key] = cart_lst
-        self.cart[key].extend(slab_ids)
-        # self.make_price_list()
+    def add(self, ids=None, key=None):
+        cart_lst = self.cart[key] if key else self.cart['slab_ids']
+        cart_lst.extend(ids)
+        cart_lst = list(set(cart_lst))
         self.save()
 
     # 把数据更新到session
@@ -46,10 +35,9 @@ class Cart(object):
         self.session.modified = True
 
     # 把product在cart删除
-    def remove(self, slab_ids):
-        for id in slab_ids:
-            if id in self.cart['slab_ids'][:]:
-                self.cart['slab_ids'].remove(id)
+    def remove(self, ids, key=None):
+        cart_list = self.cart[key] if key else self.cart['slab_ids']
+        cart_list = list(set(cart_list) - set(ids))
         self.save()
 
     def get_total_price(self):
@@ -60,14 +48,24 @@ class Cart(object):
         del self.session[settings.CART_SESSION_ID]
         self.session.modified = True
 
-    def make_slab_list(self, keys=None):
+    def make_slab_list(self, key=None):
         """
-        :param keys: 为string类型，为需要把cart中存的那个slab_id列表生成码单，默认不存参数是返回slab_ids
+        :param key: 为string类型，为需要把cart中存的那个slab_id列表生成码单，默认不存参数是返回slab_ids
         :return: 返回列表类型
         """
-        slab_ids = self.cart[keys] if keys else self.cart['slab_ids']
+        return self.make_slab_listt(key).extend(self.make_block_list(key))
+
+    def make_slab_listt(self, key=None):
+        key = key + '_slab_ids'
+        slab_ids = self.cart[key] if key else self.cart['slab_ids']
         block_list = Product.objects.filter(slab__id__in=slab_ids).distinct()
         return [i for block in block_list for i in block.get_slab_list(slab_ids)]
+
+    def make_block_list(self, key=None):
+        key = key + '_block_ids'
+        block_ids = self.cart[key] if key else self.cart['block_ids']
+        block_list = Product.objects.filter(id__in=block_ids).all()
+        return [i for block in block_list for i in block.get_block_list()]
 
     def make_price_list(self):
         slab_list = self.make_slab_list()

@@ -98,7 +98,7 @@ class SalesOrderEditMixin:
                                      extra=extra, fields=self.get_formset_fields())
 
     def get_formset_kwargs(self):
-        return self.get_cart().make_slab_list(keys='current_order_slab_ids') if self.object else \
+        return self.get_cart().make_slab_list(key='current_order_slab_ids') if self.object else \
             self.get_cart().make_slab_list()
 
     def get_formset(self):
@@ -128,7 +128,7 @@ class SalesOrderEditMixin:
                 'block_num': data['block_num'],
                 'part': data['part_count'],
                 'pic': data['block_pics'],
-                'quantity': data.get('quantity', data['block_m2']),
+                'quantity': data.get('block_quantity', data['block_quantity']),
                 'unit': 'ton' if data.get('quantiy') else 'm2',
                 'thickness': data['thickness']
             })
@@ -161,8 +161,8 @@ class SalesOrderEditMixin:
                  'line_num': Slab.objects.get(id=slab).line_num}
                 for slab in new_ids
                 ]
-            for i in slabs:
-                slablistform = SlabListItemForm(data=i)
+            for slab in slabs:
+                slablistform = SlabListItemForm(data=slab)
                 if slablistform.is_valid():
                     slablistform.save()
                 else:
@@ -180,8 +180,8 @@ class SalesOrderEditMixin:
                  'part_num': Slab.objects.get(id=id).part_num,
                  'line_num': Slab.objects.get(id=id).line_num}
                 for id in self.get_cart().cart['slab_ids']]
-            for i in slabs:
-                slablistform = SlabListItemForm(data=i)
+            for slab in slabs:
+                slablistform = SlabListItemForm(data=slab)
                 if slablistform.is_valid():
                     slablistform.save()
                 else:

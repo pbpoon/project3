@@ -148,9 +148,10 @@ class PurchaseOrderEditMixin(object):
             sid = transaction.savepoint()
             if self.object is None:
                 form.instance.data_entry_staff = self.request.user
-            form.save()
+            instance = form.save()
             # formset.instance = self.object
             if formset.is_valid():
+                formset.instance=instance
                 formset.save()
                 cart = Cart(self.request)
                 if cart.cart.get('import_block'):
