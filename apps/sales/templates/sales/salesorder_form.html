@@ -44,7 +44,7 @@
                                 <th>厚度</th>
                                 <th>夹数</th>
                                 <th>件数</th>
-                                <th>平方</th>
+                                <th>数量</th>
                                 <th>单价</th>
                                 <th>码单</th>
                                 <th>删除</th>
@@ -58,7 +58,7 @@
                                     <td>{{ object.thickness }}</td>
                                     <td>{{ object.part_count }}</td>
                                     <td>{{ object.block_pics }}</td>
-                                    <td>{{ object.block_m2 }}</td>
+                                    <td>{{ object.quantity }}{{ object.unit }}</td>
                                     <td>
                                         {{ form.order }}
                                         {{ form.id }}
@@ -94,13 +94,13 @@
                                         </div>
                                     </td>
                                     <td>
-
-
-                                        <form action="{% url 'cart:remove' %}" method="post">
+                                        <form action="{% url 'cart:remove' %}" method="post" id="remove">
                                             <input type="hidden" name="item"
-                                                   value="{{ object.slab_ids }}">
+                                                   value="{{ object.ids }}">
+                                            <input type="hidden" name="key" value="current_order">
+                                            <input type="hidden" name="block" value="{% ifequal object.thickness '荒料' %}1{% else %}0{% endifequal %}">
                                             {% csrf_token %}
-                                            <input class="btn btn-danger btn-sm" type="submit"
+                                            <input class="btn btn-danger btn-sm" type="submit" form="remove"
                                                    value="删除">
                                         </form>
                                     </td>

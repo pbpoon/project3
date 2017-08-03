@@ -71,6 +71,7 @@ class Product(models.Model):
                    'quantity': str(part['quantity']),
                    'part_count': len(part_list),
                    'part_num': {},
+                   'ids': slab_ids,
                    'unit': 'm2'}
 
             for item in part_list:
@@ -94,8 +95,10 @@ class Product(models.Model):
             quantity = {'quantity': self.weight, 'unit': cost_by}
         else:
             quantity = {'quantity': self.m3, 'unit': cost_by}
-        lst = {'block_num': self.block_num, 'thickness': '荒料', 'block_pics': 1}
-        return [lst.update(quantity)]
+        lst = {'block_num': self.block_num, 'thickness': '荒料', 'block_pics': 1, 'part_count': '',
+               'ids': self.block_num}
+        lst.update(quantity)
+        return [lst]
 
     def get_inventory_list(self):
         block_type = self._get_block_type()

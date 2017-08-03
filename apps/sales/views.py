@@ -62,6 +62,13 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
     model = SalesOrder
 
     def get_context_data(self, **kwargs):
+        cart = Cart(self.request)
+        ids = []
+        for item in self.object.items.all():
+            if item.thickness == '荒料':
+                ids.append(str(item.block_num))
+        if ids:
+            cart.cart['current_order_block_ids'] = ids
         kwargs['item_list'] = self.object.items.all()
         kwargs['total_amount'] = '{:.0f}'.format(
             sum(Decimal(item.sum) for item in self.object.items.all()))
@@ -128,7 +135,7 @@ class SalesOrderEditMixin:
                 'block_num': data['block_num'],
                 'part': data['part_count'],
                 'pic': data['block_pics'],
-                'quantity':data['quantity'],
+                'quantity': data['quantity'],
                 'unit': data['unit'],
                 'thickness': data['thickness']
             })
@@ -273,7 +280,8 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
             return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSaveMixin, CreateView):
+class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSaveMixin,
+                           CreateView):
     model = SalesOrder
     form_class = SalesOrderForm
     formset_model = SalesOrderItem
@@ -297,7 +305,7 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSa
             item_list = self.get_formset_kwargs()
             for item in item_list:
                 item['slab_ids'] = [id for part in item['part_num'].values() for id in
-                                    part['slabs']]
+                                    part['slabs']] if item['thickness'] != '荒料' else ''
 
             kwargs['item_list'] = zip(item_list, price_formset)
             kwargs['price_formset'] = price_formset

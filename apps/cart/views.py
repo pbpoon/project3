@@ -3,7 +3,6 @@ from django.views.decorators.http import require_POST
 from .cart import Cart
 from django.contrib import messages
 from utils import str_to_list, AddExcelForm
-from sales.forms import SalesOrderItemForm
 
 
 def cart_detail(request):
@@ -12,9 +11,8 @@ def cart_detail(request):
     import_slabs = cart.make_import_slab_list()
     import_slab_form = AddExcelForm()
     for item in object_list:
-        item['slab_ids'] = [id for part in item['part_num'].values() if item['thickness']
-                            != '荒料'
-                            for id in part['slabs']]
+        item['slab_ids'] = item['block_num'] if item['thickness'] == '荒料' \
+            else [id for part in item['part_num'].values() for id in part['slabs']]
     context = {
         'object_list': object_list,
         'import_slabs': import_slabs,
@@ -29,7 +27,7 @@ def cart_add(request):
     cart = Cart(request)
     ids = request.POST.getlist('check_box_list')
     key = request.POST.get('key', None)
-    block = True if request.POST.get('block') else False
+    block = int(request.POST.get('block'))
     cart.add(ids, key=key, block=block)
     path = request.META.get('HTTP_REFERER')
     messages.success(request, '已成功更新选择列表！')
@@ -40,8 +38,11 @@ def cart_add(request):
 def cart_remove(request):
     cart = Cart(request)
     item = request.POST.get('item')
-    cart.remove(str_to_list(item))
-    return redirect('cart:index')
+    block = int(request.POST.get('block'))
+    key = request.POST.get('key', None)
+    cart.remove(str_to_list(item), key=key, block=block)
+    path = request.META.get('HTTP_REFERER')
+    return redirect(path)
 
 
 @require_POST

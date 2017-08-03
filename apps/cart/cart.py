@@ -28,7 +28,7 @@ class Cart(object):
             suffix = 'block_ids'
         if key:
             suffix = key + '_' + suffix
-        self.cart[suffix].extend(ids)
+        self.cart.setdefault(suffix, []).extend(ids)
         self.cart[suffix] = list(set(self.cart[suffix]))
         self.save()
 
@@ -72,7 +72,7 @@ class Cart(object):
     def make_block_list(self, key=None):
         suffix = 'block_ids'
         block_ids = self.cart.get(key + '_' + suffix) if key else self.cart.get(suffix)
-        block_list = Product.objects.filter(id__in=block_ids).all() if block_ids else []
+        block_list = Product.objects.filter(block_num__in=block_ids).all() if block_ids else []
         return [i for block in block_list for i in block.get_block_list()]
 
     def make_price_list(self):

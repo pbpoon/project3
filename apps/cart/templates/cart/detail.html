@@ -14,6 +14,7 @@
                 <th>序号</th>
                 <th>荒料编号</th>
                 <th>厚度</th>
+                <th>夹数</th>
                 <th>件数</th>
                 <th>数量</th>
                 <th>码单</th>
@@ -26,6 +27,7 @@
                     <td>{{ forloop.counter }}</td>
                     <td>{{ object.block_num }}</td>
                     <td>{{ object.thickness }}</td>
+                    <td>{{ object.part_count }}</td>
                     <td>{{ object.block_pics }}</td>
                     <td>{{ object.quantity }}{{ object.unit }}</td>
                     <td>
@@ -56,6 +58,7 @@
 
                         <form action="{% url 'cart:remove' %}" method="post">
                             <input type="hidden" name="item" value="{{ object.slab_ids }}">
+                            <input type="hidden" name="block" value="{% ifequal object.thickness '荒料' %}1{% else %}0{% endifequal %}">
                             {% csrf_token %}
                             <input class="btn btn-danger btn-sm" type="submit" value="删除">
                         </form>

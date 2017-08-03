@@ -4,76 +4,83 @@
 {% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}
 {% block main %}
     <form method="post" id="slab_form" action="{% url 'cart:add' %}">
-        {% for slabs in slab_list %}
-            <div id="{{ slabs.thickness|slugify }}">
-                <h2 class="page-header">{{ slabs.thickness }}
-                    厚度/{{ slabs.part_count }}
-                    夹/ {{ slabs.block_pics }}
-                    件/ {{ slabs.block_m2 }}
-                    m2
-                    <small class="pull-right">
-                        <div class="checkbox btn btn-default btn-sm">
-                            <label>
-                                <input type="checkbox"
-                                       id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
-                                       onclick="select_all(this.id, this.checked)">全选/不选
-                            </label>
-                        </div>
-                    </small>
-                </h2>
-
-                <ul class="list-unstyled">
-                    {% for part_key ,part_value in slabs.part_num.items %}
-                        <div class="panel panel-default"
-                             id="{{ slabs.thickness|slugify }}{{ part_key }}">
-                            <div class="panel-heading">
-                                <li class="panel-title">{{ part_key }}#
-                                    夹/ {{ part_value.part_pics }}
-                                    件/ {{ part_value.part_m2 }} m2
-
-                                    <div class="pull-right">
-                                        <input type="checkbox" class=" btn btn-default btn-sm"
-                                               id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
-                                               onclick="select_all(this.id, this.checked)">
-                                        <a class="btn btn-link"
-                                           id="{{ slabs.thickness|slugify }}{{ part_key }}_reverse"
-                                           onclick="select_reverse(this.id)">反选
-                                        </a>
-                                    </div>
+        {% if block_type %}
+            {% for block in slab_list %}
+                <input type="checkbox" name="check_box_list" value="{{ block.block_num }}">{{ block.thickness }}/{{ block.quantity }}{{ block.unit }}
+            {% endfor %}
+        {% else %}
+            {% for slabs in slab_list %}
+                <div id="{{ slabs.thickness|slugify }}">
+                    <h2 class="page-header">{{ slabs.thickness }}
+                        厚度/{{ slabs.part_count }}
+                        夹/ {{ slabs.block_pics }}
+                        件/ {{ slabs.block_m2 }}
+                        m2
+                        <small class="pull-right">
+                            <div class="checkbox btn btn-default btn-sm">
+                                <label>
+                                    <input type="checkbox"
+                                           id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
+                                           onclick="select_all(this.id, this.checked)">全选/不选
+                                </label>
                             </div>
-                            <div class="panel-body">
-                                <table class="table">
-                                    <tr>
-                                        <th width="10%">选择</th>
-                                        <th width="15%">序号</th>
-                                        <th width="45%">规格</th>
-                                        <th>m2</th>
-                                    </tr>
-                                    {% for slab in part_value.slabs %}
-                                        <tr class="clickable-row">
-                                            <td>
-                                                <input type="checkbox" name="check_box_list"
-                                                       onchange="sum_m2()"
-                                                       {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
-                                                       value="{{ slab.id }}">
-                                            </td>
-                                            <td>{{ slab.line_num }}</td>
-                                            <td>{{ slab }}</td>
-                                            <td id="{{ slab.id }}m2">{{ slab.m2 }}</td>
+                        </small>
+                    </h2>
+
+                    <ul class="list-unstyled">
+                        {% for part_key ,part_value in slabs.part_num.items %}
+                            <div class="panel panel-default"
+                                 id="{{ slabs.thickness|slugify }}{{ part_key }}">
+                                <div class="panel-heading">
+                                    <li class="panel-title">{{ part_key }}#
+                                        夹/ {{ part_value.part_pics }}
+                                        件/ {{ part_value.part_m2 }} m2
+
+                                        <div class="pull-right">
+                                            <input type="checkbox" class=" btn btn-default btn-sm"
+                                                   id="{{ slabs.thickness|slugify }}{{ part_key }}_all"
+                                                   onclick="select_all(this.id, this.checked)">
+                                            <a class="btn btn-link"
+                                               id="{{ slabs.thickness|slugify }}{{ part_key }}_reverse"
+                                               onclick="select_reverse(this.id)">反选
+                                            </a>
+                                        </div>
+                                </div>
+                                <div class="panel-body">
+                                    <table class="table">
+                                        <tr>
+                                            <th width="10%">选择</th>
+                                            <th width="15%">序号</th>
+                                            <th width="45%">规格</th>
+                                            <th>m2</th>
                                         </tr>
-                                    {% endfor %}
-                                </table>
+                                        {% for slab in part_value.slabs %}
+                                            <tr class="clickable-row">
+                                                <td>
+                                                    <input type="checkbox" name="check_box_list"
+                                                           onchange="sum_m2()"
+                                                           {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
+                                                           value="{{ slab.id }}">
+                                                </td>
+                                                <td>{{ slab.line_num }}</td>
+                                                <td>{{ slab }}</td>
+                                                <td id="{{ slab.id }}m2">{{ slab.m2 }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
 
-        {% endfor %}
+            {% endfor %}
+        {% endif %}
         <input type="hidden" name="path" value="{{ request.path }}">
         <input type="hidden" name="block_num" value="{{ object.block_num }}">
         <input type="hidden" name="thickness" value="{{ object.thickness }}">
+        <input type="hidden" name="block" value="{{ block_type }}">
         {% csrf_token %}
     </form>
 
@@ -117,4 +124,4 @@
 {% block domready %}
     sum_m2()
 {% endblock %}
- {% block body_tag %}onunload="window.opener.location.reload(){% endblock %}
+{% block body_tag %}onunload="window.opener.location.reload(){% endblock %}
