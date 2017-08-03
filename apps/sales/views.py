@@ -174,6 +174,14 @@ class SalesOrderEditMixin:
                     slablistform.save()
                 else:
                     errors.append(slablistform.errors)
+            for id in new_ids:
+                s = Slab.objects.get(id=id)
+                s.is_booking = True
+                s.save()
+            for id in del_ids:
+                s = Slab.objects.get(id=id)
+                s.is_booking = False
+                s.save()
             SlabListItem.objects.filter(slablist=slab_list, slab__in=del_ids).delete()
         else:
             """
@@ -191,6 +199,9 @@ class SalesOrderEditMixin:
                 slablistform = SlabListItemForm(data=slab)
                 if slablistform.is_valid():
                     slablistform.save()
+                    s = Slab.objects.get(id=slab['slab'])
+                    s.is_booking = True
+                    s.save()
                 else:
                     errors.append(slablistform.errors)
             """

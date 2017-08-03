@@ -76,3 +76,11 @@ class OrderSlabListView(View):
             'slab_ids': slab_ids,
         }
         return render(request, self.template_name, context)
+
+
+class SearchView(View):
+    template_name = 'products/search.html'
+
+    def get(self, request, *args, **kwargs):
+        object_list = Product.objects.filter(block_num__contains=self.request.POST.get('num')).all()
+        return object_list
