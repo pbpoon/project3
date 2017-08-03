@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <form action="" method="POST">
+        <input type="search" name="q">
+        <input type="submit" value="提交">
+    {% csrf_token %}
+    </form>
+    {% if object_list %}
+        <div class="list-group">
+            {% for object in object_list %}
+                <div class="list-group-item"><a href="{{ object.get_absolute_url }}">
+                    {{ object }}</a>
+                    <a  onclick="gogo_slab_list('{{ object.block_num }}','{{ object.thickness }}','{% url "product:order_slab_list" %}')">在新的页面打开</a></div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -121,9 +121,10 @@
                         data-quantity="{{ block_num.weight }}">{{ block_num }}</option>
             {% endfor %}
         </datalist>
-        <input class="btn btn-default" type="button" id="add_f" value="添加一行">
-        <input class="btn btn-default" type="button" id="remove_f"
-               value="删除最后一行">
+        <input type="button" class="btn btn-default" onclick="open_search()" value="添加项目">
+{#        <input class="btn btn-default" type="button" id="add_f" value="添加一行">#}
+{#        <input class="btn btn-default" type="button" id="remove_f"#}
+{#               value="删除最后一行">#}
         <input type="hidden" name="order_type" value="{{ order_type }}"
                id="order_type">
         <input type="hidden" name="step" value="{{ step }}">
@@ -184,6 +185,9 @@
 
             })
         }
-
+        function open_search() {
+            window.open('{% url 'product:open_search' %}','search',"menubar=yes,width=500," +
+                "height=700 ", "resizeable=yes")
+        }
     </script>
 {% endblock %}

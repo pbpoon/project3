@@ -22,6 +22,7 @@ urlpatterns = [
     url(r'^(?P<pk>\d+)/$', views.ProductDetailView.as_view(), name='detail'),
     url(r'^slab-list/(?P<block_num>\w+)/$', views.ProductSlabListView.as_view(), name='slab_list'),
     url(r'^order-slab-list/$', views.OrderSlabListView.as_view(), name='order_slab_list'),
+    url(r'^search/$', views.SearchView.as_view(), name='open_search')
 ]
 # '''生产订单'''
 # urlpatterns += [
