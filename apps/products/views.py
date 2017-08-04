@@ -43,7 +43,7 @@ class ProductSlabListView(View):
             'slab_list': ids_list,
             'object': object,
             'slab_ids': cart.cart.get('slab_ids'),
-            'block_type': 1 if object.block_type == 'otw' else 0
+            # 'block_type': 1 if object.block_type == 'otw' else 0
         }
         return render(request, self.template_name, context)
 
@@ -69,7 +69,7 @@ class OrderSlabListView(View):
             'slab_list': ids_list,
             'object': object,
             'slab_ids': cart.cart.get('slab_ids'),
-            'block_type': 1 if object.block_type == 'otw' else 0
+            # 'block_type': 1 if object.block_type == 'otw' else 0
         }
         return render(request, self.template_name, context)
 

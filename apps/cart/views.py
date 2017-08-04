@@ -27,7 +27,7 @@ def cart_add(request):
     cart = Cart(request)
     ids = request.POST.getlist('check_box_list')
     key = request.POST.get('key', None)
-    block = int(request.POST.get('block'))
+    block = int(request.POST.get('block', 0))
     cart.add(ids, key=key, block=block)
     path = request.META.get('HTTP_REFERER')
     messages.success(request, '已成功更新选择列表！')
@@ -38,7 +38,7 @@ def cart_add(request):
 def cart_remove(request):
     cart = Cart(request)
     item = request.POST.get('item')
-    block = int(request.POST.get('block'))
+    block = int(request.POST.get('block', 0))
     key = request.POST.get('key', None)
     cart.remove(str_to_list(item), key=key, block=block)
     path = request.META.get('HTTP_REFERER')

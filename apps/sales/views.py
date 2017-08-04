@@ -162,9 +162,10 @@ class SalesOrderEditMixin:
             new_ids = set(ids) - set(order_ids)
             del_ids = set(order_ids) - set(ids)
             slabs = [
-                {'slab': Slab.objects.get(id=slab),
+                {'slab': Slab.objects.get(id=slab).id,
                  'part_num': Slab.objects.get(id=slab).part_num,
-                 'line_num': Slab.objects.get(id=slab).line_num}
+                 'line_num': Slab.objects.get(id=slab).line_num,
+                 'slablist': slab_list.id}
                 for slab in new_ids
                 ]
             for slab in slabs:

@@ -6,7 +6,7 @@
 {% block body_tag %}onunload="window.opener.location.reload(){% endblock %}
 {#{% block jumbotron %}<h2 class="page-header">{{ object.block_num }}</h2>{% endblock %}#}
 {% block main %}
-    <form method="post" id="slab_form" action="{% url 'cart:add' %}?key='current_order_slab_ids">
+    <form method="post" id="slab_form" action="{% url 'cart:add' %}">
         {% for item in slab_list %}
             <ul class="nav nav-tabs">
                 <li><a data-toggle="tab" href="#{{ item.thickness|slugify }}">
@@ -104,8 +104,9 @@
         <input type="hidden" name="path" value="{{ request.path }}">
         <input type="hidden" name="block_num" value="{{ object.block_num }}">
         <input type="hidden" name="thickness" value="{{ object.thickness }}">
-        <input type="hidden" name="key" value="current_order_slab_ids">
-        <input type="hidden" name="block" value="{{ block_type }}">
+        <input type="hidden" name="key" value="current_order">
+        <input type="hidden" name="block" value="{% ifequal object.thickness '荒料' %}1
+        {% else %}0{% endifequal %}">
         {% csrf_token %}
     </form>
     <div class="navbar navbar-fixed-bottom">

@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
 
 {% block content %}
+    <div class="container center-block">
     <form action="" method="POST">
         <input type="search" name="q">
         <input type="submit" value="提交">
     {% csrf_token %}
     </form>
+    </div>
     {% if object_list %}
         <div class="list-group">
             {% for object in object_list %}
