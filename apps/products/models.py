@@ -71,7 +71,7 @@ class Product(models.Model):
                    'quantity': str(part['quantity']),
                    'part_count': len(part_list),
                    'part_num': {},
-                   'ids': slab_ids,
+                   'ids': [],
                    'unit': 'm2'}
 
             for item in part_list:
@@ -85,6 +85,7 @@ class Product(models.Model):
                 lst['part_num'][part_num]['part_m2'] = str(sum(slab.m2 for slab in slabs))
                 lst['part_num'][part_num]['slabs'] = [s for s in slabs] if object_format \
                     else [s.id for s in slabs]
+                lst['ids'].extend([s.id for s in slabs])
             list.append(lst)
 
         return list

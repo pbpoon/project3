@@ -12,7 +12,7 @@ import json
 def str_to_list(str):
     s, r = '', ''
     try:
-        s, *t, r = re.split(r'[\[,\s\]\"\\]\s', str)
+        s, *t, r = re.split(r'[\|[|,|\s|\]|\"|\']\s*', str)
     except Exception as e:
         t = str.split(',')
     if not t:

@@ -67,8 +67,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
         for item in self.object.items.all():
             if item.thickness == '荒料':
                 ids.append(str(item.block_num))
-        if ids:
-            cart.cart['current_order_block_ids'] = ids
+        cart.cart['current_order_block_ids'] = ids if ids else []
         kwargs['item_list'] = self.object.items.all()
         kwargs['total_amount'] = '{:.0f}'.format(
             sum(Decimal(item.sum) for item in self.object.items.all()))
@@ -273,7 +272,7 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
     def get_context_data(self, **kwargs):
         item_list = self.get_formset_kwargs()
         price_formset = self.get_formset()
-        kwargs['item_list'] = zip(item_list, price_formset)
+        kwargs['item_list'] = list(zip(item_list, price_formset))
         kwargs['price_formset'] = price_formset
         return super(SalesOrderUpdateItemView, self).get_context_data(**kwargs)
 
@@ -303,32 +302,24 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSa
         kwargs['item_list'] = ""
         items = self.get_formset_kwargs()
         dt = defaultdict(float)
-        # for item in items:
-        #     dt[item['unit']] += item['quantity']
-        total = {
-            'total_count': len(items),
-            'total_quantity': dt,
-            # 'total_quantity': '{:.2f}'.format(sum(item['quantity'] for item in items)),
-
-        }
-        print(total)
+        for item in items:
+            dt[item['unit']] += float(item['quantity'])
+        kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
+        kwargs['total_count'] = len(items)
         if not step:
             item_list = self.get_formset_kwargs()
             for item in item_list:
                 item['slab_ids'] = [id for part in item['part_num'].values() for id in
                                     part['slabs']] if item['thickness'] != '荒料' else ''
 
-            kwargs['item_list'] = zip(item_list, price_formset)
+            kwargs['item_list'] = list(zip(item_list, price_formset))
             kwargs['price_formset'] = price_formset
             kwargs['step'] = '1'
         elif step == '1':
             kwargs['step'] = '2'
             cd = price_formset.cleaned_data
-
-            kwargs['total_quantity'] = '{:.2f}'.format(sum(item['quantity'] for item in cd))
             kwargs['total_amount'] = '{:.0f}'.format(
                 sum(item['quantity'] * item['price'] for item in cd))
-            kwargs['total_count'] = len(cd)
         return super(SalesOrderCreateView, self).get_context_data(**kwargs)
 
 

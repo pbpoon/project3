@@ -95,15 +95,9 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <form action="{% url 'cart:remove' %}" method="post" id="remove">
-                                            <input type="hidden" name="item"
-                                                   value="{{ object.ids }}">
-                                            <input type="hidden" name="key" value="current_order">
-                                            <input type="hidden" name="block" value="{% ifequal object.thickness '荒料' %}1{% else %}0{% endifequal %}">
-                                            {% csrf_token %}
-                                            <input class="btn btn-danger btn-sm" type="submit" form="remove"
-                                                   value="删除">
-                                        </form>
+                                        <input class="btn btn-danger btn-sm" type="submit"
+                                               form="remove_{{ forloop.counter }}"
+                                               value="删除">
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -114,6 +108,7 @@
                 </div>
             </div>
         {% endif %}
+
         <datalist id="block_info">
             {% for block_num in data_list %}
                 <option value="{{ block_num }}"
@@ -122,15 +117,28 @@
             {% endfor %}
         </datalist>
         <input type="button" class="btn btn-default" onclick="open_search()" value="添加项目">
-{#        <input class="btn btn-default" type="button" id="add_f" value="添加一行">#}
-{#        <input class="btn btn-default" type="button" id="remove_f"#}
-{#               value="删除最后一行">#}
+        {#        <input class="btn btn-default" type="button" id="add_f" value="添加一行">#}
+        {#        <input class="btn btn-default" type="button" id="remove_f"#}
+        {#               value="删除最后一行">#}
         <input type="hidden" name="order_type" value="{{ order_type }}"
                id="order_type">
         <input type="hidden" name="step" value="{{ step }}">
         <input type="hidden" name="update" value="{{ update }}">
     </form>
-
+    {% for item,_ in item_list %}
+        <form action="{% url 'cart:remove' %}" method="post"
+              id="remove_{{ forloop.counter }}">
+            <input type="hidden"
+                   name="item" form="remove_{{ forloop.counter }}"
+                   value="{{ item.ids }}">
+            <input type="hidden" form="remove_{{ forloop.counter }}"
+                   name="key" value="{% if object %}current_order{% endif %}">
+            <input type="hidden" form="remove_{{ forloop.counter }}"
+                   name="block"
+                   value="{% ifequal item.thickness '荒料' %}1{% else %}0{% endifequal %}">
+            {% csrf_token %}
+        </form>
+    {% endfor %}
 {% endblock %}
 {% block sidebar %}
     <input type="submit" class="btn btn-primary" value="提交" form="myformset">
@@ -140,8 +148,13 @@
             <div class="panel-body">
                 <ul>
                     <li>{{ total_count }} 项目</li>
-                    <li>数量：{{ total_quantity }}</li>
-                    <li>金额：￥{{ total_amount }}</li>
+
+                    <li>数量：{% for unit,quantity in total_quantity.items %}
+                        <h4><span class="label label-info">{{ quantity }}{{ unit }}</span></h4>
+                    {% endfor %}
+                    </li>
+                    <li>金额：<h4><span class="label label-primary">￥{{ total_amount }}</span></h4>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -186,7 +199,7 @@
             })
         }
         function open_search() {
-            window.open('{% url 'product:open_search' %}','search',"menubar=yes,width=500," +
+            window.open('{% url 'product:open_search' %}', 'search', "menubar=yes,width=500," +
                 "height=700 ", "resizeable=yes")
         }
     </script>
