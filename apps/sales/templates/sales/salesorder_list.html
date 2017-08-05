@@ -1,11 +1,34 @@
 {% extends 'base.html' %}
 {% block title %}销售订单列表{% endblock %}
-{% block list_group %}
-    {% for object in object_list %}
-        <div class="list-group-item">
-            <a href="{{ object.get_absolute_url }}">{{ object }}</a></div>
-    {% endfor %}
-    
+{% block main %}
+    <table class="table">
+        <tr>
+            <th>状态</th>
+            <th>完款</th>
+            <th>提货进度</th>
+            <th>单号</th>
+            <th>客户信息</th>
+            <th>日期</th>
+            <th>销往</th>
+            <th>经办人</th>
+            <th>订单金额</th>
+            <th>备注</th>
+        </tr>
+        {% for object in object_list %}
+            <tr>
+                <td>{{ object.get_status_display }}</td>
+                <td><input disabled type="checkbox"{% if object.is_proceeds %}checked{% endif %}></td>
+                <td>{{ object.pickup_progress }}</td>
+                <td><a href="{{ object.get_absolute_url }}">{{ object.order }}</a></td>
+                <td>{{ object.customer }}\n[{{ object.customer.telephone }}]</td>
+                <td>{{ object.date }}</td>
+                <td>{{ object.province }}\n{{ object.city }}</td>
+                <td>{{ object.handler }}</td>
+                <td>{{ object.total_amount }}</td>
+                <td>{{ object.ps }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 {% endblock %}
 {% block sidebar %}
     <a href="{% url 'sales:order_create' %}">新建订单信息</a>

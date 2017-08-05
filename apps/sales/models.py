@@ -1,7 +1,9 @@
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.contrib.auth.models import User
 from datetime import datetime
 from django.shortcuts import reverse
+from decimal import Decimal
 
 CUSTOMER_TYPE_CHOICES = (('personal', '个人'), ('company', '公司'))
 CALL_CHOICES = (('mr', '先生'), ('ms', '女士'), ('cp', '公司'))
@@ -89,6 +91,7 @@ class City(models.Model):
 
 class SalesOrder(models.Model):
     status = models.CharField('订单状态', max_length=1, choices=STATUS_CHOICES, default='N')
+    is_proceeds = models.BooleanField('是否收款', default=False)
     order = models.CharField('订单号', max_length=16, unique=True, db_index=True, default='new')
     customer = models.ForeignKey('CustomerInfo', related_name='order', verbose_name='客户名称')
     province = models.ForeignKey('Province', verbose_name='省份')
@@ -100,8 +103,9 @@ class SalesOrder(models.Model):
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
-    verifier = models.ForeignKey(User, related_name='%(class)s_verifier', verbose_name='审核人')
-    verify_date = models.DateField('审核日期', db_index=True)
+    verifier = models.ForeignKey(User, related_name='%(class)s_verifier', verbose_name='审核人', null=True)
+    verify_date = models.DateField('审核日期', null=True, blank=True)
+    slab_list = GenericRelation('process.SlabList')
 
     class Meta:
         verbose_name = '销售订单'
@@ -130,6 +134,23 @@ class SalesOrder(models.Model):
 
     def get_absolute_url(self):
         return reverse('sales:order_detail', args=[self.id])
+
+    def get_total_quantity_of_pickup(self):
+        return '{:.2f}'.format(sum(item.total_quantity() for item in self.pickup.all()))
+
+    def get_total_quantity(self):
+        return '{:.2f}'.format(sum(item.quantity for item in self.items.all()))
+
+    def _get_pickup_progress(self):
+        a = Decimal(self.get_total_quantity())
+        b = Decimal(self.get_total_quantity_of_pickup())
+        return format((a - (a - b)) / a, '0.1%')
+    pickup_progress = property(_get_pickup_progress)
+
+    def _get_total_amount(self):
+        return '{:.2f}'.format(sum(Decimal(item.sum) for item in self.items.all()))
+
+    total_amount = property(_get_total_amount)
 
 
 class SalesOrderItem(models.Model):
@@ -170,7 +191,7 @@ class SalesProceeds(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return '[{order}]:{amount}'.format(self.sales_order, self.amount)
+        return '[{}]:{}'.format(self.sales_order, self.amount)
 
 
 class ProceedsAccount(models.Model):
@@ -204,11 +225,15 @@ class SalesOrderPickUp(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return '[{order}]'.format(self.order)
+        return '[{}]'.format(self.order)
+
+    def total_quantity(self):
+        return '{:.2f}'.format(sum(item.quantity for item in self.items.all()))
 
 
 class SalesOrderPickUpItem(models.Model):
-    block_num = models.ForeignKey('products.Product', related_name='pickup_item', verbose_name='荒料编号')
+    block_num = models.ForeignKey('products.Product', related_name='pickup_item',
+                                  verbose_name='荒料编号')
     order = models.ForeignKey('SalesOrderPickUp', related_name='items', verbose_name='对应单号')
     part = models.SmallIntegerField('夹数', null=True, blank=True)
     pic = models.SmallIntegerField('件数')

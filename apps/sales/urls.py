@@ -28,3 +28,7 @@ url(r'^order/update/info/(?P<pk>\d+)/$', views.SalesOrderUpdateInfoView.as_view(
     url(r'^order/(?P<pk>\d+)/$', views.SalesOrderDetailView.as_view(), name='order_detail'),
 
 ]
+# """订单状态操作"""
+# urlpatterns += [
+#                    url(r'^order/(?P<pk>\d+)/$', views.SalesOrderDetailView.as_view(),
+#                        name='order_detail'),]

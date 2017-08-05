@@ -1,8 +1,10 @@
 from collections import defaultdict
+from datetime import date, datetime
 
+from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render, HttpResponse, redirect
 from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, \
     TemplateView
@@ -22,6 +24,81 @@ from django.forms import inlineformset_factory, formset_factory, modelformset_fa
 
 from utils import AddExcelForm, ImportData
 from decimal import Decimal
+
+
+class VerifyMixin(object):
+    model = None
+
+    def post(self, request, *args, **kwargs):
+
+        self.order = self.get_order()
+        path = request.META.get('HTTP_REFERER')
+        type = self.get_operation_type()
+        if self.check_status():
+
+        else:
+            messages.error(request, '该订单不能通过审核!')
+        return redirect(path)
+
+    def process_verify(self):
+        errors = []
+        if self.check_items_is_sell():
+            if self.check_items_is_sell():
+                self.order.status = 'V'
+                self.order.verifier = self.request.user
+                self.order.verify_date = datetime.now()
+                self.order.save()
+                for list in self.order.slab_list.all():
+                    for item in list.item.all():
+                        slab = item.slab
+                        slab.is_sell = True
+                        slab.save()
+                messages.success(self.request, '该订单已成功通过审核!')
+            else:
+                errors.append('!!!!')
+                messages.error(self.request, '本订单的项目中有部分已经销售,不能通过审核!')
+
+
+    def check_status(self):
+        type = self.get_operation_type()
+        if type == 'verify':
+            allow = ('N', 'M')
+        elif type == 'close':
+            allow = ('N', 'V', 'M')
+        elif type == 'finish':
+            allow = ('V',)
+        elif type == 'cancel':
+            allow = ('V',)
+        if self.order.status in allow:
+            return True
+        else:
+            return False
+
+    def get_order(self):
+        order = self.request.POST.get('order', None)
+        if order:
+            if self.model:
+                return self.model.objects.filter(order=order).all()[0]
+            else:
+                raise ValueError('没有定义model')
+        else:
+            return self.get_object()
+
+    def check_items_is_sell(self):
+        for list in self.order.slab_list.all():
+            for item in list.item.all():
+                if item.slab.is_sell or item.slab.is_booking:
+                    break
+            else:
+                return True
+            return False
+        return False
+
+    def get_operation_type(self):
+        p = self.request.POST
+        type = p.get('verify') or p.get('close') or p.get('cancel') or p.get('finish') or p.get(
+            'proceeds')
+        return type.keys()
 
 
 class ProvinceCityInfoMixin(object):
@@ -58,7 +135,7 @@ class SalesOrderListView(ListView):
     model = SalesOrder
 
 
-class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, DetailView):
+class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, VerifyMixin, DetailView):
     model = SalesOrder
 
     def get_context_data(self, **kwargs):

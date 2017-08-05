@@ -21,7 +21,7 @@ class CustomerInfoForm(forms.ModelForm):
 class SalesOrderForm(forms.ModelForm):
     class Meta:
         model = SalesOrder
-        fields = '__all__'
+        exclude = ('verifier', 'verify_date')
 
     def __init__(self, *args, **kwargs):
         super(SalesOrderForm, self).__init__(*args, **kwargs)
