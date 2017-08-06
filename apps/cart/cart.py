@@ -61,15 +61,15 @@ class Cart(object):
         :param key: 为string类型，为需要把cart中存的那个cart的list的前序
         :return: 返回列表类型
         """
-        return self.make_slab_list(key) + self.make_block_list(key)
+        return self._make_slab_list(key) + self._make_block_list(key)
 
-    def make_slab_list(self, key=None):
+    def _make_slab_list(self, key=None):
         suffix = 'slab_ids'
         slab_ids = self.cart.get(key + '_' + suffix) if key else self.cart.get(suffix)
         slab_list = Product.objects.filter(slab__id__in=slab_ids).distinct() if slab_ids else []
         return [i for block in slab_list for i in block.get_slab_list(slab_ids)]
 
-    def make_block_list(self, key=None):
+    def _make_block_list(self, key=None):
         suffix = 'block_ids'
         block_ids = self.cart.get(key + '_' + suffix) if key else self.cart.get(suffix)
         block_list = Product.objects.filter(block_num__in=block_ids).all() if block_ids else []

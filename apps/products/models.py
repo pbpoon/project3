@@ -222,6 +222,34 @@ class Slab(models.Model):
     is_sell = models.BooleanField(default=False, verbose_name=u'是否已售')
     is_booking = models.BooleanField(default=False, verbose_name=u'是否已定')
     is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
+    #
+    # def _get_sell(self):
+    #     for sales in self.block_num.sale.all():
+    #         for sale in sales:
+    #             if sale.order.status in ('V', 'F'):
+    #                 return True
+    #     else:
+    #         return False
+    # is_sell = property(_get_sell)
+    #
+    # def _get_booking(self):
+    #     for sales in self.block_num.sale.all():
+    #         for sale in sales:
+    #             if sale.order.status in ('N,V,F'):
+    #                 return True
+    #     else:
+    #         return False
+    # is_sell = property(_get_sell)
+    #
+    # def _get_pickup(self):
+    #     for sales in self.block_num.sale.all():
+    #         for sale in sales:
+    #             if sale.order.status in ('V', 'F'):
+    #                 return True
+    #     else:
+    #         return False
+    #
+    # is_sell = property(_get_sell)
 
     class Meta:
         verbose_name = '码单'

@@ -18,46 +18,105 @@ from process.forms import SlabListItemForm
 from process.models import SlabList, SlabListItem
 from process.views import SaveCurrentOrderSlabsMixin
 from products.models import Product, Slab
-from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem
-from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPriceForm
+from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem, SalesOrderPickUp, \
+    SalesOrderPickUpItem
+from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPriceForm, \
+    PickUpItemForm
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
 
 from utils import AddExcelForm, ImportData
 from decimal import Decimal
 
 
+class PickUpOrderInfoMixin:
+    def get_sales_order(self):
+        try:
+            salesorder = SalesOrder.objects.get(pk=self.kwargs.get('salesorder'))
+            return salesorder
+        except Exception as e:
+            raise ValueError('没有输入正确的order')
+
+    def save_can_pickup_item(self):
+        slab_ids = []
+        block_ids = []
+        for slab_list in self.get_sales_order().slab_list.all():
+            for slab in slab_list.item.all():
+                if slab.slab.is_pickup == False:
+                    slab_ids.append(str(slab.slab.id))
+
+        for item in self.get_formset_kwargs():
+            if item['thickness'] == '荒料':
+                if not Product.objects.get(block_num=item['block_num']).pickup_item.exists():
+                    block_ids.append(Product.objects.get(block_num=item['block_num']).block_num)
+
+        self.get_cart().cart['can_pickup_slab_ids'] = slab_ids
+        self.get_cart().cart['can_pickup_block_ids'] = block_ids
+
+    def get_formset_kwargs(self):
+        return self.get_cart().make_items_list(key='current_order') if self.object else \
+            self.get_cart().make_items_list(key='can_pickup')
+
+    def get_cart(self):
+        return Cart(self.request)
+
+
 class VerifyMixin(object):
     model = None
 
     def post(self, request, *args, **kwargs):
-
         self.order = self.get_order()
         path = request.META.get('HTTP_REFERER')
         type = self.get_operation_type()
         if self.check_status():
-
+            self.process_type(type)  # 以不同的状态处理
         else:
             messages.error(request, '该订单不能通过审核!')
         return redirect(path)
 
-    def process_verify(self):
-        errors = []
-        if self.check_items_is_sell():
-            if self.check_items_is_sell():
-                self.order.status = 'V'
-                self.order.verifier = self.request.user
-                self.order.verify_date = datetime.now()
-                self.order.save()
-                for list in self.order.slab_list.all():
-                    for item in list.item.all():
-                        slab = item.slab
-                        slab.is_sell = True
-                        slab.save()
-                messages.success(self.request, '该订单已成功通过审核!')
-            else:
-                errors.append('!!!!')
-                messages.error(self.request, '本订单的项目中有部分已经销售,不能通过审核!')
+    def process_type(self, type):
+        return getattr(self, f'process_{type}')()
 
+    def process_verify(self):
+        is_sell = []
+        for list in self.order.slab_list.all():
+            issell = set(item.slab.block_num.block_num for item in list.item.all() \
+                         if item.slab.is_sell or item.slab.is_booking)
+            is_sell.extend(issell)
+        if not is_sell:
+            self.order.status = 'V'
+            self.order.verifier = self.request.user
+            self.order.verify_date = datetime.now()
+            self.order.save()
+            for list in self.order.slab_list.all():
+                for item in list.item.all():
+                    slab = item.slab
+                    slab.is_sell = True
+                    slab.save()
+            messages.success(self.request, '该订单已成功通过审核!')
+        else:
+            messages.error(self.request, '本订单荒料编号[{}]有部分已经销售,不能通过审核!'.format(
+                ','.join(is_sell)))
+
+    def process_cancel(self):
+        if self.order.status == 'V':
+            for list in self.order.slab_list.all():
+                for item in list.item.all():
+                    slab = item.slab
+                    slab.is_sell = False
+                    slab.save()
+        self.order.status = 'M'
+        self.order.ps += f'该订单由{self.request.user}于{datetime.now()}撤销审核!'
+        self.order.verifier = None
+        self.order.verify_date = None
+        self.order.save()
+
+    def process_close(self):
+        if self.order.status == 'V':
+            for list in self.order.slab_list.all():
+                for item in list.item.all():
+                    slab = item.slab
+                    slab.is_sell = False
+                    slab.save()
 
     def check_status(self):
         type = self.get_operation_type()
@@ -84,21 +143,19 @@ class VerifyMixin(object):
         else:
             return self.get_object()
 
-    def check_items_is_sell(self):
-        for list in self.order.slab_list.all():
-            for item in list.item.all():
-                if item.slab.is_sell or item.slab.is_booking:
-                    break
-            else:
-                return True
-            return False
-        return False
-
     def get_operation_type(self):
         p = self.request.POST
-        type = p.get('verify') or p.get('close') or p.get('cancel') or p.get('finish') or p.get(
-            'proceeds')
-        return type.keys()
+        if p.get('verify'):
+            type = 'verify'
+        elif p.get('close'):
+            type = 'close'
+        elif p.get('cancel'):
+            type = 'cancel'
+        elif p.get('finish'):
+            type = 'finish'
+        elif p.get('proceeds'):
+            type = 'proceeds'
+        return type
 
 
 class ProvinceCityInfoMixin(object):
@@ -135,16 +192,19 @@ class SalesOrderListView(ListView):
     model = SalesOrder
 
 
-class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, VerifyMixin, DetailView):
+class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, VerifyMixin,
+                           DetailView):
     model = SalesOrder
 
     def get_context_data(self, **kwargs):
         cart = Cart(self.request)
+        self.save_can_pickup_item()
         ids = []
         for item in self.object.items.all():
             if item.thickness == '荒料':
                 ids.append(str(item.block_num))
         cart.cart['current_order_block_ids'] = ids if ids else []
+        kwargs['can_pickup_item_list'] = cart.make_items_list(key='can_pickup')
         kwargs['item_list'] = self.object.items.all()
         kwargs['total_amount'] = '{:.0f}'.format(
             sum(Decimal(item.sum) for item in self.object.items.all()))
@@ -155,6 +215,9 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, VerifyMixin, DetailView):
             sum(Decimal(item.quantity) for item in self.object.items.all()))
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
+    def get_sales_order(self):
+        return self.object
+
 
 class SalesOrderEditMixin:
     """
@@ -163,22 +226,22 @@ class SalesOrderEditMixin:
     formset_prefix = formset使用的prefix，默认'fs'
     """
     formset_model = None
-    formset_class = SalesOrderItemForm
+    formset_class = None
     formset_fields = '__all__'
     formset_prefix = 'fs'
 
-    def get_formset_fields(self):
+    def _get_formset_fields(self):
         return self.formset_fields
 
-    def get_formset_prefix(self):
+    def _get_formset_prefix(self):
         return self.formset_prefix
 
-    def get_formset_class(self):
+    def _get_formset_class(self):
         extra = 0 if self.object else \
-            len(
-                self.get_cart().make_items_list())  # len(self.get_cart().make_items_list(keys='current_order_slab_ids'))
+            len(self.get_formset_kwargs())
         return inlineformset_factory(self.model, self.formset_model, form=self.formset_class,
-                                     extra=extra, fields=self.get_formset_fields())
+                                     extra=extra,
+                                     fields=self._get_formset_fields())
 
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
@@ -186,16 +249,16 @@ class SalesOrderEditMixin:
 
     def get_formset(self):
         if self.request.GET.get('next'):
-            formset = self.get_formset_class()(data=self.request.GET,
-                                               prefix=self.get_formset_prefix(),
-                                               instance=self.object)
+            formset = self._get_formset_class()(data=self.request.GET,
+                                                prefix=self._get_formset_prefix(),
+                                                instance=self.object)
         elif self.request.method in ('POST', 'PUT'):
-            formset = self.get_formset_class()(data=self.request.POST,
-                                               prefix=self.get_formset_prefix(),
-                                               instance=self.object)
+            formset = self._get_formset_class()(data=self.request.POST,
+                                                prefix=self._get_formset_prefix(),
+                                                instance=self.object)
         else:
-            formset = self.get_formset_class()(instance=self.object,
-                                               prefix=self.get_formset_prefix())
+            formset = self._get_formset_class()(instance=self.object,
+                                                prefix=self._get_formset_prefix())
 
         return self.make_formset_initial(formset)
 
@@ -344,6 +407,7 @@ class SalesOrderAddView(LoginRequiredMixin, SalesOrderEditMixin, TemplateView):
 class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailView):
     model = SalesOrder
     form_class = SalesOrderForm
+    formset_class = SalesOrderItemForm
     formset_model = SalesOrderItem
     template_name = 'sales/salesorder_form.html'
 
@@ -372,6 +436,7 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSa
                            CreateView):
     model = SalesOrder
     form_class = SalesOrderForm
+    formset_class = SalesOrderItemForm
     formset_model = SalesOrderItem
 
     def get_context_data(self, **kwargs):
@@ -411,6 +476,58 @@ class SalesOrderUpdateInfoView(LoginRequiredMixin, UpdateView):
 
 class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):
     model = SalesOrder
+
+
+class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditMixin,
+                       SalesOrderSaveMixin, CreateView):
+    model = SalesOrderPickUp
+    fields = '__all__'
+    formset_model = SalesOrderPickUpItem
+    formset_class = PickUpItemForm
+
+    def get_context_data(self, **kwargs):
+        formset = self.get_formset()
+        step = self.request.GET.get('step') or self.request.POST.get('step')
+        kwargs['item_list'] = ''
+        items = self.make_items()
+        dt = defaultdict(float)
+        for item in items:
+            dt[item['unit']] += float(item['quantity'])
+        kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
+        kwargs['total_count'] = len(items)
+        if not step:
+            item_list = items
+            for item in item_list:
+                item['slab_ids'] = [id for part in item['part_num'].values() for id in
+                                    part['slabs']] if item['thickness'] != '荒料' else ''
+
+            kwargs['item_list'] = list(zip(item_list, formset))
+            kwargs['price_formset'] = formset
+            kwargs['step'] = '1'
+        elif step == '1':
+            kwargs['step'] = '2'
+            cd = formset.cleaned_data
+            kwargs['total_amount'] = '{:.0f}'.format(
+                sum(item['quantity'] * item['price'] for item in cd))
+        return super(PickUpCreateView, self).get_context_data(**kwargs)
+
+    def get_formset_kwargs(self):
+        return self.get_cart().make_items_list(key='current_order') if self.object else \
+            self.get_cart().make_items_list(key='can_pickup')
+
+    def make_items(self):
+        pickup_ids = self.get_cart().cart['can_pickup_slab_ids'] or self.get_cart().cart[
+            'can_pickup_block_ids']
+        items = self.get_formset_kwargs() if not pickup_ids else self.get_cart().make_items_list(
+            key='can_pickup')
+        self.get_cart().cart['can_pickup_slab_ids'], \
+        self.get_cart().cart['can_pickup_slab_ids'] = [], []
+        self.get_cart().save()
+        for item in items:
+            item['part_count'] = 0
+            item['block_pics'] = 0
+            item['quantity'] = 0
+        return items
 
 
 class ImportView(FormView):

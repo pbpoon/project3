@@ -2,7 +2,7 @@
 __author__ = 'pb'
 __date__ = '2017/7/19 10:17'
 from django import forms
-from .models import SalesOrder, SalesOrderItem, CustomerInfo
+from .models import SalesOrder, SalesOrderItem, CustomerInfo, SalesOrderPickUp, SalesOrderPickUpItem
 from products.models import Product
 
 
@@ -70,3 +70,17 @@ class OrderPriceForm(forms.Form):
                                widget=forms.TextInput(attrs={'size': '2'}))
     block_num = forms.CharField(widget=forms.HiddenInput())
     thickness = forms.CharField(widget=forms.HiddenInput())
+
+
+class PickUpItemForm(forms.ModelForm):
+    class Meta:
+        model = SalesOrderPickUpItem
+        fields = '__all__'
+        widgets = {
+            'block_num': forms.HiddenInput(),
+            'part': forms.HiddenInput(),
+            'pic': forms.HiddenInput(),
+            'thickness': forms.HiddenInput(),
+            'quantity': forms.HiddenInput(),
+            'unit': forms.HiddenInput(),
+        }
