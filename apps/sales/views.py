@@ -37,20 +37,20 @@ class PickUpOrderInfoMixin:
             raise ValueError('没有输入正确的order')
 
     def save_can_pickup_item(self):
-        slab_ids = []
-        block_ids = []
+        self.get_cart().cart['can_pickup_slab_ids'] = slab_ids = []
+        self.get_cart().cart['can_pickup_block_ids'] = block_ids = []
         for slab_list in self.get_sales_order().slab_list.all():
             for slab in slab_list.item.all():
-                if slab.slab.is_pickup == False:
+                if not slab.slab.is_pickup:
                     slab_ids.append(str(slab.slab.id))
 
-        for item in self.get_formset_kwargs():
-            if item['thickness'] == '荒料':
-                if not Product.objects.get(block_num=item['block_num']).pickup_item.exists():
-                    block_ids.append(Product.objects.get(block_num=item['block_num']).block_num)
-
-        self.get_cart().cart['can_pickup_slab_ids'] = slab_ids
-        self.get_cart().cart['can_pickup_block_ids'] = block_ids
+        for item in self.get_sales_order().items.all():
+            if item.thickness == '荒料':
+                if not Product.objects.get(block_num=item.block_num).pickup_item.exists():
+                    block_ids.append(Product.objects.get(block_num=item.block_num).block_num)
+        self.get_cart().save()
+        # self.get_cart().cart['can_pickup_slab_ids'] = slab_ids
+        # self.get_cart().cart['can_pickup_block_ids'] = block_ids
 
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
@@ -197,6 +197,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
     model = SalesOrder
 
     def get_context_data(self, **kwargs):
+        super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
         self.save_can_pickup_item()
         ids = []
