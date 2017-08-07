@@ -36,9 +36,9 @@ class PickUpOrderInfoMixin:
         except Exception as e:
             raise ValueError('没有输入正确的order')
 
-    def save_can_pickup_item(self):
-        self.get_cart().cart['can_pickup_slab_ids'] = slab_ids = []
-        self.get_cart().cart['can_pickup_block_ids'] = block_ids = []
+    def get_order_item_can_pickup_ids(self):
+        slab_ids = []
+        block_ids = []
         for slab_list in self.get_sales_order().slab_list.all():
             for slab in slab_list.item.all():
                 if not slab.slab.is_pickup:
@@ -48,9 +48,7 @@ class PickUpOrderInfoMixin:
             if item.thickness == '荒料':
                 if not Product.objects.get(block_num=item.block_num).pickup_item.exists():
                     block_ids.append(Product.objects.get(block_num=item.block_num).block_num)
-        self.get_cart().save()
-        # self.get_cart().cart['can_pickup_slab_ids'] = slab_ids
-        # self.get_cart().cart['can_pickup_block_ids'] = block_ids
+        return {'slab_ids': slab_ids, 'block_ids': block_ids}
 
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
@@ -199,7 +197,11 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
     def get_context_data(self, **kwargs):
         super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
-        self.save_can_pickup_item()
+        order_ids = self.get_order_item_can_pickup_ids()
+        cart.cart['can_pickup_block_ids'], cart.cart['can_pickup_slab_ids'] = order_ids[
+                                                                                  'block_ids'], \
+                                                                              order_ids['slab_ids']
+        cart.save()
         ids = []
         for item in self.object.items.all():
             if item.thickness == '荒料':
@@ -249,6 +251,9 @@ class SalesOrderEditMixin:
             self.get_cart().make_items_list()
 
     def get_formset(self):
+        return self.make_formset_initial()
+
+    def instance_formset(self):
         if self.request.GET.get('next'):
             formset = self._get_formset_class()(data=self.request.GET,
                                                 prefix=self._get_formset_prefix(),
@@ -260,16 +265,15 @@ class SalesOrderEditMixin:
         else:
             formset = self._get_formset_class()(instance=self.object,
                                                 prefix=self._get_formset_prefix())
+        return formset
 
-        return self.make_formset_initial(formset)
-
-    def make_formset_initial(self, formset):
+    def make_formset_initial(self):
         """
         是这个mixin可以适应更多order的formset，不同的order只需要更改这里来适配
         :param formset:
         :return:
         """
-        for form, data in zip(formset, self.get_formset_kwargs()):
+        for form, data in zip(self.instance_formset(), self.get_formset_kwargs()):
             data['block_num'] = Product.objects.get(block_num=data['block_num'])
             form.initial.update({
                 'block_num': data['block_num'],
@@ -279,7 +283,7 @@ class SalesOrderEditMixin:
                 'unit': data['unit'],
                 'thickness': data['thickness']
             })
-        return formset
+        return self.instance_formset()
 
     def formset_valid(self, instance=None, formset=None):
         """
@@ -490,7 +494,7 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
         formset = self.get_formset()
         step = self.request.GET.get('step') or self.request.POST.get('step')
         kwargs['item_list'] = ''
-        items = self.make_items()
+        items = self.get_formset_kwargs()
         dt = defaultdict(float)
         for item in items:
             dt[item['unit']] += float(item['quantity'])
@@ -515,14 +519,14 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
             self.get_cart().make_items_list(key='can_pickup')
-
+    #
     def make_items(self):
         pickup_ids = self.get_cart().cart['can_pickup_slab_ids'] or self.get_cart().cart[
             'can_pickup_block_ids']
         items = self.get_formset_kwargs() if not pickup_ids else self.get_cart().make_items_list(
             key='can_pickup')
         self.get_cart().cart['can_pickup_slab_ids'], \
-        self.get_cart().cart['can_pickup_slab_ids'] = [], []
+        self.get_cart().cart['can_pickup_block_ids'] = [], []
         self.get_cart().save()
         for item in items:
             item['part_count'] = 0
@@ -530,6 +534,23 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
             item['quantity'] = 0
         return items
 
+    def make_formset_initial(self):
+        """
+        是这个mixin可以适应更多order的formset，不同的order只需要更改这里来适配
+        :param formset:
+        :return:
+        """
+        for form, data in zip(self.instance_formset(), self.get_formset_kwargs()):
+            data['block_num'] = Product.objects.get(block_num=data['block_num'])
+            form.initial.update({
+                'block_num': data['block_num'],
+                'part': data['part_count'],
+                'pic': data['block_pics'],
+                'quantity': data['quantity'],
+                'unit': data['unit'],
+                'thickness': data['thickness']
+            })
+        return self.instance_formset()
 
 class ImportView(FormView):
     """
