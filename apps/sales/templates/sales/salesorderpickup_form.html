@@ -27,7 +27,7 @@
 {% endif %}
 <form action="" method="post" id="myformset">
     {% csrf_token %}
-    {% ifequal step "3" %}
+    {% ifequal step "2" %}
         {{ form|as_bootstrap }}
     {% endifequal %}
 
@@ -105,9 +105,9 @@
                 </div>
             </div>
         </div>
-    {% endifequal %}
-
-    {% ifequal step "2" %}
+{#    {% endifequal %}#}
+{##}
+{#    {% ifequal step "2" %}#}
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title">订单货品信息</h3>

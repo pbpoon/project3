@@ -136,7 +136,7 @@ class SalesOrder(models.Model):
         return reverse('sales:order_detail', args=[self.id])
 
     def get_total_quantity_of_pickup(self):
-        return '{:.2f}'.format(sum(item.total_quantity() for item in self.pickup.all()))
+        return '{:.2f}'.format(sum(float(item.total_quantity()) for item in self.pickup.all()))
 
     def get_total_quantity(self):
         return '{:.2f}'.format(sum(item.quantity for item in self.items.all()))

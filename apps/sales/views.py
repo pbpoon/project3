@@ -571,9 +571,10 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
         cost_formset = self.get_cost_formset()
         with transaction.atomic():
             sid = transaction.savepoint()
-            form.data_entry_staff = self.request.user
-            form.order = self.get_sales_order()
-            instance = form.save()
+            instance = form.save(commit=False)
+            instance.data_entry_staff = self.request.user
+            instance.order = self.get_sales_order()
+            instance.save()
             if formset.is_valid():
                 formset_error = self.formset_valid(instance, formset)
                 if formset_error:
@@ -585,6 +586,7 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
                     }
                     return self.render_to_response(context)
             if cost_formset.is_valid():
+                cost_formset.instance = instance
                 cost_formset.save()
             else:
                 transaction.savepoint_rollback(sid)
