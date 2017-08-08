@@ -77,6 +77,7 @@ class PickUpOrderInfoMixin:
                                                      prefix='cost_fs')
         return formset
 
+
 class VerifyMixin(object):
     model = None
 
@@ -509,6 +510,7 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
     fields = ['cart_num', 'consignee', 'date', 'ps']
     formset_model = SalesOrderPickUpItem
     formset_class = PickUpItemForm
+    formset_fields = ['block_num', 'part', 'pic', 'thickness', 'quantity', 'unit']
 
     def get_first_status(self):
         try:
@@ -525,18 +527,16 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
                 'current_order_slab_ids'] = []
             self.get_cart().save()
         formset = self.get_formset()
-        kwargs['item_list'] = ''
         items = self.make_items()
-
         dt = defaultdict(float)
         for item in items:
             dt[item['unit']] += float(item['quantity'])
-        kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
-        kwargs['total_count'] = len(items)
-        kwargs['cost_formset'] = self.get_cost_formset()
         for item in items:
             item['slab_ids'] = [id for part in item['part_num'].values() for id in
                                 part['slabs']] if item['thickness'] != '荒料' else []
+        kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
+        kwargs['total_count'] = len(items)
+        kwargs['cost_formset'] = self.get_cost_formset()
         kwargs['item_list'] = list(zip(items, formset))
         kwargs['price_formset'] = formset
         if not step:
@@ -566,6 +566,109 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
 
         return choose_items
 
+    def form_valid(self, form):
+        formset = self.get_formset()
+        cost_formset = self.get_cost_formset()
+        with transaction.atomic():
+            sid = transaction.savepoint()
+            form.data_entry_staff = self.request.user
+            form.order = self.get_sales_order()
+            instance = form.save()
+            if formset.is_valid():
+                formset_error = self.formset_valid(instance, formset)
+                if formset_error:
+                    transaction.savepoint_rollback(sid)
+                    context = {
+                        'form': form,
+                        'itemformset': formset,
+                        'errors': formset_error['errors']
+                    }
+                    return self.render_to_response(context)
+            if cost_formset.is_valid():
+                cost_formset.save()
+            else:
+                transaction.savepoint_rollback(sid)
+                context = {
+                    'form': form,
+                    'itemformset': formset,
+                    'errors': ""
+                }
+                return self.render_to_response(context)
+
+        return super(SalesOrderSaveMixin, self).form_valid(form)
+
+    def formset_valid(self, instance=None, formset=None):
+        formset.instance = instance
+        formset.save()
+        errors = []
+        if self.object:
+            """
+            编辑状态
+            """
+            slab_model = ContentType.objects.get_for_model(self.object)
+            slab_list = SlabList.objects.get(content_type__pk=slab_model.id,
+                                             object_id=self.object.id)
+            order_ids = [str(slab.slab.id) for slab in
+                         SlabListItem.objects.filter(slablist=slab_list).all()]
+            ids = self.get_cart().cart['current_order_slab_ids']
+            new_ids = set(ids) - set(order_ids)
+            del_ids = set(order_ids) - set(ids)
+            slabs = [
+                {'slab': Slab.objects.get(id=slab).id,
+                 'part_num': Slab.objects.get(id=slab).part_num,
+                 'line_num': Slab.objects.get(id=slab).line_num,
+                 'slablist': slab_list.id}
+                for slab in new_ids
+                ]
+            for slab in slabs:
+                slablistform = SlabListItemForm(data=slab)
+                if slablistform.is_valid():
+                    slablistform.save()
+                else:
+                    errors.append(slablistform.errors)
+            for id in new_ids:
+                s = Slab.objects.get(id=id)
+                s.is_pickup = True
+                s.save()
+            for id in del_ids:
+                s = Slab.objects.get(id=id)
+                s.is_pickup = False
+                s.save()
+            SlabListItem.objects.filter(slablist=slab_list, slab__in=del_ids).delete()
+        else:
+            """
+            新建状态
+            """
+            slab_list = SlabList.objects.create(order=instance,
+                                                data_entry_staff_id=self.request.user.id)
+            slabs = [
+                {'slablist': slab_list.id,
+                 'slab': Slab.objects.get(id=id).id,
+                 'part_num': Slab.objects.get(id=id).part_num,
+                 'line_num': Slab.objects.get(id=id).line_num}
+                for id in self.get_cart().cart['current_order_slab_ids']]
+            for slab in slabs:
+                slablistform = SlabListItemForm(data=slab)
+                if slablistform.is_valid():
+                    slablistform.save()
+                    s = Slab.objects.get(id=slab['slab'])
+                    s.is_pickup = True
+                    s.save()
+                else:
+                    errors.append(slablistform.errors)
+            """
+            把slab_list包含的slab id 读取出来，和选择的slab id作比较
+            如果是新订单就把import_slab_list用get_import_slab_list_by_parameter遍历出来添加到列表，
+            如果是编辑订单就直接读取cart的current_order_slab_ids，并用make_slab_list返回码单
+            """
+        if errors:
+            context = {
+                'itemformset': formset,
+                'errors': errors
+            }
+            return context
+        else:
+            return False
 
 class ImportView(FormView):
     """
