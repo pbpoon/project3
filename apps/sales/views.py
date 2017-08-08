@@ -19,7 +19,7 @@ from process.models import SlabList, SlabListItem
 from process.views import SaveCurrentOrderSlabsMixin
 from products.models import Product, Slab
 from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem, SalesOrderPickUp, \
-    SalesOrderPickUpItem
+    SalesOrderPickUpItem, SalesOrderPickUpCost
 from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPriceForm, \
     PickUpItemForm
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
@@ -57,6 +57,25 @@ class PickUpOrderInfoMixin:
     def get_cart(self):
         return Cart(self.request)
 
+    def _get_cost_formset_class(self):
+        return inlineformset_factory(self.model, SalesOrderPickUpCost, fields='__all__', extra=1)
+
+    def get_cost_formset(self):
+        return self.instance_cost_formset()
+
+    def instance_cost_formset(self):
+        if self.request.GET.get('next'):
+            formset = self._get_cost_formset_class()(data=self.request.GET,
+                                                     prefix='cost_fs',
+                                                     instance=self.object)
+        elif self.request.method in ('POST', 'PUT'):
+            formset = self._get_cost_formset_class()(data=self.request.POST,
+                                                     prefix='cost_fs',
+                                                     instance=self.object)
+        else:
+            formset = self._get_cost_formset_class()(instance=self.object,
+                                                     prefix='cost_fs')
+        return formset
 
 class VerifyMixin(object):
     model = None
@@ -66,12 +85,12 @@ class VerifyMixin(object):
         path = request.META.get('HTTP_REFERER')
         type = self.get_operation_type()
         if self.check_status():
-            self.process_type(type)  # 以不同的状态处理
+            self._process_type(type)  # 以不同的状态处理
         else:
             messages.error(request, '该订单不能通过审核!')
         return redirect(path)
 
-    def process_type(self, type):
+    def _process_type(self, type):
         return getattr(self, f'process_{type}')()
 
     def process_verify(self):
@@ -198,9 +217,9 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
         order_ids = self.get_order_item_can_pickup_ids()
-        cart.cart['can_pickup_block_ids'], cart.cart['can_pickup_slab_ids'] = order_ids[
-                                                                                  'block_ids'], \
-                                                                              order_ids['slab_ids']
+        cart.cart['can_pickup_block_ids'], \
+        cart.cart['can_pickup_slab_ids'] = order_ids['block_ids'], order_ids['slab_ids']
+        cart.cart['first_status'] = [1]
         cart.save()
         ids = []
         for item in self.object.items.all():
@@ -273,7 +292,8 @@ class SalesOrderEditMixin:
         :param formset:
         :return:
         """
-        for form, data in zip(self.instance_formset(), self.get_formset_kwargs()):
+        formset = self.instance_formset()
+        for form, data in zip(formset, self.get_formset_kwargs()):
             data['block_num'] = Product.objects.get(block_num=data['block_num'])
             form.initial.update({
                 'block_num': data['block_num'],
@@ -283,7 +303,7 @@ class SalesOrderEditMixin:
                 'unit': data['unit'],
                 'thickness': data['thickness']
             })
-        return self.instance_formset()
+        return formset
 
     def formset_valid(self, instance=None, formset=None):
         """
@@ -486,71 +506,66 @@ class SalesOrderDeleteView(LoginRequiredMixin, DeleteView):
 class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditMixin,
                        SalesOrderSaveMixin, CreateView):
     model = SalesOrderPickUp
-    fields = '__all__'
+    fields = ['cart_num', 'consignee', 'date', 'ps']
     formset_model = SalesOrderPickUpItem
     formset_class = PickUpItemForm
 
+    def get_first_status(self):
+        try:
+            first_status = self.get_cart().cart['first_status'].pop()
+        except Exception as e:
+            first_status = None
+        return first_status
+
     def get_context_data(self, **kwargs):
-        formset = self.get_formset()
         step = self.request.GET.get('step') or self.request.POST.get('step')
+        self.first_status = self.get_first_status()
+        if self.first_status:
+            self.get_cart().cart['current_order_block_ids'] = self.get_cart().cart[
+                'current_order_slab_ids'] = []
+            self.get_cart().save()
+        formset = self.get_formset()
         kwargs['item_list'] = ''
-        items = self.get_formset_kwargs()
+        items = self.make_items()
+
         dt = defaultdict(float)
         for item in items:
             dt[item['unit']] += float(item['quantity'])
         kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
         kwargs['total_count'] = len(items)
+        kwargs['cost_formset'] = self.get_cost_formset()
+        for item in items:
+            item['slab_ids'] = [id for part in item['part_num'].values() for id in
+                                part['slabs']] if item['thickness'] != '荒料' else []
+        kwargs['item_list'] = list(zip(items, formset))
+        kwargs['price_formset'] = formset
         if not step:
-            item_list = items
-            for item in item_list:
-                item['slab_ids'] = [id for part in item['part_num'].values() for id in
-                                    part['slabs']] if item['thickness'] != '荒料' else ''
-
-            kwargs['item_list'] = list(zip(item_list, formset))
-            kwargs['price_formset'] = formset
             kwargs['step'] = '1'
         elif step == '1':
             kwargs['step'] = '2'
-            cd = formset.cleaned_data
-            kwargs['total_amount'] = '{:.0f}'.format(
-                sum(item['quantity'] * item['price'] for item in cd))
+        elif step == '2':
+            kwargs['step'] = '3'
         return super(PickUpCreateView, self).get_context_data(**kwargs)
 
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
-            self.get_cart().make_items_list(key='can_pickup')
-    #
+            self.make_items()
+
     def make_items(self):
-        pickup_ids = self.get_cart().cart['can_pickup_slab_ids'] or self.get_cart().cart[
-            'can_pickup_block_ids']
-        items = self.get_formset_kwargs() if not pickup_ids else self.get_cart().make_items_list(
-            key='can_pickup')
-        self.get_cart().cart['can_pickup_slab_ids'], \
-        self.get_cart().cart['can_pickup_block_ids'] = [], []
-        self.get_cart().save()
-        for item in items:
+        all_can_pickup_items = self.get_cart().make_items_list(key='can_pickup')
+        for item in all_can_pickup_items:
             item['part_count'] = 0
             item['block_pics'] = 0
             item['quantity'] = 0
-        return items
+            item['can_pickup'] = True
+        choose_items = self.get_cart().make_items_list(key='current_order')
+        choose_items_list = [(item['block_num'], item['thickness']) for item in choose_items]
+        for item in all_can_pickup_items:
+            if (item['block_num'], item['thickness']) not in choose_items_list:
+                choose_items.append(item)
 
-    def make_formset_initial(self):
-        """
-        是这个mixin可以适应更多order的formset，不同的order只需要更改这里来适配
-        :param formset:
-        :return:
-        """
-        for form, data in zip(self.instance_formset(), self.get_formset_kwargs()):
-            data['block_num'] = Product.objects.get(block_num=data['block_num'])
-            form.initial.update({
-                'block_num': data['block_num'],
-                'part': data['part_count'],
-                'pic': data['block_pics'],
-                'quantity': data['quantity'],
-                'unit': data['unit'],
-                'thickness': data['thickness']
-            })
-        return self.instance_formset()
+        return choose_items
+
 
 class ImportView(FormView):
     """

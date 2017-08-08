@@ -247,10 +247,9 @@ class SalesOrderPickUpItem(models.Model):
 
 
 class SalesOrderPickUpCost(models.Model):
+    order = models.ForeignKey('SalesOrderPickUp', related_name='cost', verbose_name='对应单号')
     item = models.CharField('项目', max_length=1, choices=SALES_ORDER_PICK_UP_COST)
     amount = models.DecimalField('金额', max_digits=5, decimal_places=0)
-    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
-                                         verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
@@ -260,4 +259,4 @@ class SalesOrderPickUpCost(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return '{}-{}'.format(self.item, self.amount)
+        return '{}-{}'.format(self.get_item_display(), self.amount)
