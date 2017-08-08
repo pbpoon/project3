@@ -108,78 +108,105 @@
         </div>
     </div>
     {% if can_pickup_item_list %}
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">可提货数量 <a class="btn btn-link" href=
-                    "{% url 'sales:pickup_create' object.id %}">
-                提货
-            </a></h3>
-            <div class="panel-body">
-                {% if item_list %}
-                    <table class="table">
-                        <tr>
-
-                            <th>序号</th>
-                            <th>荒料编号</th>
-                            <th>厚度</th>
-                            <th>夹数</th>
-                            <th>件数</th>
-                            <th>数量</th>
-                            <th>码单</th>
-                        </tr>
-
-                        {% for object in can_pickup_item_list %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">可提货数量 <a class="btn btn-link" href=
+                        "{% url 'sales:pickup_create' object.id %}">
+                    提货
+                </a></h3>
+                <div class="panel-body">
+                    {% if item_list %}
+                        <table class="table">
                             <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>
-                                    <a href="{{ object.block_num.get_absolute_url }}">{{ object.block_num }}</a>
-                                </td>
-                                <td>{{ object.thickness }}</td>
-                                <td>{{ object.part_count }}</td>
-                                <td>{{ object.block_pics }}</td>
-                                <td>{{ object.quantity }}{{ object.unit }}</td>
-                                <td>
-                                    <div class="dropdown">
-                                        <a href="#" data-target="#" class="dropdown-toggle"
-                                           data-toggle="dropdown" role="button"
-                                           aria-haspopup="true"
-                                           aria-expanded="false"><span
-                                                class="btn btn-default btn-sm">操作</span><span
-                                                class="caret"></span></a>
-                                        <ul class="dropdown-menu">
-                                            <li><a
-                                                    href="{% url 'product:slab_list'  object.block_num %}">修改</a>
-                                            </li>
-                                            <li role="separator" class="divider"></li>
-                                            <li>
-                                                <button class="btn btn-info"
-                                                        onclick="gogo_slab_list('{{ object.block_num }}',
-                                                                '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
-                                                    新页面打开
-                                                </button>
-                                                <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </td>
+
+                                <th>序号</th>
+                                <th>荒料编号</th>
+                                <th>厚度</th>
+                                <th>夹数</th>
+                                <th>件数</th>
+                                <th>数量</th>
+                                <th>码单</th>
                             </tr>
-                        {% endfor %}
-                        <tr>
-                            <th>总计：</th>
-                            <th>{{ total_count }}</th>
-                            <th></th>
-                            <th>{{ total_part }}</th>
-                            <th>{{ total_pic }}</th>
-                            <th>{{ total_quantity }}</th>
-                            <th></th>
-                            <th>{{ total_amount }}</th>
-                            <th></th>
-                        </tr>
-                    </table>
-                {% endif %}
+
+                            {% for object in can_pickup_item_list %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <a href="{{ object.block_num.get_absolute_url }}">{{ object.block_num }}</a>
+                                    </td>
+                                    <td>{{ object.thickness }}</td>
+                                    <td>{{ object.part_count }}</td>
+                                    <td>{{ object.block_pics }}</td>
+                                    <td>{{ object.quantity }}{{ object.unit }}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a href="#" data-target="#" class="dropdown-toggle"
+                                               data-toggle="dropdown" role="button"
+                                               aria-haspopup="true"
+                                               aria-expanded="false"><span
+                                                    class="btn btn-default btn-sm">操作</span><span
+                                                    class="caret"></span></a>
+                                            <ul class="dropdown-menu">
+                                                <li><a
+                                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a>
+                                                </li>
+                                                <li role="separator" class="divider"></li>
+                                                <li>
+                                                    <button class="btn btn-info"
+                                                            onclick="gogo_slab_list('{{ object.block_num }}',
+                                                                    '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
+                                                        新页面打开
+                                                    </button>
+                                                    <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr>
+                                <th>总计：</th>
+                                <th>{{ total_count }}</th>
+                                <th></th>
+                                <th>{{ total_part }}</th>
+                                <th>{{ total_pic }}</th>
+                                <th>{{ total_quantity }}</th>
+                                <th></th>
+                                <th>{{ total_amount }}</th>
+                                <th></th>
+                            </tr>
+                        </table>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
+    {% endif %}
+    {% if already_pickup_list %}
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">已提货记录
+                </h3>
+                <div class="panel-body">
+                    <table class="table">
+                        <tr>
+                            <th>日期</th>
+                            <th>提货数量</th>
+                            <th>车牌</th>
+                            <th>总花费</th>
+                        </tr>
+                        {% for item in already_pickup_list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.total_quantity }}</td>
+                                <td>{{ item.cart_num }}</td>
+                                <td>{{ item.total_cost }}</td>
+                            </tr>
+
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}
 {% block sidebar %}

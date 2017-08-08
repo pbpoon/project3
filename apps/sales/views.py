@@ -236,6 +236,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         kwargs['total_part'] = sum(int(item.part) for item in self.object.items.all() if item.part)
         kwargs['total_quantity'] = '{:.2f}'.format(
             sum(Decimal(item.quantity) for item in self.object.items.all()))
+        kwargs['already_pickup_list'] = self.object.pickup.all()
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
     def get_sales_order(self):

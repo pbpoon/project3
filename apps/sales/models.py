@@ -230,6 +230,9 @@ class SalesOrderPickUp(models.Model):
     def total_quantity(self):
         return '{:.2f}'.format(sum(item.quantity for item in self.items.all()))
 
+    def total_cost(self):
+        return '{:.2f}'.format(sum(item.amount for item in self.cost.all()))
+
 
 class SalesOrderPickUpItem(models.Model):
     block_num = models.ForeignKey('products.Product', related_name='pickup_item',
