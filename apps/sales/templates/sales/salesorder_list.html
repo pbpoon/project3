@@ -20,9 +20,9 @@
                 <td><input disabled type="checkbox"{% if object.is_proceeds %}checked{% endif %}></td>
                 <td>{{ object.pickup_progress }}</td>
                 <td><a href="{{ object.get_absolute_url }}">{{ object.order }}</a></td>
-                <td>{{ object.customer }}\n[{{ object.customer.telephone }}]</td>
+                <td>{{ object.customer }}<br>[{{ object.customer.telephone }}]</td>
                 <td>{{ object.date }}</td>
-                <td>{{ object.province }}\n{{ object.city }}</td>
+                <td>{{ object.province }}<br>{{ object.city }}</td>
                 <td>{{ object.handler }}</td>
                 <td>{{ object.total_amount }}</td>
                 <td>{{ object.ps }}</td>

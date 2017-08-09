@@ -85,8 +85,7 @@
                                             <li role="separator" class="divider"></li>
                                             <li>
                                                 <a class="btn btn-info"
-                                                   onclick="gogo_slab_list('{{ object.block_num }}',
-                                                           '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
+                                                   onclick="gogo_slab_list('{{ object.block_num }}','{{ object.thickness }}','{{ object.ids }}','{% url "product:order_slab_list" %}')">
                                                     新页面打开
                                                 </a>
                                                 <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>

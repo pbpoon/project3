@@ -138,13 +138,13 @@ function open_slab_list(id, url) {
     gogo_slab_list(block_num, thickness, url)
 }
 
-function gogo_slab_list(block_num, thickness, url) {
+function gogo_slab_list(block_num, thickness, ids, url) {
     // var slab_ids = ids
     console.log(url)
     console.log(block_num, thickness)
     // var thickness =thickness
     // var block_num = block_num
-    var _url = url + "?block_num=" + block_num + "&thickness=" + thickness;
+    var _url = url + "?block_num=" + block_num + "&thickness=" + thickness + "&ids=" + ids;
     //以后要在JavaScript里使用django的url连接需要用这个方式连接字符串
     var w_width = window.innerWidth / 2 - 250
     var slab_window = window.open(_url, "new", "menubar=yes,width=500,height=700 ", "resizeable=yes");

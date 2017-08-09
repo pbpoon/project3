@@ -28,7 +28,12 @@ urlpatterns += [
     url(r'^order/update/info/(?P<pk>\d+)/$', views.SalesOrderUpdateInfoView.as_view(),
         name='order_update_info'),
     url(r'^order/(?P<pk>\d+)/$', views.SalesOrderDetailView.as_view(), name='order_detail'),
-    url(r'^order/pickup/create/(?P<salesorder>\d+)/$', views.PickUpCreateView.as_view(), name='pickup_create'),
+    url(r'^order/pickup/create/(?P<salesorder>\d+)/$', views.PickUpCreateView.as_view(),
+        name='pickup_create'),
+    url(r'^order/pickup/(?P<pk>\d+)/$', views.PickupDetailView.as_view(),
+        name='pickup_detail'),
+    url(r'^order/pickup/delete/(?P<pk>\d+)/$', views.PickUpDeleteView.as_view(),
+        name='pickup_delete'),
 ]
 # """订单状态操作"""
 # urlpatterns += [

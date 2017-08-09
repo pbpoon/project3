@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.contrib.auth.models import User
@@ -135,15 +136,21 @@ class SalesOrder(models.Model):
     def get_absolute_url(self):
         return reverse('sales:order_detail', args=[self.id])
 
-    def get_total_quantity_of_pickup(self):
-        return '{:.2f}'.format(sum(float(item.total_quantity()) for item in self.pickup.all()))
+    def get_total_quantity_of_can_pickup(self):
+        return '{:.2f}'.format(sum(sum(item.total_quantity().values()) for item in self.pickup.all()))
 
     def get_total_quantity(self):
-        return '{:.2f}'.format(sum(item.quantity for item in self.items.all()))
+        dt = defaultdict(float)
+        for item in self.items.all():
+            dt[item.unit] += float(item.quantity)
+        return {k: float(v) for k, v in dt.items()}
+
+    def sum_total_quantity(self):
+        return '{:.2f}'.format(sum(self.get_total_quantity().values()))
 
     def _get_pickup_progress(self):
-        a = Decimal(self.get_total_quantity())
-        b = Decimal(self.get_total_quantity_of_pickup())
+        a = Decimal(self.sum_total_quantity())
+        b = Decimal(self.get_total_quantity_of_can_pickup())
         return format((a - (a - b)) / a, '0.1%')
     pickup_progress = property(_get_pickup_progress)
 
@@ -223,12 +230,19 @@ class SalesOrderPickUp(models.Model):
     class Meta:
         verbose_name = '销售提货单'
         verbose_name_plural = verbose_name
+        ordering = ['date']
 
     def __str__(self):
         return '[{}]'.format(self.order)
 
+    def get_absolute_url(self):
+        return reverse('sales:pickup_detail', args=[self.id])
+
     def total_quantity(self):
-        return '{:.2f}'.format(sum(item.quantity for item in self.items.all()))
+        dt = defaultdict(float)
+        for item in self.items.all():
+            dt[item.unit] += float(item.quantity)
+        return {k: float(v) for k, v in dt.items()}
 
     def total_cost(self):
         return '{:.2f}'.format(sum(item.amount for item in self.cost.all()))

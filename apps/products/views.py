@@ -54,13 +54,13 @@ class OrderSlabListView(View):
     def get(self, request, **kwargs):
         cart = Cart(request)
         block_num = self.request.GET.get('block_num', None)
-        slab_ids = self.request.GET.get('slab_ids')
+        ids = self.request.GET.get('ids')
         object = Product.objects.get(block_num=block_num)
         if object.block_type == 'otw':
             ids_list = object.get_block_list()
         elif object.block_type == 'slab':
-            if slab_ids:
-                ids_list = object.get_slab_list(slab_ids=str_to_list(slab_ids),
+            if ids:
+                ids_list = object.get_slab_list(slab_ids=str_to_list(ids),
                                                 object_format=True)
             else:
                 ids_list = object.get_slab_list(object_format=True)
@@ -69,7 +69,7 @@ class OrderSlabListView(View):
             'slab_list': ids_list,
             'object': object,
             'slab_ids': cart.cart.get('slab_ids'),
-            # 'block_type': 1 if object.block_type == 'otw' else 0
+            'block_type': 1 if object.block_type == 'otw' else 0
         }
         return render(request, self.template_name, context)
 

@@ -220,22 +220,34 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         order_ids = self.get_order_item_can_pickup_ids()
         cart.cart['can_pickup_block_ids'], \
         cart.cart['can_pickup_slab_ids'] = order_ids['block_ids'], order_ids['slab_ids']
-        cart.cart['first_status'] = [1]
+        cart.cart['first_status'] = [1]  # 下标志
         cart.save()
         ids = []
         for item in self.object.items.all():
             if item.thickness == '荒料':
                 ids.append(str(item.block_num))
         cart.cart['current_order_block_ids'] = ids if ids else []
-        kwargs['can_pickup_item_list'] = cart.make_items_list(key='can_pickup')
-        kwargs['item_list'] = self.object.items.all()
+
+        can_pickup_item_list = cart.make_items_list(key='can_pickup')
+        kwargs['can_pickup_item_list'] = can_pickup_item_list
+        can_pickup_dt = defaultdict(float)
+        for item in can_pickup_item_list:
+            can_pickup_dt[item['unit']] += float(item['quantity'])
+        kwargs['can_pickup_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in
+                                               can_pickup_dt.items()}
+
+        item_list = self.object.items.all()
+        items = self.get_cart().make_items_list(key='current_order')
+        kwargs['item_list'] = zip(item_list, items)
         kwargs['total_amount'] = '{:.0f}'.format(
-            sum(Decimal(item.sum) for item in self.object.items.all()))
+            sum(Decimal(item.sum) for item in item_list))
         kwargs['total_count'] = self.object.items.all().count()
-        kwargs['total_pic'] = sum(int(item.pic) for item in self.object.items.all())
-        kwargs['total_part'] = sum(int(item.part) for item in self.object.items.all() if item.part)
-        kwargs['total_quantity'] = '{:.2f}'.format(
-            sum(Decimal(item.quantity) for item in self.object.items.all()))
+        kwargs['total_pic'] = sum(int(item.pic) for item in item_list)
+        kwargs['total_part'] = sum(int(item.part) for item in item_list if item.part)
+        item_dt = defaultdict(float)
+        for item in item_list:
+            item_dt[item.unit] += float(item.quantity)
+        kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in item_dt.items()}
         kwargs['already_pickup_list'] = self.object.pickup.all()
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
@@ -673,6 +685,7 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
         else:
             return False
 
+
 class ImportView(FormView):
     """
     导入省份，城市数据
@@ -701,3 +714,28 @@ def get_city_info(request):
     city_lst = [{'id': city.id, 'name': city.name} for city in \
                 City.objects.filter(father_id=father_id).all()]
     return JsonResponse(city_lst, safe=False)
+
+
+class PickupDetailView(DetailView):
+    model = SalesOrderPickUp
+
+    def get_context_data(self, **kwargs):
+        item_list = self.object.items.all()
+        kwargs['item_list'] = item_list
+        dt = defaultdict(float)
+        for item in item_list:
+            dt[item.unit] += float(item.quantity)
+        kwargs['item_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
+        kwargs['item_total_count'] = len(item_list)
+
+        cost_list = self.object.cost.all()
+        kwargs['cost_list'] = cost_list
+        kwargs['total_cost'] = self.object.total_cost()
+        kwargs['cost_count'] = len(cost_list)
+        return kwargs
+
+
+class PickUpDeleteView(DeleteView):
+    model = SalesOrderPickUp
+    template_name = 'process/serviceprovider_confirm_delete.html'
+    success_url = '/sales/order/'
