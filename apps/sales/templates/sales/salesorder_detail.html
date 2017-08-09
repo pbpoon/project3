@@ -110,7 +110,7 @@
         </div>
     </div>
     {% if can_pickup_item_list %}
-        <div class="panel panel-default">
+        <div class="panel panel-info">
             <div class="panel-heading">
                 <h3 class="panel-title">可提货数量 <a class="btn btn-link" href=
                         "{% url 'sales:pickup_create' object.id %}">
@@ -184,7 +184,7 @@
         </div>
     {% endif %}
     {% if already_pickup_list %}
-        <div class="panel panel-default">
+        <div class="panel panel-danger">
             <div class="panel-heading">
                 <h3 class="panel-title">已提货记录
                 </h3>

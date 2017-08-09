@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block main %}
+    <h2 class="page-header">删除资料</h2>
+    <form action="" method="post">{% csrf_token %}
+        <p>你确定要删除提货单 "{{ object }}"?</p>
+        <ul>
+            <li>共有提货数量:{% for unit, quantity in object.total_quantity.items %}{{ quantity }}
+                {{ unit }}<br>{% endfor %}</li>
+            <li>共花费：{{ object.total_cost }}</li>
+        </ul>
+        <input type="submit" value="继续"/>
+    </form>
+
+{% endblock %}

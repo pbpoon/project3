@@ -41,7 +41,7 @@ class PickUpOrderInfoMixin:
         block_ids = []
         for slab_list in self.get_sales_order().slab_list.all():
             for slab in slab_list.item.all():
-                if not slab.slab.is_pickup:
+                if not slab.slab.has_pickup:
                     slab_ids.append(str(slab.slab.id))
 
         for item in self.get_sales_order().items.all():
@@ -123,7 +123,10 @@ class VerifyMixin(object):
                     slab.is_sell = False
                     slab.save()
         self.order.status = 'M'
-        self.order.ps += f'该订单由{self.request.user}于{datetime.now()}撤销审核!'
+        if self.order.ps is None:
+            self.order.ps = f'该订单由{self.request.user}于{datetime.now()}撤销审核!'
+        else:
+            self.order.ps += f'该订单由{self.request.user}于{datetime.now()}撤销审核!'
         self.order.verifier = None
         self.order.verify_date = None
         self.order.save()
@@ -737,5 +740,8 @@ class PickupDetailView(DetailView):
 
 class PickUpDeleteView(DeleteView):
     model = SalesOrderPickUp
-    template_name = 'process/serviceprovider_confirm_delete.html'
     success_url = '/sales/order/'
+
+    # def delete(self, request, *args, **kwargs):
+    #     self.object = self.get_object()
+    #     SlabList.objects.get_for_

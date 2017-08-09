@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from decimal import Decimal
 from django.shortcuts import reverse
 from process.models import ServiceProvider
+from sales.models import SalesOrder
 
 BLOCK_TYPE_CHOICES = (('block', '荒料'), ('coarse', '毛板'), ('slab', '板材'))
 UNIT_CHOICES = (
@@ -224,7 +225,9 @@ class Slab(models.Model):
     is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
     #
     # def _get_sell(self):
-    #     for sales in self.block_num.sale.all():
+    #     allows_status_sales_order_list = SalesOrder.objects.filter(status__in=('V', 'F')).all()
+    #     all_slab_ids = ()
+    #     if self.slab_list_items.filter(slablist__content_type__model='salesorder').exists():
     #         for sale in sales:
     #             if sale.order.status in ('V', 'F'):
     #                 return True
@@ -241,15 +244,13 @@ class Slab(models.Model):
     #         return False
     # is_sell = property(_get_sell)
     #
-    # def _get_pickup(self):
-    #     for sales in self.block_num.sale.all():
-    #         for sale in sales:
-    #             if sale.order.status in ('V', 'F'):
-    #                 return True
-    #     else:
-    #         return False
-    #
-    # is_sell = property(_get_sell)
+    def _get_pickup(self):
+        if self.slab_list_items.filter(slablist__content_type__model='salesorderpickup').exists():
+            return True
+        else:
+            return False
+
+    has_pickup = property(_get_pickup)
 
     class Meta:
         verbose_name = '码单'

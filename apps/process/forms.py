@@ -7,7 +7,6 @@ from .models import ProcessOrder, TSOrderItem, MBOrderItem, KSOrderItem, \
     STOrderItem, SlabList, SlabListItem
 from products.models import Product, Slab
 from products.forms import SlabForm
-from crispy_forms.helper import FormHelper
 
 
 class ProcessOrderForm(forms.ModelForm):
@@ -21,9 +20,6 @@ class ProcessOrderForm(forms.ModelForm):
             'status': forms.TextInput(attrs={'readonly': True}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super(ProcessOrderForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
 
 
 def block_num_choice():

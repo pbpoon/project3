@@ -99,8 +99,7 @@ class SalesOrder(models.Model):
     city = models.ForeignKey('City', verbose_name='城市')
     date = models.DateField('订单日期', db_index=True)
     handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
-    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry',
-                                         verbose_name='数据录入人')
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
@@ -226,6 +225,7 @@ class SalesOrderPickUp(models.Model):
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
+    slab_list = GenericRelation('process.SlabList')
 
     class Meta:
         verbose_name = '销售提货单'

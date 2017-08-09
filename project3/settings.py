@@ -45,10 +45,10 @@ INSTALLED_APPS = [
     'django_forms_bootstrap',
     'cart',
     'sales',
-    'jquery',
-    'djangoformsetjs',
-    'import_export',#导入导出数据功能
-    'crispy_forms'
+    # 'jquery',
+    # 'djangoformsetjs',
+    # 'import_export',#导入导出数据功能
+    # 'crispy_forms'
 ]
 
 MIDDLEWARE = [

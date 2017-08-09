@@ -1,12 +1,5 @@
 from django.contrib import admin
 from .models import PurchaseOrder, PurchaseOrderItem, Supplier, ImportOrder, ImportOrderItem, PaymentHistory
-from import_export.admin import ImportExportModelAdmin
-from import_export import resources, fields
-
-
-@admin.register(PurchaseOrderItem)
-class PuchaseOrderItemAdmin(ImportExportModelAdmin):
-    pass
 
 
 class PuchaserOrderItemInline(admin.TabularInline):
