@@ -31,18 +31,11 @@ class SalesOrderForm(forms.ModelForm):
 
 
 class SalesOrderItemForm(forms.ModelForm):
-    # slab_list = forms.CharField(label='码单', max_length='2', initial='打开', widget=forms.TextInput(
-    #     attrs={'size': '2', 'class': 'btn btn-default open_slab_list', 'readonly': True, }))
-
-    # block_name = forms.CharField(label='荒料编号', widget=forms.TextInput(
-    #     attrs={'size': '5', 'list': "block_info",
-    #            'onchange': 'get_source(this.id)'}))
 
     class Meta:
         model = SalesOrderItem
         fields = '__all__'
         widgets = {
-            # 'block_name': forms.HiddenInput(),
             'block_num': forms.HiddenInput(),
             'part': forms.HiddenInput(),
             'pic': forms.HiddenInput(),

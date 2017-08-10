@@ -41,7 +41,7 @@
                     <table class="table">
                         <tr>
 
-                            <th>序号</th>
+                            <th>#</th>
                             <th>荒料编号</th>
                             <th>厚度</th>
                             <th>夹数</th>
@@ -99,6 +99,7 @@
                             <th>{{ total_pic }}</th>
                             <th>{% for unit, quantity in total_quantity.items %}
                                 {{ quantity }}{{ unit }}
+                                {% if forloop.last %}{% else %}<br>{% endif %}
                             {% endfor %}</th>
                             <th></th>
                             <th>{{ total_amount }}</th>
@@ -121,7 +122,7 @@
                         <table class="table">
                             <tr>
 
-                                <th>序号</th>
+                                <th>#</th>
                                 <th>荒料编号</th>
                                 <th>厚度</th>
                                 <th>夹数</th>
@@ -168,12 +169,13 @@
                             {% endfor %}
                             <tr>
                                 <th>总计：</th>
-                                <th>{{ total_count }}</th>
+                                <th>{{ can_pickup_total_count }}</th>
                                 <th></th>
-                                <th>{{ total_part }}</th>
-                                <th>{{ total_pic }}</th>
+                                <th>{{ can_pickup_total_part }}</th>
+                                <th>{{ can_pickup_total_pic }}</th>
                                 <th>{% for unit, quantity in can_pickup_total_quantity.items %}
-                                    {{ quantity }}{{ unit }}{% endfor %}</th>
+                                    {{ quantity }}{{ unit }}{% if forloop.last %}{% else %}<br>
+                                    {% endif %}{% endfor%}</th>
                                 <th></th>
                                 <th></th>
                             </tr>
@@ -191,7 +193,7 @@
                 <div class="panel-body">
                     <table class="table">
                         <tr>
-                            <th>序号</th>
+                            <th>#</th>
                             <th>日期</th>
                             <th>车牌</th>
                             <th>提货数量</th>

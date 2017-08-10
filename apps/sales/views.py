@@ -64,17 +64,15 @@ class PickUpOrderInfoMixin:
 
     def instance_cost_formset(self):
         if self.request.GET.get('next'):
-            formset = self._get_cost_formset_class()(data=self.request.GET,
-                                                     prefix='cost_fs',
-                                                     instance=self.object)
-        elif self.request.method in ('POST', 'PUT'):
-            formset = self._get_cost_formset_class()(data=self.request.POST,
-                                                     prefix='cost_fs',
-                                                     instance=self.object)
+            return self._get_cost_formset_class()(data=self.request.GET, prefix='cost_fs',
+                                                  instance=self.object)
+
         else:
-            formset = self._get_cost_formset_class()(instance=self.object,
-                                                     prefix='cost_fs')
-        return formset
+            if self.request.method in ('POST', 'PUT'):
+                return self._get_cost_formset_class()(data=self.request.POST, prefix='cost_fs',
+                                                      instance=self.object)
+
+            return self._get_cost_formset_class()(instance=self.object, prefix='cost_fs')
 
 
 class VerifyMixin(object):
@@ -219,25 +217,15 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
     def get_context_data(self, **kwargs):
         super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
-        order_ids = self.get_order_item_can_pickup_ids()
+        can_pickup_ids = self.get_order_item_can_pickup_ids()
         cart.cart['can_pickup_block_ids'], \
-        cart.cart['can_pickup_slab_ids'] = order_ids['block_ids'], order_ids['slab_ids']
+        cart.cart['can_pickup_slab_ids'] = can_pickup_ids['block_ids'], can_pickup_ids['slab_ids']
         cart.cart['first_status'] = [1]  # 下标志
         cart.save()
-        ids = []
-        for item in self.object.items.all():
-            if item.thickness == '荒料':
-                ids.append(str(item.block_num))
+        ids = [str(item.block_num) for item in self.object.items.all() if item.thickness == '荒料']
         cart.cart['current_order_block_ids'] = ids if ids else []
 
-        can_pickup_item_list = cart.make_items_list(key='can_pickup')
-        kwargs['can_pickup_item_list'] = can_pickup_item_list
-        can_pickup_dt = defaultdict(float)
-        for item in can_pickup_item_list:
-            can_pickup_dt[item['unit']] += float(item['quantity'])
-        kwargs['can_pickup_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in
-                                               can_pickup_dt.items()}
-
+        # 订单货品信息
         item_list = self.object.items.all()
         items = self.get_cart().make_items_list(key='current_order')
         kwargs['item_list'] = zip(item_list, items)
@@ -251,6 +239,22 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
             item_dt[item.unit] += float(item.quantity)
         kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in item_dt.items()}
         kwargs['already_pickup_list'] = self.object.pickup.all()
+
+        # 可提货相关
+        if can_pickup_ids:
+            can_pickup_item_list = cart.make_items_list(key='can_pickup')
+            kwargs['can_pickup_item_list'] = can_pickup_item_list
+            can_pickup_dt = defaultdict(float)
+            for item in can_pickup_item_list:
+                can_pickup_dt[item['unit']] += float(item['quantity'])
+            kwargs['can_pickup_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in
+                                                   can_pickup_dt.items()}
+            kwargs['can_pickup_total_count'] = len(can_pickup_item_list)
+            kwargs['can_pickup_total_part'] = sum(
+                int(item['part_count']) for item in can_pickup_item_list if item['part_count'])
+            kwargs['can_pickup_total_pic'] = sum(
+                int(item['block_pics']) for item in can_pickup_item_list)
+
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
     def get_sales_order(self):
@@ -278,29 +282,30 @@ class SalesOrderEditMixin:
         extra = 0 if self.object else \
             len(self.get_formset_kwargs())
         return inlineformset_factory(self.model, self.formset_model, form=self.formset_class,
-                                     extra=extra,
-                                     fields=self._get_formset_fields())
+                                     extra=extra, fields=self._get_formset_fields())
 
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
             self.get_cart().make_items_list()
 
     def get_formset(self):
+        if self.request.GET.get('next') or self.request.method in ('POST', 'PUT'):
+            return self.instance_formset()
+
         return self.make_formset_initial(self.instance_formset())
 
     def instance_formset(self):
         if self.request.GET.get('next'):
-            formset = self._get_formset_class()(data=self.request.GET,
-                                                prefix=self._get_formset_prefix(),
-                                                instance=self.object)
-        elif self.request.method in ('POST', 'PUT'):
-            formset = self._get_formset_class()(data=self.request.POST,
-                                                prefix=self._get_formset_prefix(),
-                                                instance=self.object)
+            return self._get_formset_class()(data=self.request.GET,
+                                             prefix=self._get_formset_prefix(),
+                                             instance=self.object)
         else:
-            formset = self._get_formset_class()(instance=self.object,
-                                                prefix=self._get_formset_prefix())
-        return formset
+            if self.request.method in ('POST', 'PUT'):
+                return self._get_formset_class()(data=self.request.POST,
+                                                 prefix=self._get_formset_prefix(),
+                                                 instance=self.object)
+            return self._get_formset_class()(instance=self.object,
+                                             prefix=self._get_formset_prefix())
 
     def make_formset_initial(self, formset):
         # new_key = {'part_count': 'part', 'block_pics': 'pic'}
