@@ -97,7 +97,7 @@ class Product(models.Model):
             quantity = {'quantity': self.weight, 'unit': cost_by}
         else:
             quantity = {'quantity': self.m3, 'unit': cost_by}
-        lst = {'block_num': self.block_num, 'thickness': '荒料', 'block_pics': 1, 'part_count': '',
+        lst = {'block_num': self.block_num, 'thickness': '荒料', 'block_pics': 1, 'part_count': 0,
                'ids': self.block_num}
         lst.update(quantity)
         return [lst]

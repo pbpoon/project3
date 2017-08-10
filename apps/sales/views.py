@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import date, datetime
 
+from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
@@ -10,8 +11,6 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
     TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.views.generic.detail import BaseDetailView, SingleObjectTemplateResponseMixin, \
-    SingleObjectMixin
 
 from cart.cart import Cart
 from process.forms import SlabListItemForm
@@ -24,7 +23,7 @@ from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPr
     PickUpItemForm
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
 
-from utils import AddExcelForm, ImportData
+from utils import AddExcelForm, ImportData, item2sales
 from decimal import Decimal
 
 
@@ -287,7 +286,7 @@ class SalesOrderEditMixin:
             self.get_cart().make_items_list()
 
     def get_formset(self):
-        return self.make_formset_initial()
+        return self.make_formset_initial(self.instance_formset())
 
     def instance_formset(self):
         if self.request.GET.get('next'):
@@ -303,13 +302,9 @@ class SalesOrderEditMixin:
                                                 prefix=self._get_formset_prefix())
         return formset
 
-    def make_formset_initial(self):
-        """
-        是这个mixin可以适应更多order的formset，不同的order只需要更改这里来适配
-        :param formset:
-        :return:
-        """
-        formset = self.instance_formset()
+    def make_formset_initial(self, formset):
+        # new_key = {'part_count': 'part', 'block_pics': 'pic'}
+
         for form, data in zip(formset, self.get_formset_kwargs()):
             data['block_num'] = Product.objects.get(block_num=data['block_num'])
             form.initial.update({
@@ -320,14 +315,10 @@ class SalesOrderEditMixin:
                 'unit': data['unit'],
                 'thickness': data['thickness']
             })
+        # formset.initial = item2sales(self.get_formset_kwargs(), new_key)
         return formset
 
     def formset_valid(self, instance=None, formset=None):
-        """
-        :param instance:
-        :param formset:
-        :return: 如果保存过程出错返回错误'errors'和formset，如果成功，返回False。可以用if formset_valid（）
-        """
         formset.instance = instance
         formset.save()
         errors = []
@@ -570,9 +561,9 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
     def make_items(self):
         all_can_pickup_items = self.get_cart().make_items_list(key='can_pickup')
         for item in all_can_pickup_items:
-            item['part_count'] = 0
-            item['block_pics'] = 0
-            item['quantity'] = 0
+            item['part_count'] = '0'
+            item['block_pics'] = '0'
+            item['quantity'] = '0'
             item['can_pickup'] = True
         choose_items = self.get_cart().make_items_list(key='current_order')
         choose_items_list = [(item['block_num'], item['thickness']) for item in choose_items]
@@ -644,14 +635,6 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
                     slablistform.save()
                 else:
                     errors.append(slablistform.errors)
-            for id in new_ids:
-                s = Slab.objects.get(id=id)
-                s.is_pickup = True
-                s.save()
-            for id in del_ids:
-                s = Slab.objects.get(id=id)
-                s.is_pickup = False
-                s.save()
             SlabListItem.objects.filter(slablist=slab_list, slab__in=del_ids).delete()
         else:
             """
@@ -669,9 +652,6 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
                 slablistform = SlabListItemForm(data=slab)
                 if slablistform.is_valid():
                     slablistform.save()
-                    s = Slab.objects.get(id=slab['slab'])
-                    s.is_pickup = True
-                    s.save()
                 else:
                     errors.append(slablistform.errors)
             """
@@ -740,8 +720,8 @@ class PickupDetailView(DetailView):
 
 class PickUpDeleteView(DeleteView):
     model = SalesOrderPickUp
-    success_url = '/sales/order/'
 
-    # def delete(self, request, *args, **kwargs):
-    #     self.object = self.get_object()
-    #     SlabList.objects.get_for_
+    def get_success_url(self):
+        self.success_url = reverse_lazy('sales:order_detail',
+                                        kwargs={'pk': self.get_object().order.id})
+        return self.success_url

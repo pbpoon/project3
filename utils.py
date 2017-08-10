@@ -117,7 +117,22 @@ class ImportData:
                 lst.append(item)
         return lst
 
+
 def default_decimal(obj):
     if isinstance(obj, Decimal):
         return float(obj)
     raise TypeError(f'{obj} is not JSON')
+
+
+def item2sales(lst, new_key):
+    result = []
+    for item in lst:
+        result_item = {}
+        for k, v in item.items():
+            if k in new_key:
+                result_item.update({new_key[k]: v})
+            else:
+                result_item.update({k: v})
+        result.append(result_item)
+
+    return result
