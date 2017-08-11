@@ -1,0 +1,6 @@
+{% extends 'sales/customerinfo_list.html' %}
+{% block title %}账户信息{% endblock %}
+
+{% block sidebar %}
+    <a href="{% url 'sales:account_create' %}">新建账户信息</a>
+{% endblock %}

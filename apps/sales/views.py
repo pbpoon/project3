@@ -18,7 +18,7 @@ from process.models import SlabList, SlabListItem
 from process.views import SaveCurrentOrderSlabsMixin
 from products.models import Product, Slab
 from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem, SalesOrderPickUp, \
-    SalesOrderPickUpItem, SalesOrderPickUpCost
+    SalesOrderPickUpItem, SalesOrderPickUpCost, ProceedsAccount, SalesProceeds
 from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPriceForm, \
     PickUpItemForm
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
@@ -27,23 +27,25 @@ from utils import AddExcelForm, ImportData, item2sales
 from decimal import Decimal
 
 
-class PickUpOrderInfoMixin:
-    def get_sales_order(self):
+class GetAnotherOrderMixin(object):
+    def get_another_order(self):
         try:
-            salesorder = SalesOrder.objects.get(pk=self.kwargs.get('salesorder'))
-            return salesorder
+            another_order = SalesOrder.objects.get(pk=self.kwargs.get('another_order'))
+            return another_order
         except Exception as e:
             raise ValueError('没有输入正确的order')
 
+
+class PickUpOrderInfoMixin(GetAnotherOrderMixin):
     def get_order_item_can_pickup_ids(self):
         slab_ids = []
         block_ids = []
-        for slab_list in self.get_sales_order().slab_list.all():
+        for slab_list in self.get_another_order().slab_list.all():
             for slab in slab_list.item.all():
                 if not slab.slab.has_pickup:
                     slab_ids.append(str(slab.slab.id))
 
-        for item in self.get_sales_order().items.all():
+        for item in self.get_another_order().items.all():
             if item.thickness == '荒料':
                 if not Product.objects.get(block_num=item.block_num).pickup_item.exists():
                     block_ids.append(Product.objects.get(block_num=item.block_num).block_num)
@@ -229,8 +231,9 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         item_list = self.object.items.all()
         items = self.get_cart().make_items_list(key='current_order')
         kwargs['item_list'] = zip(item_list, items)
-        kwargs['total_amount'] = '{:.0f}'.format(
-            sum(Decimal(item.sum) for item in item_list))
+        # kwargs['amount'] = '{:.0f}'.format(
+        #     sum(Decimal(item.sum) for item in item_list))
+
         kwargs['total_count'] = self.object.items.all().count()
         kwargs['total_pic'] = sum(int(item.pic) for item in item_list)
         kwargs['total_part'] = sum(int(item.part) for item in item_list if item.part)
@@ -255,9 +258,12 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
             kwargs['can_pickup_total_pic'] = sum(
                 int(item['block_pics']) for item in can_pickup_item_list)
 
+        # 收款相关
+        kwargs['proceeds_list'] = self.object.proceeds.all()
+
         return super(SalesOrderDetailView, self).get_context_data(**kwargs)
 
-    def get_sales_order(self):
+    def get_another_order(self):
         return self.object
 
 
@@ -499,7 +505,7 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSa
         elif step == '1':
             kwargs['step'] = '2'
             cd = price_formset.cleaned_data
-            kwargs['total_amount'] = '{:.0f}'.format(
+            kwargs['amount'] = '{:.0f}'.format(
                 sum(item['quantity'] * item['price'] for item in cd))
         return super(SalesOrderCreateView, self).get_context_data(**kwargs)
 
@@ -585,7 +591,7 @@ class PickUpCreateView(LoginRequiredMixin, PickUpOrderInfoMixin, SalesOrderEditM
             sid = transaction.savepoint()
             instance = form.save(commit=False)
             instance.data_entry_staff = self.request.user
-            instance.order = self.get_sales_order()
+            instance.order = self.get_another_order()
             instance.save()
             if formset.is_valid():
                 formset_error = self.formset_valid(instance, formset)
@@ -730,3 +736,60 @@ class PickUpDeleteView(DeleteView):
         self.success_url = reverse_lazy('sales:order_detail',
                                         kwargs={'pk': self.get_object().order.id})
         return self.success_url
+
+
+class ProceedsAccountListView(ListView):
+    model = ProceedsAccount
+
+
+class ProceedsAccountDetailView(DetailView):
+    model = ProceedsAccount
+
+
+class ProceedsAccountCreateView(CreateView):
+    model = ProceedsAccount
+    fields = '__all__'
+    template_name = 'sales/customerinfo_form.html'
+
+
+class ProceedsAccountUpdateView(UpdateView):
+    model = ProceedsAccount
+    fields = '__all__'
+    template_name = 'sales/customerinfo_form.html'
+
+
+class SalesProceedsListView(ListView):
+    model = SalesProceeds
+
+
+class SalesProceedsDetailView(GetAnotherOrderMixin, DetailView):
+    model = SalesProceeds
+
+    def get_context_data(self, **kwargs):
+        context = super(SalesProceedsDetailView, self).get_context_data(**kwargs)
+        context['order'] = self.object.order
+        return context
+
+
+class SalesProceedsCreateView(GetAnotherOrderMixin, CreateView):
+    model = SalesProceeds
+    fields = ('amount', 'date', 'account', 'method', 'type', 'ps')
+
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        instance.order = self.get_another_order()
+        instance.data_entry_staff = self.request.user
+        instance.save()
+        return super(SalesProceedsCreateView, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super(SalesProceedsCreateView, self).get_context_data(**kwargs)
+        context['order'] = self.get_another_order()
+        return context
+
+
+class SalesProceedsDeleteView(DeleteView):
+    model = SalesProceeds
+
+    def get_success_url(self):
+        return reverse_lazy('sales:order_detail', kwargs={'pk': self.object.order.id})

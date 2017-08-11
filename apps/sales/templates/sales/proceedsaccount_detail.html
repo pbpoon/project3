@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}{{ object }}信息{% endblock %}
+{% block jumbotron %}{{ object }}{% endblock %}
+{% block main %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">账户信息</h3>
+            <div class="panel-body">
+                <ul>
+                    <li>账户名称:{{ object.name }}</li>
+                    <li>银行名称:{{ object.bank_name }}</li>
+                    <li>创建日期:{{ object.created }}</li>
+                    <li>更新日期:{{ object.updated }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

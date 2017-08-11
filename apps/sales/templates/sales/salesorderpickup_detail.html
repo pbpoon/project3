@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load sales_tags %}
 {% block title %}{{ object }}{% endblock %}
 {% block jumbotron %}
     <h2 class="page-header"><a href="{{ object.order.get_absolute_url }}">{{ object.order }}</a>
@@ -203,6 +204,7 @@
     {% endif %}
 {% endblock %}
 {% block sidebar %}
+    {% about_this_order object.order.id %}
     <form action="" method="post">
         {% if object.status in 'NM' %}
             <input type="submit" name="verify" value="审核订单">

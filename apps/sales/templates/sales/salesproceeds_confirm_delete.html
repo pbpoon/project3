@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block main %}
+    <h2 class="page-header">删除资料</h2>
+    <form action="" method="post">{% csrf_token %}
+        <p>你确定要删除提货单 "{{ object }}"?</p>
+        <ul>
+                <li>支付日期:{{ object.date }}</li>
+                <li>金额： <h4><span class="label label-success">￥{{ object.amount}}</span></h4></li>
+                <li>款项类型:{{ object.get_type_display }}</li>
+                <li>支付方式:{{ object.get_method_display }}</li>
+                <li>收款账户:{{ object.account }}</li>
+                <li>备注信息:{{ object.ps }}</li>
+                <li>数据录入：{{ object.data_entry_staff }}</li>
+                <li>创建日期:{{ object.created }}</li>
+                <li>更新日期:{{ object.updated }}</li>
+            </ul>
+        <input class="btn btn-danger" type="submit" value="确认删除"/>
+    </form>
+
+{% endblock %}

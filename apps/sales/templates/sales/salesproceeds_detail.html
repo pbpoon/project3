@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load sales_tags %}
+{% block main %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">订单信息</h3></div>
+        <div class="panel-body">
+            <ul>
+                <li>订单号：<a href="{{ order.get_absolute_url }}">{{ order }}</a></li>
+                <li>客户:{{ order.customer }}/销往：{{ order.province }}-{{ order.city }}</li>
+                <li>共有：{{ order.items.all|length }}项，数量：
+                    {% for unit, quantity in order.get_total_quantity.items %}
+                        {{ quantity }}{{ unit }}
+                        {% if not forloop.last %}/
+                        {% endif %}{% endfor %}</li>
+                <li>订单总款：<h4><span class="label label-success">￥{{ order.amount }}</span></h4></li>
+                <li>未收货款：<h4><span class="label label-danger">￥{{ order.balance }}</span></h4></li>
+            </ul>
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                详细收款信息
+            </h3>
+        </div>
+        <div class="panel-body">
+            <ul>
+                <li>支付日期:{{ object.date }}</li>
+                <li>金额： <h4><span class="label label-success">￥{{ object.amount}}</span></h4></li>
+                <li>款项类型:{{ object.get_type_display }}</li>
+                <li>支付方式:{{ object.get_method_display }}</li>
+                <li>收款账户:{{ object.account }}</li>
+                <li>备注信息:{{ object.ps }}</li>
+                <li>数据录入：{{ object.data_entry_staff }}</li>
+                <li>创建日期:{{ object.created }}</li>
+                <li>更新日期:{{ object.updated }}</li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+{% block sidebar %}
+    {% about_this_order object.order.id %}
+    <a class="btn btn-danger" href="{% url 'sales:proceeds_delete' object.id %}">删除本笔记录</a>
+{% endblock %}

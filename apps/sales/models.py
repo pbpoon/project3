@@ -156,7 +156,16 @@ class SalesOrder(models.Model):
     def _get_total_amount(self):
         return '{:.2f}'.format(sum(Decimal(item.sum) for item in self.items.all()))
 
-    total_amount = property(_get_total_amount)
+    amount = property(_get_total_amount)
+
+    def _get_total_proceeds(self):
+        return '{:.2f}'.format(sum(Decimal(item.amount) for item in self.proceeds.all()))
+    proceeds = property(_get_total_proceeds)
+
+    def _get_balance(self):
+        return '{:.2f}'.format(Decimal(self._get_total_amount())-Decimal(self._get_total_proceeds()))
+
+    balance = property(_get_balance)
 
 
 class SalesOrderItem(models.Model):
@@ -185,7 +194,8 @@ class SalesProceeds(models.Model):
     amount = models.DecimalField('金额', max_digits=9, decimal_places=0)
     type = models.CharField('款项类型', max_length=1, choices=SALES_PROCEEDS_TYPE, default='g')
     method = models.CharField('支付方式', choices=SALES_PROCEEDS_METHOD, max_length=1)
-    account = models.ForeignKey('ProceedsAccount', on_delete=models.SET_NULL, null=True, blank=True)
+    account = models.ForeignKey('ProceedsAccount', on_delete=models.SET_NULL, null=True, blank=True,
+                                verbose_name='收款账户')
     date = models.DateField('支付日期', db_index=True)
     data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
@@ -197,11 +207,14 @@ class SalesProceeds(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return '[{}]:{}'.format(self.sales_order, self.amount)
+        return '[{}]:{}'.format(self.order, self.amount)
+
+    def get_absolute_url(self):
+        return reverse('sales:proceeds_detail', args=[self.id])
 
 
 class ProceedsAccount(models.Model):
-    name = models.CharField('账户名称', max_length=20)
+    name = models.CharField('账户名称', max_length=20, unique=True)
     bank_name = models.CharField('银行名称', max_length=10)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
@@ -211,7 +224,10 @@ class ProceedsAccount(models.Model):
         verbose_name_plural = verbose_name
 
     def __str__(self):
-        return '{bank}-{name}'.format(self.bank_name, self.name)
+        return '{}-{}'.format(self.bank_name, self.name)
+
+    def get_absolute_url(self):
+        return reverse('sales:account_detail', args=[self.id])
 
 
 class SalesOrderPickUp(models.Model):
