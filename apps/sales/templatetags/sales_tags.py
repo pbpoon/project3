@@ -7,6 +7,9 @@ from ..models import SalesOrder
 register = template.Library()
 
 
-@register.inclusion_tag('sales/about_this_order.html')
-def about_this_order(order_id=None):
-    return {'order': SalesOrder.objects.get(pk=order_id)}
+@register.inclusion_tag('sales/about_this_order.html', takes_context=True)
+def about_this_order(context, order_id=None):
+    request = context['request']
+    order = SalesOrder.objects.get(pk=order_id)
+    goback = False if request.path == order.get_absolute_url() else True
+    return {'order': order, 'goback': goback}

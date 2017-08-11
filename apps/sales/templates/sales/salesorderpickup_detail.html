@@ -132,7 +132,7 @@
                                                data-toggle="dropdown" role="button"
                                                aria-haspopup="true"
                                                aria-expanded="false"><span
-                                                    class="btn btn-default btn-sm">操作</span><span
+                                                    class="btn btn-default btn-sm">...</span><span
                                                     class="caret"></span></a>
                                             <ul class="dropdown-menu">
                                                 <li><a
@@ -201,20 +201,11 @@
                 </div>
             </div>
         </div>
+
     {% endif %}
+    <a class="btn btn-danger" href="{% url 'sales:pickup_delete' object.id %}">删除本条提货记录</a>
 {% endblock %}
 {% block sidebar %}
     {% about_this_order object.order.id %}
-    <form action="" method="post">
-        {% if object.status in 'NM' %}
-            <input type="submit" name="verify" value="审核订单">
-        {% endif %}
-        {% ifequal object.status 'V' %}
-            <input type="submit" name="cancel" value="撤销审核">
-        {% endifequal %}
-        {% if object.status in 'VM' %}
-            <input type="submit" name="close" value="关闭订单">
-        {% endif %}
-        {% csrf_token %}
-    </form>
+
 {% endblock %}

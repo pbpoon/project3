@@ -6,29 +6,28 @@
         <small>{{ object.get_status_display }}</small>
     </h2>{% endblock %}
 {% block main %}
-
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">订单信息<a class="btn btn-link" href=
                     "{% url 'sales:order_update_info' object.id %}">
                 修改
-            </a></h3></div>
-        <div class="panel-body">
-            <ul>
-                <li>订单号:{{ object.order }}</li>
-                <li>日期:{{ object.date }}</li>
-                <li>客户名称: <a
-                        href="{{ object.customer.get_absolute_url }}">{{ object.customer }}</a>
-                </li>
-                <li>经办人:{{ object.handler }}</li>
-                <li>销往:{{ object.province }}-{{ object.city }}</li>
-                {% if object.verifier %}
-                    <li>审核人:{{ object.verifier }}</li>
-                    <li>审核日期:{{ object.verify_date }}</li>
-                {% endif %}
-                <li>备注信息:{{ object.ps }}</li>
-            </ul>
-
+            </a></h3>
+            <div class="panel-body">
+                <ul>
+                    <li>订单号:{{ object.order }}</li>
+                    <li>日期:{{ object.date }}</li>
+                    <li>客户名称: <a
+                            href="{{ object.customer.get_absolute_url }}">{{ object.customer }}</a>
+                    </li>
+                    <li>经办人:{{ object.handler }}</li>
+                    <li>销往:{{ object.province }}-{{ object.city }}</li>
+                    {% if object.verifier %}
+                        <li>审核人:{{ object.verifier }}</li>
+                        <li>审核日期:{{ object.verify_date }}</li>
+                    {% endif %}
+                    <li>备注信息:{{ object.ps }}</li>
+                </ul>
+            </div>
         </div>
     </div>
     <div class="panel panel-default">
@@ -42,8 +41,7 @@
             {% if item_list %}
                 <table class="table">
                     <tr>
-
-                        <th>#</th>
+                        <th width="11%">#</th>
                         <th>荒料编号</th>
                         <th>厚度</th>
                         <th>夹数</th>
@@ -94,7 +92,7 @@
                         </tr>
                     {% endfor %}
                     <tr>
-                        <th>总计：</th>
+                        <th width="11%">总计：</th>
                         <th>{{ total_count }}</th>
                         <th></th>
                         <th>{{ total_part }}</th>
@@ -126,7 +124,7 @@
                     <table class="table">
                         <tr>
 
-                            <th>#</th>
+                            <th width="11%">#</th>
                             <th>荒料编号</th>
                             <th>厚度</th>
                             <th>夹数</th>
@@ -172,7 +170,7 @@
                             </tr>
                         {% endfor %}
                         <tr>
-                            <th>总计：</th>
+                            <th width="11%">总计：</th>
                             <th>{{ can_pickup_total_count }}</th>
                             <th></th>
                             <th>{{ can_pickup_total_part }}</th>
@@ -180,7 +178,6 @@
                             <th>{% for unit, quantity in can_pickup_total_quantity.items %}
                                 {{ quantity }}{{ unit }}{% if forloop.last %}{% else %}<br>
                                 {% endif %}{% endfor %}</th>
-                            <th></th>
                             <th></th>
                         </tr>
                     </table>
@@ -198,7 +195,7 @@
             <div class="panel-body">
                 <table class="table">
                     <tr>
-                        <th>#</th>
+                        <th width="11%">#</th>
                         <th>日期</th>
                         <th>车牌</th>
                         <th>提货数量</th>
@@ -218,22 +215,7 @@
                             <td>{{ item.total_cost }}</td>
 
                             <td>
-                                <div class="dropdown">
-                                    <a href="#" data-target="#" class="dropdown-toggle"
-                                       data-toggle="dropdown" role="button"
-                                       aria-haspopup="true"
-                                       aria-expanded="false"><span
-                                            class="btn btn-default btn-sm">...</span><span
-                                            class="caret"></span></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a href="{{ item.get_absolute_url }}">打开</a>
-                                        </li>
-                                        <li role="separator" class="divider"></li>
-                                        <li>
-                                            <a href="{% url 'sales:pickup_delete' item.id %}">删除</a>
-                                        </li>
-                                    </ul>
-                                </div>
+                                <a href="{{ item.get_absolute_url }}">打开</a>
                             </td>
                         </tr>
 
@@ -251,7 +233,7 @@
             <div class="panel-body">
                 <table class="table">
                     <tr>
-                        <th>#</th>
+                        <th width="11%">#</th>
                         <th>日期</th>
                         <th>金额</th>
                         <th>支付方式</th>
@@ -278,7 +260,7 @@
     {% endif %}
 {% endblock %}
 {% block sidebar %}
-{% about_this_order object.id %}
+    {% about_this_order object.id %}
     <form action="" method="post">
         {% if object.status in 'NM' %}
             <input class="btn btn-primary" type="submit" name="verify" value="审核订单">

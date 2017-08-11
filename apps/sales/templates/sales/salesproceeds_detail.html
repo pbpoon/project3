@@ -38,8 +38,9 @@
             </ul>
         </div>
     </div>
+    <a class="btn btn-danger" href="{% url 'sales:proceeds_delete' object.id %}">删除本笔记录</a>
 {% endblock %}
 {% block sidebar %}
     {% about_this_order object.order.id %}
-    <a class="btn btn-danger" href="{% url 'sales:proceeds_delete' object.id %}">删除本笔记录</a>
+
 {% endblock %}
