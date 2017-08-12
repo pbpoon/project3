@@ -149,7 +149,6 @@ class Product(models.Model):
             return [{'type': '光板', 'quantity': quantity, 'unit': 'm2'},
                     {'type': '毛板', 'quantity': coarse_quantity, 'unit': 'm2'}]
         else:
-
             type = {'type': '运输中'}
             type.update(inventory)
             return [type]
@@ -223,6 +222,7 @@ class Slab(models.Model):
     is_sell = models.BooleanField(default=False, verbose_name=u'是否已售')
     is_booking = models.BooleanField(default=False, verbose_name=u'是否已定')
     is_pickup = models.BooleanField(default=False, verbose_name=u'是否已提货')
+
     #
     # def _get_sell(self):
     #     allows_status_sales_order_list = SalesOrder.objects.filter(status__in=('V', 'F')).all()
@@ -235,14 +235,22 @@ class Slab(models.Model):
     #         return False
     # is_sell = property(_get_sell)
     #
-    # def _get_booking(self):
-    #     for sales in self.block_num.sale.all():
-    #         for sale in sales:
-    #             if sale.order.status in ('N,V,F'):
-    #                 return True
-    #     else:
-    #         return False
-    # is_sell = property(_get_sell)
+    def _get_booking(self):
+        if self.slab_list_items.filter(slablist__content_type__model='salesorder').exists():
+            slablist = [slab.slablist for slab in self.slab_list_items.filter(
+                slablist__content_type__model='salesorder').all()]
+            for item in slablist:
+                if item.order.status != 'C':
+                    return True
+                    # for slab in salesorder_list:
+                    #     slab_list_model = ContentType.objects.get_for_model(slab.slablist)
+                    #     slab_list = slab.slablist.order
+                    #     if slab.slablist.order.status in ('N,V,F'):
+                    #         return True
+        return False
+
+    has_booking = property(_get_booking)
+
     #
     def _get_pickup(self):
         if self.slab_list_items.filter(slablist__content_type__model='salesorderpickup').exists():

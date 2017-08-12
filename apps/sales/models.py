@@ -110,6 +110,7 @@ class SalesOrder(models.Model):
     class Meta:
         verbose_name = '销售订单'
         verbose_name_plural = verbose_name
+        ordering = ('-status', '-order')
 
     def save(self, *args, **kwargs):
         # 格式为 1703001
@@ -163,6 +164,8 @@ class SalesOrder(models.Model):
     proceeds = property(_get_total_proceeds)
 
     def _get_balance(self):
+        if self.status == 'C':
+            return '0'
         return '{:.2f}'.format(Decimal(self._get_total_amount())-Decimal(self._get_total_proceeds()))
 
     balance = property(_get_balance)

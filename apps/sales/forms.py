@@ -19,9 +19,19 @@ class CustomerInfoForm(forms.ModelForm):
 
 
 class SalesOrderForm(forms.ModelForm):
+    # customer_name = forms.CharField(label='客户名称', max_length=11)
+
     class Meta:
         model = SalesOrder
-        exclude = ('verifier', 'verify_date')
+        fields = ('date', 'customer', 'province', 'city', 'handler', 'ps')
+        # exclude = ('verifier', 'verify_date', 'order', 'is_proceeds', 'status', 'data_entry_staff')
+        widgets = {
+            'date': forms.TextInput(attrs={'class': 'date'}),
+            'customer_name': forms.TextInput(
+                attrs={'onchange': 'get_customer()', 'datalist': 'customer'}),
+            # 'customer': forms.HiddenInput(),
+            'ps': forms.Textarea()
+        }
 
     def __init__(self, *args, **kwargs):
         super(SalesOrderForm, self).__init__(*args, **kwargs)
@@ -31,7 +41,6 @@ class SalesOrderForm(forms.ModelForm):
 
 
 class SalesOrderItemForm(forms.ModelForm):
-
     class Meta:
         model = SalesOrderItem
         fields = '__all__'

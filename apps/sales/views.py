@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import date, datetime
+from django.db.models import Q
 
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -34,6 +35,24 @@ class GetAnotherOrderMixin(object):
             return another_order
         except Exception as e:
             raise ValueError('没有输入正确的order')
+
+
+class LimitsMixin(object):
+    def get_context_data(self, **kwargs):
+        context = super(LimitsMixin, self).get_context_data(**kwargs)
+        type = self.get_order().status
+        is_proceeds = self.get_order().is_proceeds
+        limits = {
+            'pickup': False if type in 'CF' else True,
+            'proceeds': False if type in 'CF' else True,
+            'edit': True if type in 'NM' else False,
+            'close': False if type in 'CF' else True,
+            'verify': True if type in 'NM' else False,
+            'cancel': True if type == 'V' else False,
+            'finish': True if type == 'V' and is_proceeds else False,
+        }
+        context['limits'] = limits
+        return context
 
 
 class PickUpOrderInfoMixin(GetAnotherOrderMixin):
@@ -77,7 +96,7 @@ class PickUpOrderInfoMixin(GetAnotherOrderMixin):
             return self._get_cost_formset_class()(instance=self.object, prefix='cost_fs')
 
 
-class VerifyMixin(object):
+class VerifyMixin(LimitsMixin):
     model = None
 
     def post(self, request, *args, **kwargs):
@@ -97,8 +116,14 @@ class VerifyMixin(object):
         is_sell = []
         for list in self.order.slab_list.all():
             issell = set(item.slab.block_num.block_num for item in list.item.all() \
-                         if item.slab.is_sell or item.slab.is_booking)
+                         if item.slab.is_sell or item.slab.has_booking)
             is_sell.extend(issell)
+        for item in self.order.items.all():
+            if item.thickness == '荒料':
+                block = Product.objects.get(block_num=item.block_num)
+                k= block.sale.filter(~Q(order__status='C')).exclude(order__order=self.order.order).all()
+                if k:
+                    is_sell.append(str(item.block_num))
         if not is_sell:
             self.order.status = 'V'
             self.order.verifier = self.request.user
@@ -131,12 +156,27 @@ class VerifyMixin(object):
         self.order.save()
 
     def process_close(self):
-        if self.order.status == 'V':
+        if not self.order.pickup.exists():
             for list in self.order.slab_list.all():
                 for item in list.item.all():
                     slab = item.slab
                     slab.is_sell = False
+                    slab.is_booking = False
                     slab.save()
+            self.order.status = 'C'
+            self.order.save()
+            messages.success(self.request, '该订单已关闭！')
+        else:
+            pickup_count = self.order.pickup.all().count()
+            messages.error(self.request, f'该订单已有提货记录{pickup_count}条，不能关闭订单。如果真要关闭，请删除记录！')
+
+    def process_is_proceeds(self):
+        if self.request.POST.get('sure'):
+            self.order.is_proceeds = True
+            self.order.save()
+            messages.success(self.request, '本单已完成收款!')
+        else:
+            path = self.request.META.get('HTTP_REFERER')
 
     def check_status(self):
         type = self.get_operation_type()
@@ -231,9 +271,6 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         item_list = self.object.items.all()
         items = self.get_cart().make_items_list(key='current_order')
         kwargs['item_list'] = zip(item_list, items)
-        # kwargs['amount'] = '{:.0f}'.format(
-        #     sum(Decimal(item.sum) for item in item_list))
-
         kwargs['total_count'] = self.object.items.all().count()
         kwargs['total_pic'] = sum(int(item.pic) for item in item_list)
         kwargs['total_part'] = sum(int(item.part) for item in item_list if item.part)
@@ -411,7 +448,8 @@ class SalesOrderSaveMixin:
         formset = self.get_formset()
         with transaction.atomic():
             sid = transaction.savepoint()
-            form.data_entry_staff = self.request.user
+            instance = form.save(commit=False)
+            instance.data_entry_staff = self.request.user
             instance = form.save()
             if formset.is_valid():
                 formset_error = self.formset_valid(instance, formset)
@@ -486,6 +524,7 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSa
     def get_context_data(self, **kwargs):
         price_formset = self.get_formset()
         step = self.request.GET.get('step') or self.request.POST.get('step')
+        kwargs['customer_list'] = CustomerInfo.objects.all()
         kwargs['item_list'] = ""
         items = self.get_formset_kwargs()
         dt = defaultdict(float)

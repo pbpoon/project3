@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load bootstrap_tags %}
-{#{% load crispy_forms_tags %}#}
 
 {% block jumbotron %}
     <h2 class="page-header">{{ object.order }}
@@ -139,9 +138,16 @@
             {% csrf_token %}
         </form>
     {% endfor %}
+    <datalist id="customer_list">
+        {% for customer in customer_list %}
+            <option value="{{ customer }}"
+                    data-id="{{ customer.id }}"
+            data-province>{{ customer }}</option>
+        {% endfor %}
+    </datalist>
 {% endblock %}
 {% block sidebar %}
-    <input type="submit" class="btn btn-primary" value="提交" form="myformset">
+
     <div class="panel panel-info">
         <div class="panel-heading">
             <div class="panel-title">订单货品总览</div>
@@ -159,10 +165,14 @@
             </div>
         </div>
     </div>
-    <input type="submit" class="btn-primary" id="next"
+    {% ifequal step '2' %}
+    <input type="submit" class="btn btn-block btn-primary" value="提交" form="myformset">
+    {% else %}
+    <input type="submit" class="btn btn-block btn-info" id="next"
            onclick="check_price_form('{{ price_formset.prefix }}')" name="next" value="下一步"
            formmethod="get"
            form="myformset">
+    {% endifequal %}
 {% endblock %}
 {% block domready %}
     {#    <script>#}
@@ -202,5 +212,24 @@
             window.open('{% url 'product:open_search' %}', 'search', "menubar=yes,width=500," +
                 "height=700 ", "resizeable=yes")
         }
+
+        function get_customer() {
+            var id = 'id_customer_name';
+            var value = $('#' + id).val(); //输入的荒料编号
+            console.log(value);
+            var select = $('#customer_list').find('option[value="' + value + '"]')
+            //荒料对应的id
+            console.log(select.data('id'));
+
+            if (!select.data('id')) {
+                alert('荒料编号[' + value + '],不是本订单内容合法的编号，请检查！')
+                setfocus(id)
+            } else {
+                $('#' + block_num_id).val(select.data('id'))
+            }
+            set_quantity(id, select)
+        }
+        ;
+
     </script>
 {% endblock %}

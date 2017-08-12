@@ -225,7 +225,7 @@ class STOrderItem(OrderItemBaseModel):
 class SlabList(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    order = GenericForeignKey()
+    order = GenericForeignKey('content_type', 'object_id')
     data_entry_staff = models.ForeignKey(User, related_name='date_entry',
                                          verbose_name='数据录入人')
     created = models.DateTimeField(auto_now_add=True, verbose_name=u'添加日期')

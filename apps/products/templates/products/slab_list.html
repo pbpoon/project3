@@ -80,8 +80,8 @@
         <input type="hidden" name="path" value="{{ request.path }}">
         <input type="hidden" name="block_num" value="{{ object.block_num }}">
         <input type="hidden" name="thickness" value="{{ object.thickness }}">
-        <input type="hidden" name="block" value="{% ifequal object.block_type '荒料' %}1
-        {% else %}0{% endifequal %}">
+        <input type="hidden" name="block" value="{% if block_type  %}1
+        {% else %}0{% endif %}">
         {% csrf_token %}
     </form>
 
