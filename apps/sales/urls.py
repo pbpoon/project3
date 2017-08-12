@@ -32,6 +32,8 @@ urlpatterns += [
         name='pickup_detail'),
     url(r'^order/pickup/delete/(?P<pk>\d+)/$', views.PickUpDeleteView.as_view(),
         name='pickup_delete'),
+url(r'^order/is_proceeds/(?P<pk>\d+)/$', views.CheckIsProceedsAjaxView.as_view(),
+        name='order_is_proceeds'),
 ]
 '''收款相关'''
 urlpatterns += [

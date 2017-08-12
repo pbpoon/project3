@@ -28,6 +28,11 @@ class Product(models.Model):
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
 
     # is_sell = models.BooleanField('是否已售', default=False)
+    def _get_booking(self):
+        if self.sale.exclude(order__status='C').exists():
+            return True
+        return False
+    has_booking = property(_get_booking)
 
     class Meta:
         verbose_name = '荒料信息'
@@ -240,6 +245,8 @@ class Slab(models.Model):
             slablist = [slab.slablist for slab in self.slab_list_items.filter(
                 slablist__content_type__model='salesorder').all()]
             for item in slablist:
+                if item.order is None:
+                    continue
                 if item.order.status != 'C':
                     return True
                     # for slab in salesorder_list:

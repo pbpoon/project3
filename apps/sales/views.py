@@ -8,6 +8,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, HttpResponse, redirect
 from django.http import JsonResponse
+from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, \
     TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -44,6 +45,7 @@ class LimitsMixin(object):
         is_proceeds = self.get_order().is_proceeds
         limits = {
             'pickup': False if type in 'CF' else True,
+            'is_proceeds': True if type in 'NVM' else False,
             'proceeds': False if type in 'CF' else True,
             'edit': True if type in 'NM' else False,
             'close': False if type in 'CF' else True,
@@ -102,9 +104,9 @@ class VerifyMixin(LimitsMixin):
     def post(self, request, *args, **kwargs):
         self.order = self.get_order()
         path = request.META.get('HTTP_REFERER')
-        type = self.get_operation_type()
+        self.type = self.get_operation_type()
         if self.check_status():
-            self._process_type(type)  # 以不同的状态处理
+            self._process_type(self.type)  # 以不同的状态处理
         else:
             messages.error(request, '该订单不能通过审核!')
         return redirect(path)
@@ -120,9 +122,8 @@ class VerifyMixin(LimitsMixin):
             is_sell.extend(issell)
         for item in self.order.items.all():
             if item.thickness == '荒料':
-                block = Product.objects.get(block_num=item.block_num)
-                k= block.sale.filter(~Q(order__status='C')).exclude(order__order=self.order.order).all()
-                if k:
+                if Product.objects.get(block_num=item.block_num).sale.exclude(
+                     order__status='C').exclude(order__order=self.order.order).exists():
                     is_sell.append(str(item.block_num))
         if not is_sell:
             self.order.status = 'V'
@@ -179,15 +180,16 @@ class VerifyMixin(LimitsMixin):
             path = self.request.META.get('HTTP_REFERER')
 
     def check_status(self):
-        type = self.get_operation_type()
-        if type == 'verify':
-            allow = ('N', 'M')
-        elif type == 'close':
-            allow = ('N', 'V', 'M')
-        elif type == 'finish':
-            allow = ('V',)
-        elif type == 'cancel':
-            allow = ('V',)
+        if self.type == 'verify':
+            allow = 'NM'
+        elif self.type == 'close':
+            allow = 'NVM'
+        elif self.type == 'finish':
+            allow = 'V'
+        elif self.type == 'cancel':
+            allow = 'V'
+        else:
+            allow = 'NVM'
         if self.order.status in allow:
             return True
         else:
@@ -213,8 +215,8 @@ class VerifyMixin(LimitsMixin):
             type = 'cancel'
         elif p.get('finish'):
             type = 'finish'
-        elif p.get('proceeds'):
-            type = 'proceeds'
+        elif p.get('is_proceeds'):
+            type = 'is_proceeds'
         return type
 
 
@@ -832,3 +834,12 @@ class SalesProceedsDeleteView(DeleteView):
 
     def get_success_url(self):
         return reverse_lazy('sales:order_detail', kwargs={'pk': self.object.order.id})
+
+
+class CheckIsProceedsAjaxView(View):
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('is_proceeds'):
+            print('OK')
+            return JsonResponse('ok')
+        else:
+            return JsonResponse('ko')

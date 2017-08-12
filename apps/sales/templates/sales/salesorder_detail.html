@@ -3,8 +3,11 @@
 {% block title %}{{ object }}{% endblock %}
 {% block jumbotron %}
     <h2 class="page-header">{{ object.order }}
-        <small>{{ object.get_status_display }}</small> <small><span class="glyphicon glyphicon-shopping-cart">{{ object.pickup_progress }}</span></small>
-        <small>{% if not object.is_proceeds %} <span class="glyphicon glyphicon-yen"></span>{% endif %}</small>
+        <small>{{ object.get_status_display }}</small>
+        <small><span class="glyphicon glyphicon-shopping-cart">{{ object.pickup_progress }}</span>
+        </small>
+        <small>{% if not object.is_proceeds %}
+            <span class="glyphicon glyphicon-yen"></span>{% endif %}</small>
     </h2>{% endblock %}
 {% block main %}
     <div class="panel panel-default">
@@ -38,113 +41,34 @@
                         "{% url 'sales:order_update_item' object.id %}">
                     修改
                 </a>{% endif %}</h3>
-        <div class="panel-body">
-            {% if item_list %}
-                <table class="table">
-                    <tr>
-                        <th width="11%">#</th>
-                        <th>荒料编号</th>
-                        <th>厚度</th>
-                        <th>夹数</th>
-                        <th>件数</th>
-                        <th>数量</th>
-                        <th>单价</th>
-                        <th>小计</th>
-                        <th>码单</th>
-
-                    </tr>
-
-                    {% for object,list in item_list %}
-                        <tr>
-                            <td>{{ forloop.counter }}</td>
-                            <td>
-                                <a href="{{ object.block_num.get_absolute_url }}">{{ object.block_num }}</a>
-                            </td>
-                            <td>{{ object.thickness }}</td>
-                            <td>{{ object.part }}</td>
-                            <td>{{ object.pic }}</td>
-                            <td>{{ object.quantity }}{{ object.unit }}</td>
-                            <td>{{ object.price }}</td>
-                            <td>{{ object.sum }}</td>
-                            <td>
-                                <div class="dropdown">
-                                    <a href="#" data-target="#" class="dropdown-toggle"
-                                       data-toggle="dropdown" role="button"
-                                       aria-haspopup="true"
-                                       aria-expanded="false"><span
-                                            class="btn btn-default btn-sm">...</span><span
-                                            class="caret"></span></a>
-                                    <ul class="dropdown-menu">
-                                        <li><a
-                                                href="{% url 'product:slab_list'  object.block_num %}">修改</a>
-                                        </li>
-                                        <li role="separator" class="divider"></li>
-                                        <li>
-                                            <button class="btn btn-info"
-                                                    onclick="gogo_slab_list('{{ list.block_num }}',
-                                                            '{{ list.thickness }}','{{ list.ids }}','{% url "product:order_slab_list" %}')">
-                                                新页面打开
-                                            </button>
-                                            <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    <tr>
-                        <th width="11%">总计：</th>
-                        <th>{{ total_count }}</th>
-                        <th></th>
-                        <th>{{ total_part }}</th>
-                        <th>{{ total_pic }}</th>
-                        <th>{% for unit, quantity in total_quantity.items %}
-                            {{ quantity }}{{ unit }}
-                            {% if forloop.last %}{% else %}<br>{% endif %}
-                        {% endfor %}</th>
-                        <th></th>
-                        <th>{{ object.amount }}</th>
-                        <th></th>
-                    </tr>
-                </table>
-            {% endif %}
-        </div>
-</div>
-    </div>
-    {% if can_pickup_item_list %}
-        {% if limits.pickup %}
-        <div class="panel panel-info">
-            <div class="panel-heading">
-                <h3 class="panel-title">可提货数量 <span
-                        class="badge">{{ can_pickup_item_list|length }}</span> {% if limits.pickup %}<a
-                        class="btn btn-link" href=
-                        "{% url 'sales:pickup_create' object.id %}">
-                    提货
-                </a>{% endif %}</h3></div>
             <div class="panel-body">
                 {% if item_list %}
                     <table class="table">
                         <tr>
-
                             <th width="11%">#</th>
                             <th>荒料编号</th>
                             <th>厚度</th>
                             <th>夹数</th>
                             <th>件数</th>
                             <th>数量</th>
+                            <th>单价</th>
+                            <th>小计</th>
                             <th>码单</th>
+
                         </tr>
 
-                        {% for object in can_pickup_item_list %}
+                        {% for object,list in item_list %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>
                                     <a href="{{ object.block_num.get_absolute_url }}">{{ object.block_num }}</a>
                                 </td>
                                 <td>{{ object.thickness }}</td>
-                                <td>{{ object.part_count }}</td>
-                                <td>{{ object.block_pics }}</td>
+                                <td>{{ object.part }}</td>
+                                <td>{{ object.pic }}</td>
                                 <td>{{ object.quantity }}{{ object.unit }}</td>
+                                <td>{{ object.price }}</td>
+                                <td>{{ object.sum }}</td>
                                 <td>
                                     <div class="dropdown">
                                         <a href="#" data-target="#" class="dropdown-toggle"
@@ -160,8 +84,8 @@
                                             <li role="separator" class="divider"></li>
                                             <li>
                                                 <button class="btn btn-info"
-                                                        onclick="gogo_slab_list('{{ object.block_num }}',
-                                                                '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
+                                                        onclick="gogo_slab_list('{{ list.block_num }}',
+                                                                '{{ list.thickness }}','{{ list.ids }}','{% url "product:order_slab_list" %}')">
                                                     新页面打开
                                                 </button>
                                                 <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
@@ -173,21 +97,101 @@
                         {% endfor %}
                         <tr>
                             <th width="11%">总计：</th>
-                            <th>{{ can_pickup_total_count }}</th>
+                            <th>{{ total_count }}</th>
                             <th></th>
-                            <th>{{ can_pickup_total_part }}</th>
-                            <th>{{ can_pickup_total_pic }}</th>
-                            <th>{% for unit, quantity in can_pickup_total_quantity.items %}
-                                {{ quantity }}{{ unit }}{% if forloop.last %}{% else %}<br>
-                                {% endif %}{% endfor %}</th>
+                            <th>{{ total_part }}</th>
+                            <th>{{ total_pic }}</th>
+                            <th>{% for unit, quantity in total_quantity.items %}
+                                {{ quantity }}{{ unit }}
+                                {% if forloop.last %}{% else %}<br>{% endif %}
+                            {% endfor %}</th>
+                            <th></th>
+                            <th>{{ object.amount }}</th>
                             <th></th>
                         </tr>
                     </table>
                 {% endif %}
             </div>
-
         </div>
-    {% endif %}{% endif %}
+    </div>
+    {% if can_pickup_item_list %}
+        {% if limits.pickup %}
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <h3 class="panel-title">可提货数量 <span
+                            class="badge">{{ can_pickup_item_list|length }}</span>
+                        {% if limits.pickup %}<a
+                                class="btn btn-link" href=
+                                "{% url 'sales:pickup_create' object.id %}">
+                            提货
+                        </a>{% endif %}</h3></div>
+                <div class="panel-body">
+                    {% if item_list %}
+                        <table class="table">
+                            <tr>
+
+                                <th width="11%">#</th>
+                                <th>荒料编号</th>
+                                <th>厚度</th>
+                                <th>夹数</th>
+                                <th>件数</th>
+                                <th>数量</th>
+                                <th>码单</th>
+                            </tr>
+
+                            {% for object in can_pickup_item_list %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <a href="{{ object.block_num.get_absolute_url }}">{{ object.block_num }}</a>
+                                    </td>
+                                    <td>{{ object.thickness }}</td>
+                                    <td>{{ object.part_count }}</td>
+                                    <td>{{ object.block_pics }}</td>
+                                    <td>{{ object.quantity }}{{ object.unit }}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a href="#" data-target="#" class="dropdown-toggle"
+                                               data-toggle="dropdown" role="button"
+                                               aria-haspopup="true"
+                                               aria-expanded="false"><span
+                                                    class="btn btn-default btn-sm">...</span><span
+                                                    class="caret"></span></a>
+                                            <ul class="dropdown-menu">
+                                                <li><a
+                                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a>
+                                                </li>
+                                                <li role="separator" class="divider"></li>
+                                                <li>
+                                                    <button class="btn btn-info"
+                                                            onclick="gogo_slab_list('{{ object.block_num }}',
+                                                                    '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
+                                                        新页面打开
+                                                    </button>
+                                                    <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr>
+                                <th width="11%">总计：</th>
+                                <th>{{ can_pickup_total_count }}</th>
+                                <th></th>
+                                <th>{{ can_pickup_total_part }}</th>
+                                <th>{{ can_pickup_total_pic }}</th>
+                                <th>{% for unit, quantity in can_pickup_total_quantity.items %}
+                                    {{ quantity }}{{ unit }}{% if forloop.last %}{% else %}<br>
+                                    {% endif %}{% endfor %}</th>
+                                <th></th>
+                            </tr>
+                        </table>
+                    {% endif %}
+                </div>
+
+            </div>
+        {% endif %}{% endif %}
     {% if already_pickup_list %}
         <div class="panel panel-warning">
             <div class="panel-heading">
@@ -273,7 +277,30 @@
         {% if limits.close %}
             <input class="btn btn-danger" type="submit" name="close" value="关闭订单">
         {% endif %}
+        {% if limits.is_proceeds %}
+            <input class="btn btn-success" type="submit" name="is_proceeds" value="完成收款">
+        {% endif %}
         {% csrf_token %}
     </form>
-    {% if limits.proceeds %}<a class="btn btn-default" href="{% url 'sales:proceeds_create' object.id %}">登记收款</a>{% endif %}
+    <button onclick="is_proceeds()">完成收款</button>
+    {% if limits.proceeds %}
+        <a class="btn btn-default" href="{% url 'sales:proceeds_create' object.id %}">登记收款</a>
+    {% endif %}
+    <script>
+        function is_proceeds() {
+            $.ajax({
+                    type: "POST",
+                    url: "{% url 'sales:order_is_proceeds' object.id %}",
+                    data: {
+                        'is_proceeds': '1' // from form
+                    }
+                    ,
+                    success: function (data) {
+                        alert(data)
+                    }
+                }
+            )
+            ;
+        }
+    </script>
 {% endblock %}
