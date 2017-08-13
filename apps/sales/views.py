@@ -45,7 +45,7 @@ class LimitsMixin(object):
         is_proceeds = self.order.is_proceeds
         limits = {
             'pickup': False if type in 'CF' else True,
-            'is_proceeds': True if type in 'NVM' and not self.order.is_proceeds else False,
+            'is_proceeds': True if type in 'V' and not self.order.is_proceeds else False,
             'proceeds': False if type in 'CF' else True,
             'edit': True if type in 'NM' else False,
             'close': False if type in 'CF' else True,
@@ -279,7 +279,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
     model = SalesOrder
 
     def get_context_data(self, **kwargs):
-        context=super(SalesOrderDetailView, self).get_context_data(**kwargs)
+        context = super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
         can_pickup_ids = self.get_order_item_can_pickup_ids()
         cart.cart['can_pickup_block_ids'], \
@@ -310,7 +310,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
             for item in can_pickup_item_list:
                 can_pickup_dt[item['unit']] += float(item['quantity'])
             context['can_pickup_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in
-                                                   can_pickup_dt.items()}
+                                                    can_pickup_dt.items()}
             context['can_pickup_total_count'] = len(can_pickup_item_list)
             context['can_pickup_total_part'] = sum(
                 int(item['part_count']) for item in can_pickup_item_list if item['part_count'])
@@ -344,6 +344,7 @@ class SalesOrderEditMixin:
         return self.formset_prefix
 
     def _get_formset_class(self):
+        # extra = 0
         extra = 0 if self.object else \
             len(self.get_formset_kwargs())
         return inlineformset_factory(self.model, self.formset_model, form=self.formset_class,
@@ -367,8 +368,8 @@ class SalesOrderEditMixin:
         else:
             if self.request.method in ('POST', 'PUT'):
                 return self._get_formset_class()(data=self.request.POST,
-                                                 prefix=self._get_formset_prefix(),
-                                                 instance=self.object)
+                                                 prefix=self._get_formset_prefix(),)
+                                                 # instance=self.object)
             return self._get_formset_class()(instance=self.object,
                                              prefix=self._get_formset_prefix())
 
@@ -520,6 +521,11 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
         price_formset = self.get_formset()
         kwargs['item_list'] = list(zip(item_list, price_formset))
         kwargs['price_formset'] = price_formset
+        button_show = {
+            'next': False,
+            'submit': True,
+        }
+        kwargs['button_show'] = button_show
         return super(SalesOrderUpdateItemView, self).get_context_data(**kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -563,11 +569,17 @@ class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSa
             kwargs['item_list'] = list(zip(item_list, price_formset))
             kwargs['price_formset'] = price_formset
             kwargs['step'] = '1'
+            kwargs['button_show'] = {
+                'next': True,
+            }
         elif step == '1':
             kwargs['step'] = '2'
             cd = price_formset.cleaned_data
             kwargs['amount'] = '{:.0f}'.format(
                 sum(item['quantity'] * item['price'] for item in cd))
+            kwargs['button_show'] = {
+                'submit': True,
+            }
         return super(SalesOrderCreateView, self).get_context_data(**kwargs)
 
 

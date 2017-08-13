@@ -83,8 +83,7 @@
                                                 </li>
                                                 <li role="separator" class="divider"></li>
                                                 <li>
-                                                    <a class="btn btn-info"
-                                                       onclick="gogo_slab_list('{{ object.block_num }}',
+                                                    <a onclick="gogo_slab_list('{{ object.block_num }}',
                                                                '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
                                                         新页面打开
                                                     </a>
@@ -94,9 +93,10 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <input class="btn btn-danger btn-sm" type="submit"
-                                               form="remove_{{ forloop.counter }}"
-                                               value="删除">
+                                        {{ form.DELETE }}
+{#                                        <input class="btn btn-danger btn-sm" type="submit"#}
+{#                                               form="remove_{{ forloop.counter }}"#}
+{#                                               value="删除">#}
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -165,14 +165,16 @@
             </div>
         </div>
     </div>
-    {% ifequal step '2' %}
-    <input type="submit" class="btn btn-block btn-primary" value="提交" form="myformset">
-    {% else %}
+    {% if button_show.submit %}
+    <input type="submit" class="btn btn-block btn-primary" value="提交" form="myformset"
+         onclick="check_price_form('{{ price_formset.prefix }}')">
+    {% endif %}
+    {% if button_show.next %}
     <input type="submit" class="btn btn-block btn-info" id="next"
            onclick="check_price_form('{{ price_formset.prefix }}')" name="next" value="下一步"
            formmethod="get"
            form="myformset">
-    {% endifequal %}
+    {% endif %}
 {% endblock %}
 {% block domready %}
     {#    <script>#}

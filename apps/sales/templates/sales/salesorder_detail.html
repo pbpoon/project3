@@ -74,9 +74,7 @@
                                         <a href="#" data-target="#" class="dropdown-toggle"
                                            data-toggle="dropdown" role="button"
                                            aria-haspopup="true"
-                                           aria-expanded="false"><span
-                                                class="btn btn-default btn-sm">...</span><span
-                                                class="caret"></span></a>
+                                           aria-expanded="false"><span class="glyphicon glyphicon-option-horizontal"></span></a>
                                         <ul class="dropdown-menu">
                                             <li><a
                                                     href="{% url 'product:slab_list'  object.block_num %}">修改</a>
@@ -154,9 +152,8 @@
                                             <a href="#" data-target="#" class="dropdown-toggle"
                                                data-toggle="dropdown" role="button"
                                                aria-haspopup="true"
-                                               aria-expanded="false"><span
-                                                    class="btn btn-default btn-sm">...</span><span
-                                                    class="caret"></span></a>
+                                               aria-expanded="false"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+{#                                            <span class="caret"></span>#}
                                             <ul class="dropdown-menu">
                                                 <li><a
                                                         href="{% url 'product:slab_list'  object.block_num %}">修改</a>
@@ -165,7 +162,8 @@
                                                 <li>
                                                     <button class="btn btn-info"
                                                             onclick="gogo_slab_list('{{ object.block_num }}',
-                                                                    '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
+                                                                    '{{ object.thickness }}','{{ object.ids }}',
+                                                                    '{% url "product:order_slab_list" %}')">
                                                         新页面打开
                                                     </button>
                                                     <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
