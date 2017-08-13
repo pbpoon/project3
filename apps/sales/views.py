@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from django.db.models import Q
 
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponseRedirect
@@ -40,12 +40,12 @@ class GetAnotherOrderMixin(object):
 
 class LimitsMixin(object):
     def get_context_data(self, **kwargs):
-        context = super(LimitsMixin, self).get_context_data(**kwargs)
-        type = self.get_order().status
-        is_proceeds = self.get_order().is_proceeds
+        self.order = self.get_order()
+        type = self.order.status
+        is_proceeds = self.order.is_proceeds
         limits = {
             'pickup': False if type in 'CF' else True,
-            'is_proceeds': True if type in 'NVM' else False,
+            'is_proceeds': True if type in 'NVM' and not self.order.is_proceeds else False,
             'proceeds': False if type in 'CF' else True,
             'edit': True if type in 'NM' else False,
             'close': False if type in 'CF' else True,
@@ -53,8 +53,8 @@ class LimitsMixin(object):
             'cancel': True if type == 'V' else False,
             'finish': True if type == 'V' and is_proceeds else False,
         }
-        context['limits'] = limits
-        return context
+        kwargs['limits'] = limits
+        return kwargs
 
 
 class PickUpOrderInfoMixin(GetAnotherOrderMixin):
@@ -101,18 +101,36 @@ class PickUpOrderInfoMixin(GetAnotherOrderMixin):
 class VerifyMixin(LimitsMixin):
     model = None
 
+    def get_context_data(self, **kwargs):
+        self.order = self.get_order()
+        if self.order.status not in 'CF':
+            if self.order.finish:
+                self.order.status = 'F'
+                self.order.save()
+        is_proceeds = self.request.GET.get('is_proceeds')
+        if is_proceeds is not None:
+            extra_info = {
+                'show': True,
+                'info': f'本单还有余款：￥{ self.get_order().balance }未收。 是否确认完成收款？',
+                'done_button_name': 'is_proceeds',
+            }
+            kwargs['extra_info'] = extra_info
+        return super(VerifyMixin, self).get_context_data(**kwargs)
+
     def post(self, request, *args, **kwargs):
         self.order = self.get_order()
-        path = request.META.get('HTTP_REFERER')
+        self.path = request.META.get('HTTP_REFERER')
         self.type = self.get_operation_type()
         if self.check_status():
             self._process_type(self.type)  # 以不同的状态处理
         else:
             messages.error(request, '该订单不能通过审核!')
-        return redirect(path)
+        return redirect(self.path)
 
     def _process_type(self, type):
-        return getattr(self, f'process_{type}')()
+        if type is not None:
+            return getattr(self, f'process_{type}')()
+        self.path = reverse('sales:order_detail', kwargs={'pk': self.order.id})
 
     def process_verify(self):
         is_sell = []
@@ -123,7 +141,7 @@ class VerifyMixin(LimitsMixin):
         for item in self.order.items.all():
             if item.thickness == '荒料':
                 if Product.objects.get(block_num=item.block_num).sale.exclude(
-                     order__status='C').exclude(order__order=self.order.order).exists():
+                        order__status='C').exclude(order__order=self.order.order).exists():
                     is_sell.append(str(item.block_num))
         if not is_sell:
             self.order.status = 'V'
@@ -152,6 +170,7 @@ class VerifyMixin(LimitsMixin):
             self.order.ps = f'该订单由{self.request.user}于{datetime.now()}撤销审核!'
         else:
             self.order.ps += f'该订单由{self.request.user}于{datetime.now()}撤销审核!'
+        self.order.is_proceeds = False
         self.order.verifier = None
         self.order.verify_date = None
         self.order.save()
@@ -172,24 +191,23 @@ class VerifyMixin(LimitsMixin):
             messages.error(self.request, f'该订单已有提货记录{pickup_count}条，不能关闭订单。如果真要关闭，请删除记录！')
 
     def process_is_proceeds(self):
-        if self.request.POST.get('sure'):
+        if self.request.POST.get('is_proceeds'):
             self.order.is_proceeds = True
             self.order.save()
             messages.success(self.request, '本单已完成收款!')
-        else:
-            path = self.request.META.get('HTTP_REFERER')
+        self.path = reverse('sales:order_detail', kwargs={'pk': self.order.id})
 
     def check_status(self):
         if self.type == 'verify':
             allow = 'NM'
-        elif self.type == 'close':
+        elif self.type == 'close' or self.type == 'is_proceeds':
             allow = 'NVM'
         elif self.type == 'finish':
             allow = 'V'
         elif self.type == 'cancel':
             allow = 'V'
         else:
-            allow = 'NVM'
+            allow = 'NVMFC'
         if self.order.status in allow:
             return True
         else:
@@ -217,6 +235,8 @@ class VerifyMixin(LimitsMixin):
             type = 'finish'
         elif p.get('is_proceeds'):
             type = 'is_proceeds'
+        else:
+            type = None
         return type
 
 
@@ -259,7 +279,7 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
     model = SalesOrder
 
     def get_context_data(self, **kwargs):
-        super(SalesOrderDetailView, self).get_context_data(**kwargs)
+        context=super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
         can_pickup_ids = self.get_order_item_can_pickup_ids()
         cart.cart['can_pickup_block_ids'], \
@@ -272,35 +292,35 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         # 订单货品信息
         item_list = self.object.items.all()
         items = self.get_cart().make_items_list(key='current_order')
-        kwargs['item_list'] = zip(item_list, items)
-        kwargs['total_count'] = self.object.items.all().count()
-        kwargs['total_pic'] = sum(int(item.pic) for item in item_list)
-        kwargs['total_part'] = sum(int(item.part) for item in item_list if item.part)
+        context['item_list'] = zip(item_list, items)
+        context['total_count'] = self.object.items.all().count()
+        context['total_pic'] = sum(int(item.pic) for item in item_list)
+        context['total_part'] = sum(int(item.part) for item in item_list if item.part)
         item_dt = defaultdict(float)
         for item in item_list:
             item_dt[item.unit] += float(item.quantity)
-        kwargs['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in item_dt.items()}
-        kwargs['already_pickup_list'] = self.object.pickup.all()
+        context['total_quantity'] = {k: '{:.2f}'.format(v) for k, v in item_dt.items()}
+        context['already_pickup_list'] = self.object.pickup.all()
 
         # 可提货相关
         if can_pickup_ids:
             can_pickup_item_list = cart.make_items_list(key='can_pickup')
-            kwargs['can_pickup_item_list'] = can_pickup_item_list
+            context['can_pickup_item_list'] = can_pickup_item_list
             can_pickup_dt = defaultdict(float)
             for item in can_pickup_item_list:
                 can_pickup_dt[item['unit']] += float(item['quantity'])
-            kwargs['can_pickup_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in
+            context['can_pickup_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in
                                                    can_pickup_dt.items()}
-            kwargs['can_pickup_total_count'] = len(can_pickup_item_list)
-            kwargs['can_pickup_total_part'] = sum(
+            context['can_pickup_total_count'] = len(can_pickup_item_list)
+            context['can_pickup_total_part'] = sum(
                 int(item['part_count']) for item in can_pickup_item_list if item['part_count'])
-            kwargs['can_pickup_total_pic'] = sum(
+            context['can_pickup_total_pic'] = sum(
                 int(item['block_pics']) for item in can_pickup_item_list)
 
         # 收款相关
-        kwargs['proceeds_list'] = self.object.proceeds.all()
+        context['proceeds_list'] = self.object.proceeds.all()
 
-        return super(SalesOrderDetailView, self).get_context_data(**kwargs)
+        return context
 
     def get_another_order(self):
         return self.object

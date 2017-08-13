@@ -1,19 +1,24 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="container center-block">
-    <form action="" method="POST">
-        <input type="search" name="q">
-        <input type="submit" value="提交">
-    {% csrf_token %}
-    </form>
+    <div class="container">
+        <form class="center-block" style="width: 200px" action="" method="POST">
+            <div class="input-group">
+                <input type="search" name="q" class="form-control" placeholder="Search for...">
+                <span class="input-group-btn">
+        <input type="submit" class="btn btn-default" value="搜索">
+      </span>
+            </div><!-- /input-group -->
+            {% csrf_token %}
+        </form>
     </div>
     {% if object_list %}
         <div class="list-group">
             {% for object in object_list %}
                 <div class="list-group-item"><a href="{{ object.get_absolute_url }}">
                     {{ object }}</a>
-                    <a  onclick="gogo_slab_list('{{ object.block_num }}','{{ object.thickness }}','{% url "product:order_slab_list" %}')">在新的页面打开</a></div>
+                    <a onclick="gogo_slab_list('{{ object.block_num }}','{{ object.thickness }}','{{ object.ids }}','{% url "product:order_slab_list" %}')">在新的页面打开</a>
+                </div>
             {% endfor %}
         </div>
     {% endif %}

@@ -170,6 +170,13 @@ class SalesOrder(models.Model):
 
     balance = property(_get_balance)
 
+    def _check_finish(self):
+        if self.is_proceeds:
+            if self.pickup_progress == '100.0%':
+                return True
+        return False
+    finish = property(_check_finish)
+
 
 class SalesOrderItem(models.Model):
     block_num = models.ForeignKey('products.Product', related_name='sale', verbose_name='荒料编号')

@@ -6,7 +6,7 @@
         <small>{{ object.get_status_display }}</small>
         <small><span class="glyphicon glyphicon-shopping-cart">{{ object.pickup_progress }}</span>
         </small>
-        <small>{% if not object.is_proceeds %}
+        <small>{% if object.is_proceeds %}
             <span class="glyphicon glyphicon-yen"></span>{% endif %}</small>
     </h2>{% endblock %}
 {% block main %}
@@ -267,7 +267,22 @@
 {% endblock %}
 {% block sidebar %}
     {% about_this_order object.id %}
-    <form action="" method="post">
+    {% if extra_info %}
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+                <div class="panel-body">
+                    {{ extra_info.info }}
+                    {% if extra_info.show %}
+                        <input form="verify" class="btn btn-danger"  type="submit"
+                               name="{{ extra_info.done_button_name }}" value="是">
+                    {% endif %}
+                    <input form="verify" class="btn btn-default" type="submit"
+                           name="no" value="否">
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <form action="" method="post" id="verify">
         {% if limits.verify %}
             <input class="btn btn-primary" type="submit" name="verify" value="审核订单">
         {% endif %}
@@ -278,11 +293,11 @@
             <input class="btn btn-danger" type="submit" name="close" value="关闭订单">
         {% endif %}
         {% if limits.is_proceeds %}
-            <input class="btn btn-success" type="submit" name="is_proceeds" value="完成收款">
+            <input class="btn btn-success" formmethod="get" type="submit" name="is_proceeds"
+                   value="完成收款">
         {% endif %}
         {% csrf_token %}
     </form>
-    <button onclick="is_proceeds()">完成收款</button>
     {% if limits.proceeds %}
         <a class="btn btn-default" href="{% url 'sales:proceeds_create' object.id %}">登记收款</a>
     {% endif %}
