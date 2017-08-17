@@ -84,7 +84,7 @@
                                                 <li role="separator" class="divider"></li>
                                                 <li>
                                                     <a onclick="gogo_slab_list('{{ object.block_num }}',
-                                                               '{{ object.thickness }}','{% url "product:order_slab_list" %}')">
+                                                               '{{ object.thickness }}','{{ object.ids }}','{% url "product:order_slab_list" %}')">
                                                         新页面打开
                                                     </a>
                                                     <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
@@ -93,10 +93,10 @@
                                         </div>
                                     </td>
                                     <td>
-                                        {{ form.DELETE }}
-{#                                        <input class="btn btn-danger btn-sm" type="submit"#}
-{#                                               form="remove_{{ forloop.counter }}"#}
-{#                                               value="删除">#}
+{#                                        {{ form.DELETE }}#}
+                                        <input class="btn btn-danger btn-sm" type="submit"
+                                               form="remove_{{ forloop.counter }}"
+                                               value="删除">
                                     </td>
                                 </tr>
                             {% endfor %}

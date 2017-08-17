@@ -3,6 +3,13 @@
         <ul>
             <li>订单状态：{{ order.get_status_display }}</li>
             <li>提货进度：{{ order.pickup_progress }}</li>
+            <li>共有:
+                <ul>
+                    <li>{{ order.proceeds.all|length }}条收款记录</li>
+                    <li>{{ order.pickup.all|length }}条提货记录</li>
+                    <li>{{ order.extra_cost.all|length }}条额外成本记录</li>
+                </ul>
+            </li>
             <li>总款：{{ order.amount }}</li>
             <li>余款：{{ order.balance }}</li>
             {% if goback %}

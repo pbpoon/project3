@@ -46,7 +46,7 @@
                             <th>码单</th>
                         </tr>
 
-                        {% for object in item_list %}
+                        {% for object, item_ids in item_list %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
                                 <td>
@@ -70,10 +70,10 @@
                                             </li>
                                             <li role="separator" class="divider"></li>
                                             <li>
-                                                <button class="btn btn-info"
-                                                        onclick="gogo_slab_list('{{ object.block_num }}','{{ object.thickness }}','{{ object.ids }}','{% url "product:order_slab_list" %}')">
+                                                <a class="btn btn-info"
+                                                        onclick="gogo_slab_list('{{ item_ids.block_num }}','{{ item_ids.thickness }}','{{ item_ids.ids }}','{% url "product:order_slab_list" %}')">
                                                     新页面打开
-                                                </button>
+                                                </a>
                                                 <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
                                             </li>
                                         </ul>
@@ -140,11 +140,11 @@
                                                 </li>
                                                 <li role="separator" class="divider"></li>
                                                 <li>
-                                                    <button class="btn btn-info"
+                                                    <a class="btn btn-info"
                                                             onclick="gogo_slab_list('{{ object.block_num }}',
                                                                     '{{ object.thickness }}','{{ object.ids }}','{% url "product:order_slab_list" %}')">
                                                         新页面打开
-                                                    </button>
+                                                    </a>
                                                     <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
                                                 </li>
                                             </ul>

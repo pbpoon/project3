@@ -1,0 +1,22 @@
+{% extends 'sales/salesproceeds_detail.html' %}
+{% block extra_item_1 %}
+<div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                额外花费详细
+            </h3>
+        </div>
+        <div class="panel-body">
+            <ul>
+                <li>支付日期:{{ object.date }}</li>
+                <li>补充说明:{{ object.desc }}</li>
+                <li>金额： <h4><span class="label label-success">￥{{ object.amount }}</span></h4>
+                </li>
+                <li>经办人:{{ object.handler }}</li>
+                <li>数据录入：{{ object.data_entry_staff }}</li>
+                <li>更新日期:{{ object.updated }}</li>
+            </ul>
+        </div>
+    </div>
+    <a class="btn btn-danger" href="{% url 'sales:extra_cost_delete' object.id %}">删除本笔记录</a>
+{% endblock %}

@@ -18,6 +18,8 @@
             </ul>
         </div>
     </div>
+{% endblock %}
+{% block extra_item_1 %}
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">
@@ -27,7 +29,8 @@
         <div class="panel-body">
             <ul>
                 <li>支付日期:{{ object.date }}</li>
-                <li>金额： <h4><span class="label label-success">￥{{ object.amount}}</span></h4></li>
+                <li>金额： <h4><span class="label label-success">￥{{ object.amount }}</span></h4>
+                </li>
                 <li>款项类型:{{ object.get_type_display }}</li>
                 <li>支付方式:{{ object.get_method_display }}</li>
                 <li>收款账户:{{ object.account }}</li>
@@ -40,6 +43,7 @@
     </div>
     <a class="btn btn-danger" href="{% url 'sales:proceeds_delete' object.id %}">删除本笔记录</a>
 {% endblock %}
+
 {% block sidebar %}
     {% about_this_order object.order.id %}
 

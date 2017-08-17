@@ -32,14 +32,14 @@ urlpatterns += [
         name='pickup_detail'),
     url(r'^order/pickup/delete/(?P<pk>\d+)/$', views.PickUpDeleteView.as_view(),
         name='pickup_delete'),
-url(r'^order/is_proceeds/(?P<pk>\d+)/$', views.CheckIsProceedsAjaxView.as_view(),
+    url(r'^order/is_proceeds/(?P<pk>\d+)/$', views.CheckIsProceedsAjaxView.as_view(),
         name='order_is_proceeds'),
 ]
 '''收款相关'''
 urlpatterns += [
-    url(r'^proceeds/delete/(?P<pk>\d+)$', views.SalesProceedsDeleteView.as_view(),
+    url(r'^proceeds/delete/(?P<pk>\d+)/$', views.SalesProceedsDeleteView.as_view(),
         name='proceeds_delete'),
-    url(r'^proceeds/create/(?P<another_order>\d+)$', views.SalesProceedsCreateView.as_view(),
+    url(r'^proceeds/create/(?P<another_order>\d+)/$', views.SalesProceedsCreateView.as_view(),
         name='proceeds_create'),
     url(r'^proceeds/(?P<pk>\d+)/$', views.SalesProceedsDetailView.as_view(),
         name='proceeds_detail'),
@@ -52,7 +52,13 @@ urlpatterns += [
         name='account_update'),
     url(r'^proceeds/account/$', views.ProceedsAccountListView.as_view(), name='account_list'),
 ]
-# """订单状态操作"""
-# urlpatterns += [
-#                    url(r'^order/(?P<pk>\d+)/$', views.SalesOrderDetailView.as_view(),
-#                        name='order_detail'),]
+"""额外成本"""
+urlpatterns += [
+    url(r'^extra-cost/create/(?P<another_order>\d+)/$',
+        views.SalesOrderExtraCostCreateView.as_view(),
+        name='extra_cost_create'),
+    url(r'^extra-cost/(?P<pk>\d+)/$', views.SalesOrderExtraCostDetailView.as_view(),
+        name='extra_cost_detail'),
+    url(r'^extra-cost/delete/(?P<pk>\d+)/$', views.SalesOrderExtraCostDeleteView.as_view(),
+        name='extra_cost_delete'),
+]

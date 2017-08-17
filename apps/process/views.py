@@ -32,6 +32,9 @@ class SaveCurrentOrderSlabsMixin(object):
             except Exception as e:
                 cart.cart['current_order_slab_ids'] = []
             finally:
+                ids = [str(item.block_num) for item in self.object.items.all() if
+                       item.thickness == '荒料']
+                cart.cart['current_order_block_ids'] = ids if ids else []
                 cart.save()
         return super(SaveCurrentOrderSlabsMixin, self).get_context_data(**kwargs)
 

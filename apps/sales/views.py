@@ -20,7 +20,7 @@ from process.models import SlabList, SlabListItem
 from process.views import SaveCurrentOrderSlabsMixin
 from products.models import Product, Slab
 from .models import CustomerInfo, Province, City, SalesOrder, SalesOrderItem, SalesOrderPickUp, \
-    SalesOrderPickUpItem, SalesOrderPickUpCost, ProceedsAccount, SalesProceeds
+    SalesOrderPickUpItem, SalesOrderPickUpCost, ProceedsAccount, SalesProceeds, OrderExtraCost
 from .forms import SalesOrderForm, CustomerInfoForm, SalesOrderItemForm, OrderPriceForm, \
     PickUpItemForm
 from django.forms import inlineformset_factory, formset_factory, modelformset_factory
@@ -286,8 +286,6 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         cart.cart['can_pickup_slab_ids'] = can_pickup_ids['block_ids'], can_pickup_ids['slab_ids']
         cart.cart['first_status'] = [1]  # 下标志
         cart.save()
-        ids = [str(item.block_num) for item in self.object.items.all() if item.thickness == '荒料']
-        cart.cart['current_order_block_ids'] = ids if ids else []
 
         # 订单货品信息
         item_list = self.object.items.all()
@@ -320,6 +318,9 @@ class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, Ver
         # 收款相关
         context['proceeds_list'] = self.object.proceeds.all()
 
+        # 额外成本
+        context['extra_cost_list'] = self.object.extra_cost.all()
+
         return context
 
     def get_another_order(self):
@@ -348,7 +349,8 @@ class SalesOrderEditMixin:
         extra = 0 if self.object else \
             len(self.get_formset_kwargs())
         return inlineformset_factory(self.model, self.formset_model, form=self.formset_class,
-                                     extra=extra, fields=self._get_formset_fields())
+                                     extra=extra, fields=self._get_formset_fields(),
+                                     can_delete=True)
 
     def get_formset_kwargs(self):
         return self.get_cart().make_items_list(key='current_order') if self.object else \
@@ -368,10 +370,32 @@ class SalesOrderEditMixin:
         else:
             if self.request.method in ('POST', 'PUT'):
                 return self._get_formset_class()(data=self.request.POST,
-                                                 prefix=self._get_formset_prefix(),)
-                                                 # instance=self.object)
+                                                 prefix=self._get_formset_prefix(),
+                                                 instance=self.object)
             return self._get_formset_class()(instance=self.object,
                                              prefix=self._get_formset_prefix())
+
+    def get_formset_data(self):
+        data = self.get_cart().make_items_list(key='current_order') if self.object else \
+            self.get_cart().make_items_list()
+        prefix = self._get_formset_prefix()
+        # forms_count = int(self.request.POST.get(f'{prefix}-TOTAL_FORMS'))
+        # if self.formset_fields == '__all__':
+        #     fields =[f.name for f in self.formset_model._meta.get_fields()]
+        # else:
+        #     fields = self._get_formset_fields()
+        # data_dict ={}
+        # if forms_count != len(data):
+        #     prefix_num = range(len(data), forms_count)
+        #     for num in prefix_num:
+        #         for field in fields:
+        #             _dict = {f'{prefix}-{num}-{field}': 0, f'{prefix}-{num}-DELETE': 'on', }
+        #             data_dict.update(_dict)
+        post_data = self.request.POST.copy()
+        post_data.update({f'{prefix}-TOTAL_FORMS': len(data)})
+        print(post_data)
+        return post_data
+        # forms_info = {f'{prefix}_TOTAL_FORMS': len(data),, }
 
     def make_formset_initial(self, formset):
         # new_key = {'part_count': 'part', 'block_pics': 'pic'}
@@ -531,6 +555,7 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         formset = self.get_formset()
+        formset.instance = self.object
         if formset.is_valid():
             formset_error = self.formset_valid(self.object, formset)
             if formset_error:
@@ -540,6 +565,17 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
                 }
                 return self.render_to_response(context)
             return HttpResponseRedirect(self.object.get_absolute_url())
+
+            # 6228 4800 7816 7777 370 中国农行厦门吾村
+            # def get_formset(self):
+            #     formset = self.get_formset_class()
+            #     formset()
+            #     return formset
+            #
+            #
+            #
+            # def get_formset_class(self):
+            #     return modelformset_factory(self.formset_model, self.formset_class, fields=self.formset_fields,extra=0)
 
 
 class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSaveMixin,
@@ -783,23 +819,26 @@ def get_city_info(request):
     return JsonResponse(city_lst, safe=False)
 
 
-class PickupDetailView(DetailView):
+class PickupDetailView(SaveCurrentOrderSlabsMixin, DetailView):
     model = SalesOrderPickUp
 
     def get_context_data(self, **kwargs):
+        context = super(PickupDetailView, self).get_context_data(**kwargs)
+        cart = Cart(self.request)
         item_list = self.object.items.all()
-        kwargs['item_list'] = item_list
+        item_ids = cart.make_items_list(key='current_order')
+        context['item_list'] = zip(item_list, item_ids)
         dt = defaultdict(float)
         for item in item_list:
             dt[item.unit] += float(item.quantity)
-        kwargs['item_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
-        kwargs['item_total_count'] = len(item_list)
+        context['item_total_quantity'] = {k: '{:.2f}'.format(v) for k, v in dt.items()}
+        context['item_total_count'] = len(item_list)
 
         cost_list = self.object.cost.all()
-        kwargs['cost_list'] = cost_list
-        kwargs['total_cost'] = self.object.total_cost()
-        kwargs['cost_count'] = len(cost_list)
-        return kwargs
+        context['cost_list'] = cost_list
+        context['total_cost'] = self.object.total_cost()
+        context['cost_count'] = len(cost_list)
+        return context
 
 
 class PickUpDeleteView(DeleteView):
@@ -844,24 +883,25 @@ class SalesProceedsDetailView(GetAnotherOrderMixin, DetailView):
         return context
 
 
-class SalesProceedsCreateView(GetAnotherOrderMixin, CreateView):
+class OrderExtraEditMixin(GetAnotherOrderMixin):
+    def form_valid(self, form):
+        instance = form.save(commit=False)
+        instance.data_entry_staff = self.request.user
+        instance.order = self.get_another_order()
+        instance.save()
+        return super(OrderExtraEditMixin, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        kwargs['order'] = self.get_another_order()
+        return super(OrderExtraEditMixin, self).get_context_data(**kwargs)
+
+
+class SalesProceedsCreateView(OrderExtraEditMixin, CreateView):
     model = SalesProceeds
     fields = ('amount', 'date', 'account', 'method', 'type', 'ps')
 
-    def form_valid(self, form):
-        instance = form.save(commit=False)
-        instance.order = self.get_another_order()
-        instance.data_entry_staff = self.request.user
-        instance.save()
-        return super(SalesProceedsCreateView, self).form_valid(form)
 
-    def get_context_data(self, **kwargs):
-        context = super(SalesProceedsCreateView, self).get_context_data(**kwargs)
-        context['order'] = self.get_another_order()
-        return context
-
-
-class SalesProceedsDeleteView(DeleteView):
+class SalesProceedsDeleteView(GetAnotherOrderMixin, DeleteView):
     model = SalesProceeds
 
     def get_success_url(self):
@@ -875,3 +915,27 @@ class CheckIsProceedsAjaxView(View):
             return JsonResponse('ok')
         else:
             return JsonResponse('ko')
+
+
+class SalesOrderExtraCostDetailView(DetailView):
+    model = OrderExtraCost
+
+
+class SalesOrderExtraCostCreateView(OrderExtraEditMixin, CreateView):
+    model = OrderExtraCost
+    template_name = 'sales/salesproceeds_form.html'
+    fields = ('date', 'item', 'desc', 'amount', 'handler')
+
+
+class SalesOrderExtraCostUpdateView(OrderExtraEditMixin, UpdateView):
+    model = OrderExtraCost
+    template_name = 'sales/salesproceeds_form.html'
+    fields = ('date', 'item', 'desc', 'amount', 'handler')
+
+
+class SalesOrderExtraCostDeleteView(DeleteView):
+    model = OrderExtraCost
+    template_name = 'sales/salesproceeds_confirm_delete.html'
+
+    def get_success_url(self):
+        return reverse_lazy('sales:order_detail', kwargs={'pk': self.object.order.id})

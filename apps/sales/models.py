@@ -37,6 +37,15 @@ SALES_ORDER_PICK_UP_COST = (
     ('O', '其它')
 )
 
+EXTRA_COST_CHOICES = (
+    ('discount', '折扣'),
+    ('brokerage', '回扣'),
+    ('shortage', '少收'),
+    ('compensate', '补偿'),
+    ('bad_debt', '坏账'),
+    ('other', '其他'),
+)
+
 
 class CustomerInfo(models.Model):
     type = models.CharField('客户类型', choices=CUSTOMER_TYPE_CHOICES,
@@ -103,7 +112,8 @@ class SalesOrder(models.Model):
     ps = models.CharField('备注信息', max_length=200, null=True, blank=True)
     created = models.DateField('创建日期', auto_now_add=True)
     updated = models.DateTimeField('更新时间', auto_now=True)
-    verifier = models.ForeignKey(User, related_name='%(class)s_verifier', verbose_name='审核人', null=True)
+    verifier = models.ForeignKey(User, related_name='%(class)s_verifier', verbose_name='审核人',
+                                 null=True)
     verify_date = models.DateField('审核日期', null=True, blank=True)
     slab_list = GenericRelation('process.SlabList')
 
@@ -137,7 +147,8 @@ class SalesOrder(models.Model):
         return reverse('sales:order_detail', args=[self.id])
 
     def get_total_quantity_of_can_pickup(self):
-        return '{:.2f}'.format(sum(sum(item.total_quantity().values()) for item in self.pickup.all()))
+        return '{:.2f}'.format(
+            sum(sum(item.total_quantity().values()) for item in self.pickup.all()))
 
     def get_total_quantity(self):
         dt = defaultdict(float)
@@ -152,6 +163,7 @@ class SalesOrder(models.Model):
         a = Decimal(self.sum_total_quantity())
         b = Decimal(self.get_total_quantity_of_can_pickup())
         return format((a - (a - b)) / a, '0.1%')
+
     pickup_progress = property(_get_pickup_progress)
 
     def _get_total_amount(self):
@@ -161,12 +173,18 @@ class SalesOrder(models.Model):
 
     def _get_total_proceeds(self):
         return '{:.2f}'.format(sum(Decimal(item.amount) for item in self.proceeds.all()))
+
     proceeds = property(_get_total_proceeds)
+
+    def _get_total_extra_cost(self):
+        return '{:.2f}'.format(sum(Decimal(item.amount) for item in self.extra_cost.all()))
 
     def _get_balance(self):
         if self.status == 'C':
             return '0'
-        return '{:.2f}'.format(Decimal(self._get_total_amount())-Decimal(self._get_total_proceeds()))
+        return '{:.2f}'.format(
+            Decimal(self._get_total_amount()) - Decimal(self._get_total_proceeds()) - Decimal(
+                self._get_total_extra_cost()))
 
     balance = property(_get_balance)
 
@@ -175,6 +193,7 @@ class SalesOrder(models.Model):
             if self.pickup_progress == '100.0%':
                 return True
         return False
+
     finish = property(_check_finish)
 
 
@@ -303,3 +322,25 @@ class SalesOrderPickUpCost(models.Model):
 
     def __str__(self):
         return '{}-{}'.format(self.get_item_display(), self.amount)
+
+
+class OrderExtraCost(models.Model):
+    order = models.ForeignKey('SalesOrder', related_name='extra_cost', on_delete=models.CASCADE,
+                              verbose_name='对应销售单')
+    item = models.CharField('项目', max_length=10, choices=EXTRA_COST_CHOICES)
+    desc = models.CharField('补充说明', max_length=80, null=True, blank=True)
+    amount = models.DecimalField('金额', max_digits=9, decimal_places=2)
+    date = models.DateField('日期')
+    handler = models.ForeignKey(User, related_name='%(class)s_handler', verbose_name='经办人')
+    data_entry_staff = models.ForeignKey(User, related_name='%(class)s_entry', verbose_name='数据录入人')
+    updated = models.DateTimeField('更新时间', auto_now=True)
+
+    class Meta:
+        verbose_name = '额外费用'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return f'[{self.item}]{self.amount}'
+
+    def get_absolute_url(self):
+        return reverse('sales:extra_cost_detail', args=[self.id])
