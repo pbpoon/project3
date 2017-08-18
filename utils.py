@@ -124,7 +124,9 @@ def default_decimal(obj):
     raise TypeError(f'{obj} is not JSON')
 
 
-def item2sales(lst, new_key):
+def item2sales(lst, new_key=None):
+    if not new_key:
+        new_key = {'part_count': 'part', 'block_pics': 'pic'}
     result = []
     for item in lst:
         result_item = {}

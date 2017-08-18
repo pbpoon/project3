@@ -555,8 +555,13 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         formset = self.get_formset()
-        formset.instance = self.object
         if formset.is_valid():
+            self.formset_model.objects.filter(order=self.object).all().delete()
+            # instances = formset.save(commit=False)
+            # for item in self.object.items.all():
+            #     if (str(item.block_num), item.thickness) not in \
+            #             [(str(instance.block_num), instance.thickness) for instance in instances]:
+            #         item.delete()
             formset_error = self.formset_valid(self.object, formset)
             if formset_error:
                 context = {
@@ -566,16 +571,23 @@ class SalesOrderUpdateItemView(LoginRequiredMixin, SalesOrderEditMixin, DetailVi
                 return self.render_to_response(context)
             return HttpResponseRedirect(self.object.get_absolute_url())
 
-            # 6228 4800 7816 7777 370 中国农行厦门吾村
-            # def get_formset(self):
-            #     formset = self.get_formset_class()
-            #     formset()
-            #     return formset
-            #
-            #
-            #
-            # def get_formset_class(self):
-            #     return modelformset_factory(self.formset_model, self.formset_class, fields=self.formset_fields,extra=0)
+    def _get_formset_class(self):
+        extra = len(self.get_formset_kwargs())
+        return modelformset_factory(self.formset_model, self.formset_class,
+                                    fields=self.formset_fields, extra=extra)
+
+    def get_formset(self):
+        data_list = item2sales(self.get_formset_kwargs())
+        for data in data_list:
+            for item in self.object.items.all():
+                if (data['block_num'], data['thickness']) == (str(item.block_num), item.thickness):
+                    data.update(
+                        {'price': item.price, 'block_num': item.block_num, 'order': self.object})
+        if self.request.method == 'POST':
+            return self._get_formset_class()(self.request.POST)
+        else:
+            return self._get_formset_class()(initial=data_list,
+                                             queryset=SalesOrderItem.objects.none())
 
 
 class SalesOrderCreateView(LoginRequiredMixin, SalesOrderEditMixin, SalesOrderSaveMixin,
@@ -933,9 +945,6 @@ class SalesOrderExtraCostUpdateView(OrderExtraEditMixin, UpdateView):
     fields = ('date', 'item', 'desc', 'amount', 'handler')
 
 
-class SalesOrderExtraCostDeleteView(DeleteView):
+class SalesOrderExtraCostDeleteView(SalesProceedsDeleteView):
     model = OrderExtraCost
     template_name = 'sales/salesproceeds_confirm_delete.html'
-
-    def get_success_url(self):
-        return reverse_lazy('sales:order_detail', kwargs={'pk': self.object.order.id})

@@ -45,6 +45,7 @@ class SalesOrderItemForm(forms.ModelForm):
         model = SalesOrderItem
         fields = '__all__'
         widgets = {
+            'order': forms.HiddenInput(),
             'block_num': forms.HiddenInput(),
             'part': forms.HiddenInput(),
             'pic': forms.HiddenInput(),
