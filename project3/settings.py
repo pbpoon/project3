@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django_forms_bootstrap',
     'cart',
     'sales',
+    'wkhtmltopdf',
     # 'jquery',
     # 'djangoformsetjs',
     # 'import_export',#导入导出数据功能
@@ -151,3 +152,5 @@ IMPORT_EXPORT_USE_TRANSACTIONS = True
 LOGIN_URL ='/admin/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+WKHTMLTOPDF_CMD = 'C:\python36\Lib\site-packages\wkhtmltopdf'

@@ -34,6 +34,7 @@ urlpatterns += [
         name='pickup_delete'),
     url(r'^order/is_proceeds/(?P<pk>\d+)/$', views.CheckIsProceedsAjaxView.as_view(),
         name='order_is_proceeds'),
+    url(r'^pdf-order/(?P<pk>\d+)/$', views.SalesOrderPDFTemplateView.as_view(filename='my_pdf.pdf'),  name='order_pdf'),
 ]
 '''收款相关'''
 urlpatterns += [

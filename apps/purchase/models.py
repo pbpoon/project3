@@ -181,6 +181,15 @@ class ImportOrder(OrderAbstract):
     def get_absolute_url(self):
         return reverse('purchase:import_order', args=[self.id])
 
+    def get_batch(self):
+        return ','.join(set(str(item.block_num.batch) for item in self.item.all()))
+
+    def get_block_count(self):
+        return self.item.all().count()
+
+    def get_total(self):
+        return sum(item.block_num.weight for item in self.item.all())
+
 
 class ImportOrderItem(models.Model):
     order = models.ForeignKey('ImportOrder', related_name='item',

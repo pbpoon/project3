@@ -14,6 +14,10 @@ UNIT_CHOICES = (
 
 
 class Product(models.Model):
+    class Meta:
+        verbose_name = '荒料信息'
+        verbose_name_plural = verbose_name
+
     block_num = models.CharField('荒料编号', max_length=16, unique=True)
     weight = models.DecimalField('重量', max_digits=5, decimal_places=2, null=True)
     long = models.IntegerField('长', null=True)
@@ -28,15 +32,20 @@ class Product(models.Model):
     ps = models.CharField('备注信息', null=True, blank=True, max_length=200)
 
     # is_sell = models.BooleanField('是否已售', default=False)
+
     def _get_booking(self):
         if self.sale.exclude(order__status='C').exists():
             return True
         return False
+
     has_booking = property(_get_booking)
 
-    class Meta:
-        verbose_name = '荒料信息'
-        verbose_name_plural = verbose_name
+    def _get_sell(self):
+        if self.sale.filter(order__status__in=('V', 'F')).exists():
+            return True
+        return False
+
+    has_sell = property(_get_sell)
 
     def _get_cost_by(self):
         return self.purchase.order.cost_by
@@ -103,7 +112,7 @@ class Product(models.Model):
         else:
             quantity = {'quantity': self.m3, 'unit': cost_by}
         lst = {'block_num': self.block_num, 'thickness': '荒料', 'block_pics': 1, 'part_count': 0,
-               'ids': self.block_num}
+               'ids': [self.block_num]}
         lst.update(quantity)
         return [lst]
 
@@ -116,7 +125,7 @@ class Product(models.Model):
             inventory = {'quantity': self.m3, 'unit': cost_by}
 
         if block_type == 'block':
-            if self.sale.order.filter(status__in=('V', 'F')).exists():
+            if self.sale.filter(order__status__in=('V', 'F')).exists():
                 return [{'type': '已售', 'quantity': 0, 'unit': cost_by}]
             else:
                 type = {'type': '荒料'}
@@ -200,6 +209,22 @@ class Product(models.Model):
 
         return sorted(st_lst + ks_lst + mb_lst, key=lambda k: k['date'])
 
+    def get_address(self):
+        # if self._get_block_type == 'block':
+        #     address = getattr(max([address for address in self.address.all() if address.type =='block'], key=lambda x: x.order.date),
+        #         'address')
+        # elif self._get_block_type == 'coarse':
+        #     ks_pic = getattr(self.ksorderitem_cost.all()[0],'pic')
+        #     all_coarse_ts_record=sorted([item for item in self.tsorderitem_cost.all() if item.block_type == 'coarse'], key=lambda x:x.date)
+        #
+        block_type = self._get_block_type()
+        if self.address.exists():
+            return getattr(max([address for address in self.address.filter(type=block_type)],
+                               key=lambda x: x.order.date), 'address').name
+        return '在途'
+        # if last_record:
+        #     if last_record =='slab':
+
 
 class Slab(models.Model):
     block_num = models.ForeignKey('Product', on_delete=models.CASCADE,
@@ -249,11 +274,6 @@ class Slab(models.Model):
                     continue
                 if item.order.status != 'C':
                     return True
-                    # for slab in salesorder_list:
-                    #     slab_list_model = ContentType.objects.get_for_model(slab.slablist)
-                    #     slab_list = slab.slablist.order
-                    #     if slab.slablist.order.status in ('N,V,F'):
-                    #         return True
         return False
 
     has_booking = property(_get_booking)
@@ -367,7 +387,7 @@ class InventoryAddress(models.Model):
         return '{}[{}]-{}'.format(self.block_num, self.type, self.address)
 
     @staticmethod
-    def _save(order=None, block_num=None, address=None):
+    def _save(order=None, block_num=None, address=None, block_type=None):
         _type = getattr(order, 'order_type')
         if _type == 'KS':
             type = 'coarse'
@@ -375,6 +395,8 @@ class InventoryAddress(models.Model):
             type = 'slab'
         elif _type == 'ST':
             type = 'block'
+        elif _type == 'TS':
+            type = block_type
         else:
             type = InventoryAddress.objects.last().type
         if order and block_num and address and type:

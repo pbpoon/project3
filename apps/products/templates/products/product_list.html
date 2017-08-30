@@ -4,6 +4,48 @@
 {% block title %}荒料列表{% endblock %}
 {% block jumbotron %}<h2>荒料列表</h2>{% endblock %}
 {% block main %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <div class="panel-body">
+                <ul class="list-inline">
+                <li>按品种：</li>
+                {% ifnotequal category_tags|length 1 %}
+                <li><a href="">全部</a></li>
+                {% endifnotequal %}
+                    {% for category in category_tags %}
+                    <li><a href="?category={{ category.id }}&quarry={{ choose_dict.quarry }}&batch={{  choose_dict.batch }}&block_type={{ choose_dict.block_type }}">{{ category.name }}</a></li>
+                {% endfor %}
+                </ul>
+            <ul class="list-inline">
+                <li>矿口：</li>
+                {% ifnotequal quarry_tags|length 1 %}
+                <li><a href="">全部</a></li>
+                {% endifnotequal %}
+                    {% for quarry in quarry_tags %}
+                    <li><a href="?category={{ choose_dict.category }}&quarry={{ quarry.id }}&batch={{  choose_dict.batch }}&block_type={{ choose_dict.block_type }}">{{ quarry.name }}</a></li>
+                {% endfor %}
+                </ul>
+            <ul class="list-inline">
+                <li>按批次：</li>
+                {% ifnotequal batch_tags|length 1 %}
+                <li><a href="">全部</a></li>
+                {% endifnotequal %}
+                    {% for batch in batch_tags %}
+                    <li><a href="?category={{ choose_dict.category }}&quarry={{ choose_dict.quarry }}&batch={{  batch.id }}&block_type={{ choose_dict.block_type }}">{{ batch.name }}</a></li>
+                {% endfor %}
+                </ul>
+            <ul class="list-inline">
+                <li>按形态：</li>
+                {% ifnotequal block_type_tags|length 1 %}
+                <li><a href="?category={{ choose_dict.category }}&quarry={{ choose_dict.quarry }}&block_type=&batch={{  choose_dict.batch }}">全部</a></li>
+                {% endifnotequal %}
+                    {% for block_type in block_type_tags %}
+                    <li><a href="?category={{ choose_dict.category }}&quarry={{ choose_dict.quarry }}&block_type={{ block_type }}&batch={{  choose_dict.batch }}">{{ block_type }}</a></li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
     <table class="table">
         <tr>
             <th>荒料编号</th>
@@ -14,9 +56,9 @@
             <th>立方</th>
             <th>形态</th>
             <th>库存情况</th>
-            <th>品种</th>
-            <th>矿口</th>
-            <th>批次</th>
+            {#            <th>品种</th>#}
+            {#            <th>矿口</th>#}
+            {#            <th>批次</th>#}
             <th>备注信息</th>
             <th>码单</th>
             <th>更新日期</th>
@@ -37,11 +79,32 @@
                         {% endfor %}
                     </ul>
                 </td>
-                <td>{{ object.category }}</td>
-                <td>{{ object.quarry }}</td>
-                <td>{{ object.batch }}</td>
+                {#                <td>{{ object.category }}</td>#}
+                {#                <td>{{ object.quarry }}</td>#}
+                {#                <td>{{ object.batch }}</td>#}
                 <td>{{ object.ps }}</td>
-                <td><a class="button" href="{% url 'product:slab_list' object.block_num %}">打开</a>
+                <td>
+                    <div class="dropdown">
+                                        <a href="#" data-target="#" class="dropdown-toggle"
+                                           data-toggle="dropdown" role="button"
+                                           aria-haspopup="true"
+                                           aria-expanded="false"><span class="glyphicon glyphicon-option-horizontal"></span></a>
+                                        <ul class="dropdown-menu">
+                                            <li><a
+                                                    href="{% url 'product:slab_list'  object.block_num %}">修改</a>
+                                            </li>
+                                            <li role="separator" class="divider"></li>
+                                            <li>
+                                                <a class="btn btn-info"
+                                                        onclick="gogo_slab_list('{{ list.block_num }}',
+                                                                '{{ list.thickness }}','{{ list.ids }}','{% url "product:order_slab_list" %}?type=can_sell')">
+                                                    可以销售
+                                                </a>
+                                                <a href="{% url 'product:slab_list'  object.block_num %}?type=can_sell">打开可销售</a>
+                                                <a href="{% url 'product:slab_list'  object.block_num %}?type=show_all">打开全部</a>
+                                            </li>
+                                        </ul>
+                                    </div>
                 </td>
                 <td>{{ object.updated }}</td>
             </tr>

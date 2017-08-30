@@ -1,3 +1,41 @@
-{% extends 'purchase/list.html' %}
-{% block list_title %}运输订单列表{% endblock %}
+{% extends 'base.html' %}
+
+{% block main %}
+    <div class="panel panel-default">
+    <div class="panel-heading">
+    </div>
+    <div class="panel-body">
+        <table class="table">
+            <tr>
+                <th>状态</th>
+                <th>付款状态</th>
+                <th>单号</th>
+                <th>批次</th>
+                <th>代理商</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>颗数</th>
+                <th>货柜数</th>
+                <th>下单日期</th>
+            </tr>
+            {% for object in object_list %}
+            <tr>
+                <td></td>
+                <td>{{ object.finish_pay }}</td>
+                <td><a href="{{ object.get_absolute_url }}">{{ object.order }}</a></td>
+                <td>{{ object.get_batch }}</td>
+                <td>{{ object.supplier }}</td>
+                <td>{{ object.price }}</td>
+                <td>{{ object.get_total }}</td>
+                <td>{{ object.get_block_count }}</td>
+                <td>{{ object.container }}</td>
+                <td>{{ object.order_date }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    </div>
+{% endblock %}
+
+
 {% block  sidebar %}<a href="{% url 'purchase:import_order_create' %}" class="btn btn-default" >新建订单</a>{% endblock %}

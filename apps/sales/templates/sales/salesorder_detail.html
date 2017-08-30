@@ -81,12 +81,8 @@
                                             </li>
                                             <li role="separator" class="divider"></li>
                                             <li>
-                                                <a class="btn btn-info"
-                                                        onclick="gogo_slab_list('{{ list.block_num }}',
-                                                                '{{ list.thickness }}','{{ list.ids }}','{% url "product:order_slab_list" %}')">
-                                                    新页面打开
-                                                </a>
-                                                <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
+                                                <a onclick="gogo_slab_list('{{ list.block_num }}','{{ list.thickness }}','{{ list.ids|safe }}','{% url "product:order_slab_list" %}')">新页面打开</a>
+                                                <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ list.ids }}">打开</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -160,12 +156,9 @@
                                                 </li>
                                                 <li role="separator" class="divider"></li>
                                                 <li>
-                                                    <button class="btn btn-info"
-                                                            onclick="gogo_slab_list('{{ object.block_num }}',
+                                                    <a onclick="gogo_slab_list('{{ object.block_num }}',
                                                                     '{{ object.thickness }}','{{ object.ids }}',
-                                                                    '{% url "product:order_slab_list" %}')">
-                                                        新页面打开
-                                                    </button>
+                                                                    '{% url "product:order_slab_list" %}')">新页面打开</a>
                                                     <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
                                                 </li>
                                             </ul>
@@ -334,6 +327,7 @@
         <a class="btn btn-default" href="{% url 'sales:proceeds_create' object.id %}">登记收款</a>
         <a class="btn btn-default" href="{% url 'sales:extra_cost_create' object.id %}">登记额外成本</a>
     {% endif %}
+    <a href="{% url 'sales:order_pdf' object.id  %}">pdf</a>
     <script>
         function is_proceeds() {
             $.ajax({

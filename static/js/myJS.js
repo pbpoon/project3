@@ -3,13 +3,23 @@
  */
 
 // 以下是slab_list的js代码
-
-function select_all(id, vall) {
+function select(id) {
+    var input_id = $("#" + id + " td :checkbox")
+    // console.log(input_id, input_id.checked)
+    // $(input_id).prop("checked", !this.checked)
+    $("#" + id + " td :checkbox").each(function () {
+        $(this).prop("checked", !this.checked);
+        sum_m2()
+    });
+}
+function select_all(id, val) {
     // 全选或全不选
+    console.log(id, val)
     var sid = id.split('_').slice(0, 1).join('_');
-
-    $("#" + sid + " table :checkbox").each(function () {
-        $(this).prop("checked", vall);
+    console.log(sid)
+    // $("#" + sid + " table :checkbox").each(function () {
+    $("#slab_form table :checkbox").each(function () {
+        $(this).prop("checked", val);
     });
     sum_m2(watch_select());
 }
@@ -43,8 +53,18 @@ function sum_m2() {
         sum += m2;
     }
     select_info(sid_list.length, sum)
+    sent_active_class()
 }
-
+function sent_active_class() {
+    $(":input[name='check_box_list']").each(function () {
+        console.log(this.checked, $(this).parent())
+        if (this.checked==true){
+            $(this).parent().parent().addClass("active")
+        }else {
+            $(this).parent().parent().removeClass("active")
+        }
+    })
+}
 function select_info(pics, m2) {
     $("#selected_info li[name=pics] b").text(pics);
     $("#selected_info li[name=m2] b").text(m2.toFixed(2));

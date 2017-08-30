@@ -6,7 +6,7 @@
     <form method="post" id="slab_form" action="{% url 'cart:add' %}">
         {% if block_type %}
             {% for block in slab_list %}
-                <input type="checkbox" name="check_box_list" value="{{ block.block_num }}">{{ block.thickness }}/{{ block.quantity }}{{ block.unit }}
+                <input {% if block.block_num|stringformat:"i" in has_booking_ids_list %} disabled {% endif %}  type="checkbox" name="check_box_list" value="{{ block.block_num }}">{{ block.thickness }}/{{ block.quantity }}{{ block.unit }}
             {% endfor %}
         {% else %}
             {% for slabs in slab_list %}
@@ -57,9 +57,10 @@
                                         {% for slab in part_value.slabs %}
                                             <tr class="clickable-row">
                                                 <td>
-                                                    <input type="checkbox" name="check_box_list"
+                                                    <input {% if slab.id|stringformat:"i" in has_booking_ids_list %} disabled {% endif %} type="checkbox" name="check_box_list"
                                                            onchange="sum_m2()"
                                                            {% if slab.id|stringformat:"i" in slab_ids %}checked="checked"{% endif %}
+
                                                            value="{{ slab.id }}">
                                                 </td>
                                                 <td>{{ slab.line_num }}</td>

@@ -21,7 +21,7 @@ from cart.cart import Cart
 
 class SaveCurrentOrderSlabsMixin(object):
     def get_context_data(self, **kwargs):
-        if self.object:
+        if hasattr(self, 'object'):
             cart = Cart(self.request)
             try:
                 slab_model = ContentType.objects.get_for_model(self.object)
@@ -31,11 +31,6 @@ class SaveCurrentOrderSlabsMixin(object):
                 cart.cart['current_order_slab_ids'] = [str(item.slab.id) for item in slab_list]
             except Exception as e:
                 cart.cart['current_order_slab_ids'] = []
-            finally:
-                ids = [str(item.block_num) for item in self.object.items.all() if
-                       item.thickness == '荒料']
-                cart.cart['current_order_block_ids'] = ids if ids else []
-                cart.save()
         return super(SaveCurrentOrderSlabsMixin, self).get_context_data(**kwargs)
 
 
@@ -122,14 +117,7 @@ class OrderFormsetMixin(object):
                                      extra=extra, can_delete=True)
 
     def get_context_data(self, **kwargs):
-        """
-        :param kwargs:
-        errors:错误信息，主要记录新建订单录入时候的错误
-        order_type:把编辑的order类型返回到template，方便提交订单时候可以根据order类型做出业务判断
-        data_list:是itemformset的block_name的data_list的数据
-        allow_edit: 是否为编辑状态，如果是，打开的slab_list的checkbox可以选择。
-        :return:
-        """
+
         context = super(OrderFormsetMixin, self).get_context_data(**kwargs)
 
         self.order_type = self.get_order_type()
@@ -223,10 +211,12 @@ class OrderFormsetMixin(object):
                 for item in items:
                     if self.order_type == 'TS':
                         address = item.destination
+                        InventoryAddress._save(order=instance, block_num=item.block_num,
+                                               address=address, block_type=item.block_type)
                     else:
                         address = instance.service_provider
-                    InventoryAddress._save(order=instance, block_num=item.block_num,
-                                           address=address)
+                        InventoryAddress._save(order=instance, block_num=item.block_num,
+                                               address=address)
                 if self.order_type == 'MB':
                     try:
                         """

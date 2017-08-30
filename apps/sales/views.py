@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import date, datetime
-from django.db.models import Q
 
 from django.urls import reverse_lazy, reverse
 from django.contrib import messages
@@ -13,6 +12,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
     TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
+from wkhtmltopdf.views import PDFTemplateView
 
 from cart.cart import Cart
 from process.forms import SlabListItemForm
@@ -27,6 +27,17 @@ from django.forms import inlineformset_factory, formset_factory, modelformset_fa
 
 from utils import AddExcelForm, ImportData, item2sales
 from decimal import Decimal
+
+
+class SaveCurrentOrderBlocksMixin(SaveCurrentOrderSlabsMixin):
+    def get_context_data(self, **kwargs):
+        if hasattr(self, 'object'):
+            cart = Cart(self.request)
+            ids = [str(item.block_num) for item in self.object.items.all() if
+                   item.thickness == '荒料']
+            cart.cart['current_order_block_ids'] = ids if ids else []
+            cart.save()
+        return super(SaveCurrentOrderBlocksMixin, self).get_context_data(**kwargs)
 
 
 class GetAnotherOrderMixin(object):
@@ -274,11 +285,12 @@ class SalesOrderListView(ListView):
     model = SalesOrder
 
 
-class SalesOrderDetailView(SaveCurrentOrderSlabsMixin, PickUpOrderInfoMixin, VerifyMixin,
+class SalesOrderDetailView(SaveCurrentOrderBlocksMixin, PickUpOrderInfoMixin, VerifyMixin,
                            DetailView):
     model = SalesOrder
 
     def get_context_data(self, **kwargs):
+        self.object = self.get_object()
         context = super(SalesOrderDetailView, self).get_context_data(**kwargs)
         cart = Cart(self.request)
         can_pickup_ids = self.get_order_item_can_pickup_ids()
@@ -831,7 +843,7 @@ def get_city_info(request):
     return JsonResponse(city_lst, safe=False)
 
 
-class PickupDetailView(SaveCurrentOrderSlabsMixin, DetailView):
+class PickupDetailView(SaveCurrentOrderBlocksMixin, DetailView):
     model = SalesOrderPickUp
 
     def get_context_data(self, **kwargs):
@@ -948,3 +960,12 @@ class SalesOrderExtraCostUpdateView(OrderExtraEditMixin, UpdateView):
 class SalesOrderExtraCostDeleteView(SalesProceedsDeleteView):
     model = OrderExtraCost
     template_name = 'sales/salesproceeds_confirm_delete.html'
+
+
+class SalesOrderPDFTemplateView(PDFTemplateView):
+    template_name = 'sales/pdf.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(SalesOrderPDFTemplateView, self).get_context_data(**kwargs)
+        context['foo'] = 'KSHKJKFWIHLSKH'
+        return context
