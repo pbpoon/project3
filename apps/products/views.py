@@ -20,17 +20,26 @@ class ProductListView(ListView):
         context['category_tags'] = set(item.category for item in product_lst)
         context['quarry_tags'] = set(item.quarry for item in product_lst)
         context['batch_tags'] = set(item.batch for item in product_lst)
-        context['block_type_tags'] = set(
-            type.get('type') for item in product_lst for type in item.get_inventory_list())
+
+        lst=[]
+        for item in product_lst:
+            for type in item.get_inventory_list():
+                lst.append(type.get('type'))
+        context['block_type_tags'] = set(lst)
+
         context['choose_dict'] = self.get_GET_dict()
         return context
 
     def get_GET_dict(self):
         return {
-            'category': self.request.GET.get('category') if self.request.GET.get('category') !='None' else None,
-            'batch': self.request.GET.get('batch') if self.request.GET.get('batch') !='None' else None,
-            'quarry':  self.request.GET.get('quarry') if self.request.GET.get('quarry') !='None' else None,
-            'block_type': self.request.GET.get('block_type') if self.request.GET.get('block_type') !='None' else None,
+            'category': self.request.GET.get('category') if self.request.GET.get(
+                'category') != 'None' else None,
+            'batch': self.request.GET.get('batch') if self.request.GET.get(
+                'batch') != 'None' else None,
+            'quarry': self.request.GET.get('quarry') if self.request.GET.get(
+                'quarry') != 'None' else None,
+            'block_type': self.request.GET.get('block_type') if self.request.GET.get(
+                'block_type') != 'None' else None,
         }
 
     def get_queryset(self):
@@ -57,6 +66,7 @@ class ProductDetailView(DetailView):
     def get_context_data(self, **kwargs):
         kwargs['inventory_list'] = self.object.get_inventory_list()
         kwargs['business_list'] = self.object.get_business()
+        kwargs['salesorder_list'] = self.object.get_salesorder()
         return super(ProductDetailView, self).get_context_data(**kwargs)
 
 
@@ -109,7 +119,21 @@ class ProductSlabListView(View):
         return render(request, self.template_name, context)
 
 
-class OrderSlabListView(View):
+class SlabListTypeMixin(object):
+    def get_type(self):
+        return self.request.GET.get('type', None)
+
+    def get_limits(self):
+        type = self.get_type()
+        limits = {}
+        if type == 'can_sell':
+            limits.update({'checkbox': True})
+        elif type == 'readonly':
+            limits.update({'checkbox': False})
+        return limits
+
+
+class OrderSlabListView(SlabListTypeMixin, View):
     template_name = 'products/order_slab_list.html'
 
     def get(self, request, **kwargs):
@@ -124,37 +148,40 @@ class OrderSlabListView(View):
         if object.block_type == 'otw':
             ids_list = object.get_block_list()
         elif object.block_type == 'slab':
-            if slab_ids:
-                ids_list = object.get_slab_list(slab_ids=str_to_list(slab_ids),
-                                                object_format=True)
-            else:
-                ids_list = object.get_slab_list(object_format=True)
+            ids_list = object.get_slab_list(object_format=True)
+            if type != 'show_all':
 
+                if slab_ids:
+                    ids_list = object.get_slab_list(slab_ids=str_to_list(slab_ids),
+                                                    object_format=True)
         if type and type == 'can_sell':
+            context.update({'key_value': True})
             if object.block_type == 'slab':
+                ids_list = object.get_slab_list(can_sell=True, object_format=True)
                 has_booking_ids_list = [id for list in ids_list for id in list['ids'] if
                                         Slab.objects.get(id=id).has_booking]
                 has_sell_ids_list = [id for list in ids_list for id in list['ids'] if
                                      Slab.objects.get(id=id).is_sell]
-                context = {
+                context.update({
                     'has_booking_ids_list': has_booking_ids_list,
                     'has_sell_ids_list': has_sell_ids_list,
-                }
+                })
             elif object.block_type == 'otw':
                 has_booking_ids_list = [id for list in ids_list for id in list['ids'] if
                                         Product.objects.get(block_num=id).has_booking]
                 has_sell_ids_list = [id for list in ids_list for id in list['ids'] if
                                      Product.objects.get(block_num=id).has_sell]
-                context = {
+                context.update({
                     'has_booking_ids_list': has_booking_ids_list,
                     'has_sell_ids_list': has_sell_ids_list,
-                }
+                })
 
         context.update({
             'slab_list': ids_list,
             'object': object,
             'slab_ids': cart.cart.get('slab_ids'),
-            'block_type': 1 if object.block_type == 'otw' else 0
+            'block_type': 1 if object.block_type == 'otw' else 0,
+            'limits': self.get_limits(),
         })
         return render(request, self.get_template_name(), context)
 

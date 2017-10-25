@@ -66,9 +66,11 @@ class Product(models.Model):
     def get_absolute_url(self):
         return reverse('product:detail', args=[self.id])
 
-    def get_slab_list(self, slab_ids=None, object_format=False):
+    def get_slab_list(self, slab_ids=None, object_format=False, can_sell=False):
         obj = self.slab.all()
 
+        if can_sell:
+            obj = obj.filter(is_sell=False)
         if slab_ids:
             obj = obj.filter(id__in=slab_ids)
         slab_list = obj.values('block_num', 'thickness').annotate(
@@ -148,7 +150,7 @@ class Product(models.Model):
             thickness = min(i.thickness for i in self.ksorderitem_cost.all())
             balance_pic = total_slab_pic - total_coarse_pic
             quantity = '{:.2f}'.format(
-                sum(item.m2 for item in self.slab.filter(is_sell=False).all()))
+                sum(item.m2 for item in self.slab.all() if not item._get_booking()))
             if not 0 < balance_pic > 8:
                 return [{'type': '光板', 'quantity': quantity, 'unit': 'm2'}]
             if cost_by == 'ton':
@@ -208,6 +210,20 @@ class Product(models.Model):
                   for item in self.mborderitem_cost.all()]
 
         return sorted(st_lst + ks_lst + mb_lst, key=lambda k: k['date'])
+
+    def get_salesorder(self):
+        list = [{
+                    'status': sale.order.get_status_display(),
+                    'date': sale.order.date,
+                    'part': sale.part,
+                    'pic': sale.pic,
+                    'quantity': sale.quantity,
+                    'unit': sale.unit,
+                    'price': sale.price,
+                    'customer': sale.order.customer,
+                    'order': sale.order
+                } for sale in self.sale.all()]
+        return sorted(list, key=lambda x: x['date'])
 
     def get_address(self):
         # if self._get_block_type == 'block':

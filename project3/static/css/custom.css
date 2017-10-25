@@ -1,0 +1,8 @@
+#top-messages, #top-messages > li {
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+.navbar {
+    border-radius: 0;
+}

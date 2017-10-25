@@ -84,7 +84,7 @@
                                                 <li role="separator" class="divider"></li>
                                                 <li>
                                                     <a onclick="gogo_slab_list('{{ object.block_num }}',
-                                                               '{{ object.thickness }}','{{ object.ids }}','{% url "product:order_slab_list" %}')">
+                                                               '{{ object.thickness }}',{% ifequal object.thickness '荒料' %}'{{ object.block_num }}'{% else %}'{{ object.ids }}'{% endifequal %},'{% url "product:order_slab_list" %}','can_sell')">
                                                         新页面打开
                                                     </a>
                                                     <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>

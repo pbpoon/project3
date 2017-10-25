@@ -76,12 +76,8 @@
                                            aria-haspopup="true"
                                            aria-expanded="false"><span class="glyphicon glyphicon-option-horizontal"></span></a>
                                         <ul class="dropdown-menu">
-                                            <li><a
-                                                    href="{% url 'product:slab_list'  object.block_num %}">修改</a>
-                                            </li>
-                                            <li role="separator" class="divider"></li>
                                             <li>
-                                                <a onclick="gogo_slab_list('{{ list.block_num }}','{{ list.thickness }}','{{ list.ids|safe }}','{% url "product:order_slab_list" %}')">新页面打开</a>
+                                                <a onclick="gogo_slab_list('{{ list.block_num }}','{{ list.thickness }}',{% ifequal list.thickness '荒料' %}'{{ list.block_num }}'{% else %}'{{ list.ids }}'{% endifequal %},'{% url "product:order_slab_list" %}')">新页面打开</a>
                                                 <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ list.ids }}">打开</a>
                                             </li>
                                         </ul>
@@ -151,13 +147,9 @@
                                                aria-expanded="false"><span class="glyphicon glyphicon-option-horizontal"></span></a>
 {#                                            <span class="caret"></span>#}
                                             <ul class="dropdown-menu">
-                                                <li><a
-                                                        href="{% url 'product:slab_list'  object.block_num %}">修改</a>
-                                                </li>
-                                                <li role="separator" class="divider"></li>
                                                 <li>
                                                     <a onclick="gogo_slab_list('{{ object.block_num }}',
-                                                                    '{{ object.thickness }}','{{ object.ids }}',
+                                                                    '{{ object.thickness }}',{% ifequal object.thickness '荒料' %}'{{ object.block_num }}'{% else %}'{{ object.ids }}'{% endifequal %},
                                                                     '{% url "product:order_slab_list" %}')">新页面打开</a>
                                                     <a href="{% url 'product:slab_list'  object.block_num %}?slab_ids={{ object.slab_ids }}">打开</a>
                                                 </li>

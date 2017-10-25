@@ -37,14 +37,65 @@
     <div class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">事务记录</h3>
+        </div>
             <div class="panel-body">
-                <ul>
-                    {% for business in business_list %}
-                        <li>{{ business.business }}/{{ business.quantity }}{{ business.unit }}/{{ business.date }}<a
-                                href="{{ business.order.get_absolute_url }}">详细</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
+            <table class="table">
+                <tr>
+                    <th>事务</th>
+                    <th>件数/次数</th>
+                    <th>数量</th>
+                    <th>地址/服务商</th>
+                    <th>日期</th>
+                    <th>详细</th>
+                </tr>
+                 {% for business in business_list %}
+                <tr>
+                    <td>{{ business.business }}</td>
+                    <td>{{ business.pic }}</td>
+                    <td>{{ business.quantity }}{{ business.unit }}</td>
+                    <td>{{ business.service_provider }}</td>
+                    <td>{{ business.date }}</td>
+                    <td><a href="{{ business.order.get_absolute_url }}/">详细</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+{#                <ul>#}
+{#                    {% for business in business_list %}#}
+{#                        <li>{{ business.business }}/{{ business.quantity }}{{ business.unit }}/{{ business.date }}</li>#}
+{#                    {% endfor %}#}
+{#                </ul>#}
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">销售记录</h3>
+        </div>
+            <div class="panel-body">
+            <table class="table">
+                <tr>
+                    <th>日期</th>
+                    <th>状态</th>
+                    <th>夹数</th>
+                    <th>件数</th>
+                    <th>数量</th>
+                    <th>单价</th>
+                    <th>客户名称</th>
+                    <th>单号</th>
+                </tr>
+                 {% for sale in salesorder_list %}
+                <tr>
+                    <td>{{ sale.date }}</td>
+                    <td>{{ sale.status }}</td>
+                    <td>{{ sale.part }}</td>
+                    <td>{{ sale.pic }}</td>
+                    <td>{{ sale.quantity }}{{ sale.unit }}</td>
+                    <td>{{ sale.price }}</td>
+                    <td><a href="{{ sale.customer.get_absolute_url }}">{{ sale.customer }}</a></td>
+                    <td><a href="{{ sale.order.get_absolute_url }}">{{ sale.order }}</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+
         </div>
     </div>
 {% endblock %}

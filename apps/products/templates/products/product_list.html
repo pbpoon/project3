@@ -95,13 +95,17 @@
                                             </li>
                                             <li role="separator" class="divider"></li>
                                             <li>
-                                                <a class="btn btn-info"
-                                                        onclick="gogo_slab_list('{{ list.block_num }}',
-                                                                '{{ list.thickness }}','{{ list.ids }}','{% url "product:order_slab_list" %}?type=can_sell')">
+                                                <button class="btn btn-info"
+                                                        onclick="gogo_slab_list('{{ object.block_num }}',
+                                                                '{{ object.thickness }}',{% ifequal object.thickness '荒料' %}'{{ object.block_num }}'{% else %}'{{ object.ids }}'{% endifequal %},'{% url "product:order_slab_list" %}', 'can_sell')">
                                                     可以销售
-                                                </a>
-                                                <a href="{% url 'product:slab_list'  object.block_num %}?type=can_sell">打开可销售</a>
-                                                <a href="{% url 'product:slab_list'  object.block_num %}?type=show_all">打开全部</a>
+                                                </button>
+                                                <button href="{% url 'product:slab_list'  object.block_num %}?type=can_sell">打开可销售</button>
+                                                <button class="btn btn-info"
+                                                        onclick="gogo_slab_list('{{ object.block_num }}',
+                                                                '{{ object.thickness }}',{% ifequal object.thickness '荒料' %}'{{ object.block_num }}'{% else %}'{{ object.ids }}'{% endifequal %},'{% url "product:order_slab_list" %}', 'show_all')">
+                                                    显示所有
+                                                </button>
                                             </li>
                                         </ul>
                                     </div>
